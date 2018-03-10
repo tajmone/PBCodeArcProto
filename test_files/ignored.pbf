@@ -1,0 +1,3 @@
+; Fake PureBasic Form file.
+;
+; Used to test that the Indexer correctly skips files with the *.pbf extension.
