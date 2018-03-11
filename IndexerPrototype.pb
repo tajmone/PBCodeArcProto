@@ -83,7 +83,7 @@ ForEach FilesL()
   Debug "PARSE: " + FilesL()
   ParseFile(FilesL())
   
-  SaveDebugOutput(FilesL() + ".log")
+  SaveDebugOutput(#PROJ_ROOT + FilesL() + ".log")
 
 Next
 

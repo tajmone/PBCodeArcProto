@@ -5,23 +5,8 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "comments_parser.pb" v0.0.5 (2018/03/11) | PureBasic 5.62
+; "comments_parser.pb" v.0.0.4 (2018/03/10) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
-
-; ==============================================================================
-;                                   CHANGELOG                                   
-;{==============================================================================
-; v0.0.5 (2018/03/11)
-;   - carry-on values no longer treated as verbatim: every line is trimmed of
-;      leading and trailing whitespace, and joined with previous line (a space
-;      is inserted as separator). Empty carry-on lines are rendere as a EOL to
-;      separate paragraphs.
-; v0.0.4 (2018/03/10)
-;   - carry-on values are treated as verbatim: a base-indentation is established
-;     from first carry-on line and used to left-trim the rest of carry-on lines.
-;     This allows to preserve any intended indentation.
-;}==============================================================================
-
 
 ;{ Define New-Line Sequence to OS native EOL
 CompilerIf #PB_Compiler_OS = #PB_OS_Windows
@@ -133,10 +118,8 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
       value.s = Trim(Mid(CommentsL(), valueStart +1))
       If value = #Empty$
         Debug dbgIndent + "- value found: (empty)"
-        newParagraph = #True
       Else
         Debug dbgIndent + "- value found: '" + value +"'"
-        newParagraph = #False
       EndIf
       ;  =======================
       ;- Look for Carry-On Value
@@ -149,35 +132,33 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
         
         commDelim.s = Left(CommentsL(), 3)
         If Left(commDelim, 2) = ";." Or commDelim = ";{."  Or commDelim = ";}."
-          carryOn = #True
-          valueNew.s = Trim(Mid(CommentsL(), 4))
+          valueNew.s = Mid(CommentsL(), 4)
           lineNum.s = RSet(Str(lineCnt), 2, "0") + "| "
           Debug lineNum + "Detected value carry-on:"
-;           If Not carryOn ; (ie, it's 1st carry-on line)
-;             ; Establish base indentation
-;             baseIndent = 0
-;             While Mid(valueNew, baseIndent +1, 1) = " "
-;               baseIndent +1
-;             Wend
-;             Debug dbgIndent + "- Base Indentantion established: " + Str(baseIndent)
-;           EndIf
-;           valueNew = RTrim(Mid(valueNew, baseIndent +1))
+          If Not carryOn ; (ie, it's 1st carry-on line)
+            ; Establish base indentation
+            baseIndent = 0
+            While Mid(valueNew, baseIndent +1, 1) = " "
+              baseIndent +1
+            Wend
+            Debug dbgIndent + "- Base Indentantion established: " + Str(baseIndent)
+          EndIf
+          valueNew = RTrim(Mid(valueNew, baseIndent +1))
           Debug dbgIndent + "- carry-on value found: '" + valueNew +"'"
           ;  ------------------------------
           ;- Append Carry-On Value to Value
           ;  ------------------------------
-          If valueNew <> #Empty$
-            If newParagraph
-              value + valueNew
+          If Not carryOn ; (ie, it's 1st carry-on line)
+            ; If value definition starts on carry-on, don't insert EOL
+            If value <> #Empty$          
+              value + #EOL$ + valueNew
             Else
-              value + " " + valueNew
+              value = valueNew
             EndIf
-            newParagraph = #False
+            carryOn = #True
           Else
-            value + #EOL$ + #EOL$
-            newParagraph = #True
+            value + #EOL$ + valueNew
           EndIf
-          
         Else ; No more carry-on lines found
           If carryOn
             ; Debug final value string

@@ -8,7 +8,7 @@
 ;:  German-Forum: 
 ; -----------------------------------------------------------------------------
 
-;: INGORED: This line will not be parsed becaue of the blank line above, which
+;: IGNORED: This line will not be parsed becaue of the blank line above, which
 ;           end the header comments block!
 
 For i=1 To 10

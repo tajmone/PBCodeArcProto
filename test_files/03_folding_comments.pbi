@@ -1,25 +1,27 @@
-﻿; -----------------------------------------------------------------------------
+﻿; FOLDING MARKS IN CARRY-ON TEST: Check that the presence of special comment
+; folding marks don't break up the parsing of carry-on values.
+; -----------------------------------------------------------------------------
 ;:   Description: A long description spanning across multiple lines.
 ;.                Carry on value: the dot indicates this line extends the value of
 ;.                the current key being parsed.
 ;.
 ;{.               This line has folding marks: ";{.". The parser should handle it
-;.                smartly nonetheless, and preserver indentation.
+;.                well nonetheless.
 ;.
 ;}.               Folding ends here.
 ;:   Description2:
-;{.    This carry on block has a folding mark on its first line, which could mess
-;.     up the base indentantion level.
+;{.    This carry on block has a folding mark on its first line: we must check
+;.     that doesn't break up comments parsing.
 ;.
 ;}.    Folding ends here.
 ;: Fold on 1st Carry-On Sinlge Spaced:
 ;{. This carry on block has a folding mark on its first line, and a single space
-;.  indentation, which could mess up the base indentantion level.
+;.  indentation, we must check that doesn't break up comments parsing.
 ;.
 ;}. Folding ends here.
 ;: Fold on Mid Carry-On Sinlge Spaced:
 ;.  This carry on block has a folding mark on its 2nd line, and a single space
-;.{ indentation, which could mess up the base indentantion level.
+;.{ indentation, we must check that doesn't break up comments parsing.
 ;.
 ;}. Folding ends here.
 ; -----------------------------------------------------------------------------
