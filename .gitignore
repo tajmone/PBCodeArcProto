@@ -8,6 +8,9 @@
 
 # Log Files
 *.log
+# Links and URLs
+*.lnk
+*.url
 
 ## PureBasic
 ############

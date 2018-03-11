@@ -5,12 +5,21 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "comments_parser.pb" v0.0.5 (2018/03/11) | PureBasic 5.62
+; "comments_parser.pb" v0.0.6 (2018/03/11) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 
 ; ==============================================================================
 ;                                   CHANGELOG                                   
 ;{==============================================================================
+; v0.0.6 (2018/03/11)
+;   - Generate an HTML Resume Card (using <table>):
+;     - value strings:
+;       - [x] string is XML escaped
+;       - [x] EOLs coverted to "<br />"
+;       - [ ] Links are not yet handled
+;     - Debug Preview:
+;       - save it to file as "<filename>.html" for testing purposes
+;       - use external CSS "test_files/test.css" for tests styling
 ; v0.0.5 (2018/03/11)
 ;   - carry-on values no longer treated as verbatim: every line is trimmed of
 ;      leading and trailing whitespace, and joined with previous line (a space
@@ -36,10 +45,10 @@ Structure KeyValPair
 EndStructure
 
 ;{ Procs Declaration
-; IncludeFile "parser.pbhgen.pbi" ; <= PBHGEN-X
-Declare ParseFile(file.s)
-Declare ExtractHeaderBlock(file.s, List CommentsL.s())
-Declare ParseComments(List CommentsL.s(), List RawDataL.KeyValPair())
+Declare   ParseFile(file.s)
+Declare   ExtractHeaderBlock(file.s, List CommentsL.s())
+Declare   ParseComments(List CommentsL.s(), List RawDataL.KeyValPair())
+Declare.s BuildCard(List RawDataL.KeyValPair())
 ;}
 
 ; ------------------------------------------------------------------------------
@@ -77,10 +86,19 @@ Procedure ParseFile(file.s)
     Debug RSet(Str(cnt), 2, "0") + "| "+ CommentsL()
     cnt+1
   Next
-  Debug LSet("--+", 80, "-")
+  Debug LSet("--+", 80, "-") ;}
   
   NewList RawDataL.KeyValPair()
   ParseComments(CommentsL(), RawDataL())
+  CardHTML.s = BuildCard( RawDataL() )
+  
+  ;- Write HTML Card to file (debug purpose)
+  ;  =======================
+  If CreateFile(0, file + ".html", #PB_UTF8) ; any existing file will be replaced by empty file
+    WriteStringN(0, CardHTML)
+    CloseFile(0)
+  EndIf
+
   
 EndProcedure
 ; ------------------------------------------------------------------------------
@@ -125,7 +143,7 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
       ;- Extract Key
       ;  ===========
       key.s = Trim(StringField(CommentsL(), 2, ":"))
-        Debug dbgIndent + "- key found: '" + key +"'"
+      Debug dbgIndent + "- key found: '" + key +"'"
       ;  =============
       ;- Extract Value
       ;  =============
@@ -149,19 +167,13 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
         
         commDelim.s = Left(CommentsL(), 3)
         If Left(commDelim, 2) = ";." Or commDelim = ";{."  Or commDelim = ";}."
+          
+          ;- Carry-on line found
+          ;  ~~~~~~~~~~~~~~~~~~~
           carryOn = #True
           valueNew.s = Trim(Mid(CommentsL(), 4))
           lineNum.s = RSet(Str(lineCnt), 2, "0") + "| "
           Debug lineNum + "Detected value carry-on:"
-;           If Not carryOn ; (ie, it's 1st carry-on line)
-;             ; Establish base indentation
-;             baseIndent = 0
-;             While Mid(valueNew, baseIndent +1, 1) = " "
-;               baseIndent +1
-;             Wend
-;             Debug dbgIndent + "- Base Indentantion established: " + Str(baseIndent)
-;           EndIf
-;           valueNew = RTrim(Mid(valueNew, baseIndent +1))
           Debug dbgIndent + "- carry-on value found: '" + valueNew +"'"
           ;  ------------------------------
           ;- Append Carry-On Value to Value
@@ -178,13 +190,18 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
             newParagraph = #True
           EndIf
           
-        Else ; No more carry-on lines found
-          If carryOn
-            ; Debug final value string
+        Else ;- No carry-on line found (or no more)
+             ;  ~~~~~~~~~~~~~~~~~~~~~~
+          If carryOn ; (there were carry-on lines)
+                     ; Debug final value string
             Debug dbgIndent + "- Assembled value:"
             Debug LSet("", 80, "-")
             Debug value
           EndIf
+          ;- Add <key> & <value> to list
+          AddElement(RawDataL())
+          RawDataL()\key = key
+          RawDataL()\val = value
           ; Roll-back List Element and line counter...
           PreviousElement(CommentsL())
           lineCnt -1
@@ -202,4 +219,35 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
   
   
   Debug "<<< ParseComments()"
+EndProcedure
+; ------------------------------------------------------------------------------
+Procedure.s BuildCard( List RawDataL.KeyValPair() )
+  Debug ">>> BuildCard()"
+  
+  ; HTML NOTE: Temporary tags and CSS for testing purposes only!
+  Card.s = "<!doctype html><html lang='en'><head><meta charset='utf-8'>" ; DELME: Temporary tags for testing
+  Card + "<link rel='stylesheet' href='test.css'>"
+  Card + "</head><body>" ; DELME: Temporary tags for testing
+  
+  Card+ "<table><tbody>"
+  
+  ; TODO: Insert <p> tags?
+  ForEach RawDataL()
+    key.s   = EscapeString( RawDataL()\key, #PB_String_EscapeXML )
+    Card + "<tr><td>" + key + ":</td><td>"
+    
+    value.s = EscapeString( RawDataL()\val, #PB_String_EscapeXML )
+    ; TODO: Add <br>
+    value = ReplaceString(value, #EOL$+#EOL$, "<br /><br />") ; <= The optional " /" is for XML compatibility
+    ; TODO: Capture Links
+    Card + value + "</td></tr>"    
+    
+  Next
+  
+  Card + "</tbody></table>"
+  Card + "</body></html>" ; DELME: Temporary tags for testing
+  
+  Debug "<<< BuildCard()"
+  ProcedureReturn Card
+  
 EndProcedure

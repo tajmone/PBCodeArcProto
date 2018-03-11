@@ -1,0 +1,29 @@
+/* TEMPORARY CSS TO TEST HTML CARDS */
+body {
+	width: 1000px;
+	margin: 1em auto;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+	letter-spacing: 0.025em;
+}
+
+table {
+	width: 100%;
+	border: 1px solid #222;
+	border-collapse: collapse;
+	/*border-spacing: 0;*/
+	padding: 5px;
+	font-size: 0.85em;
+}
+tbody tr:nth-child(odd) {
+  background: #f6f6f6;
+}
+
+td {
+	text-align: justify;
+	padding: 10px;
+	vertical-align: top;
+}
+
+td:first-child {
+	text-align: right;
+}
