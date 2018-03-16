@@ -27,6 +27,8 @@ div.container {
 
 #page table td:first-child {
 	text-align: right;
-	background-color: rgba(50, 115, 220, 0.1)
-;
+	background-color: rgba(50, 115, 220, 0.1);
+	width: 220px;
+	min-width: 220px;
+	max-width: 220px;
 }
