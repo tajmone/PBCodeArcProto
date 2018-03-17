@@ -5,12 +5,20 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "comments_parser.pb" v0.0.6 (2018/03/11) | PureBasic 5.62
+; "comments_parser.pb" v0.0.7 (2018/03/17) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 
 ; ==============================================================================
 ;                                   CHANGELOG                                   
 ;{==============================================================================
+; v0.0.7 (2018/03/17)
+;   - If value string contains a valid URL (single line) and nothing else, it
+;     is converted to an HTML link. URLs inside a wider context are ignored, for
+;     we really only care about offering links to PB Forum related pages, or
+;     project website, etc. URLs found Inside description strings could be just
+;     examples of URL syntax usage, etc (eg., in a library/module or procedure);
+;     and in any case any link beside the forum or homepage are beyond the scope
+;     of the resume-card.
 ; v0.0.6 (2018/03/11)
 ;   - Generate an HTML Resume Card (using <table>):
 ;     - value strings:
@@ -44,12 +52,25 @@ Structure KeyValPair
   val.s
 EndStructure
 
-;{ Procs Declaration
+;{ Procs Declarations
 Declare   ParseFile(file.s)
 Declare   ExtractHeaderBlock(file.s, List CommentsL.s())
 Declare   ParseComments(List CommentsL.s(), List RawDataL.KeyValPair())
 Declare.s BuildCard(List RawDataL.KeyValPair())
 ;}
+
+;- RegEx
+Enumeration RegExs
+  #RE_URL
+EndEnumeration
+
+#RE_URL$ = "^(https?://([-\w\.]+)+(:\d+)?(/([\w/_\.]*(\?\S+)?)?)?)$"
+
+If Not CreateRegularExpression(#RE_URL, #RE_URL$)
+  Debug "RegEx URL Error: " + RegularExpressionError()
+  MessageRequester("ERROR", "Error while creating URL RegEx!", #PB_MessageRequester_Error)
+  End 1
+EndIf
 
 ; ------------------------------------------------------------------------------
 Procedure ParseFile(file.s)
@@ -236,11 +257,30 @@ Procedure.s BuildCard( List RawDataL.KeyValPair() )
     key.s   = EscapeString( RawDataL()\key, #PB_String_EscapeXML )
     Card + "<tr><td>" + key + ":</td><td>"
     
-    value.s = EscapeString( RawDataL()\val, #PB_String_EscapeXML )
-    ; TODO: Add <br>
-    value = ReplaceString(value, #EOL$+#EOL$, "<br /><br />") ; <= The optional " /" is for XML compatibility
-    ; TODO: Capture Links
-    Card + value + "</td></tr>"    
+    value.s = RawDataL()\val
+    
+    value = EscapeString( value, #PB_String_EscapeXML )
+    
+    ;- Capture Links
+    ;  =============
+    ;  Only capture links if they are the sole content of value string.
+    If ExamineRegularExpression(#RE_URL, value)
+      While NextRegularExpressionMatch(#RE_URL)
+        URL.s = RegularExpressionMatchString(#RE_URL)
+        Link.s = ~"<a href=\"" + URL + ~"\">" + URL + "</a>"
+        Debug "! URL Match: " + URL
+        Debug "! URL Link: " + Link
+        value = ReplaceString(value, URL, Link, #PB_String_CaseSensitive, 1, 1)
+        ;         Debug "! URL Position: " + Str(RegularExpressionMatchPosition(#RE_URL))
+        ;         Debug "! URL Length: " + Str(RegularExpressionMatchLength(#RE_URL))
+      Wend
+    EndIf
+    
+    ;- Convert EOLs to <br>
+    ;  ====================
+      value = ReplaceString(value, #EOL$+#EOL$, "<br /><br />") ; <= The optional " /" is for XML compatibility
+      Card + value + "</td></tr>"    
+      
     
   Next
   

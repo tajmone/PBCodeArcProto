@@ -18,8 +18,15 @@ Based on the original discussion with [@SicroAtGit] in [Issue #5].
 - [Suggested Approach \(Draft\)](#suggested-approach-draft)
     - [Premise](#premise)
     - [Design Proposal](#design-proposal)
+    - [Carry-On Multi-Line Values](#carry-on-multi-line-values)
+    - [URL Value Strings](#url-value-strings)
+    - [Comments Folding Support](#comments-folding-support)
+    - [Resume...](#resume)
 - [Project Status](#project-status)
     - [WIP TODOs](#wip-todos)
+        - [HTML Template](#html-template)
+        - [Project Tree Scanner](#project-tree-scanner)
+        - [Comments Parser](#comments-parser)
     - [Comments Parsing Features](#comments-parsing-features)
 - [Project Structure](#project-structure)
 - [Usage and Testing](#usage-and-testing)
@@ -89,9 +96,11 @@ The parse will extract from the above examples the following `<key>:<value>` pai
 - `French-Forum`: (empty)
 - `German-Forum`: `http://www.purebasic.fr/german/viewtopic.php?`
 
-The parser itself is going to be "dumb", and just make a list of strings out of them (duplicates allowed). After parsing, the app will convert all keys to identifiers (ascii conversion, lowercase, spaces to underscore) and look up the identifiers in a Map (definable via a settings file) to determine if a key is of interest for building the resume or not (in the latter case, just discards it).
+The parser itself is going to be "dumb", and just make a list of strings out of them (duplicates allowed). ~~After parsing, the app will convert all keys to identifiers (ascii conversion, lowercase, spaces to underscore) and look up the identifiers in a Map (definable via a settings file) to determine if a key is of interest for building the resume or not (in the latter case, just discards it)~~.
 
-This approach allows to easily integrate new keys into the sytem via settings file. Also, the map allows aliases to map to the same significant key, which might be useful in some cases.
+The extracted list of  `<key>:<value>` pairs will simply be converted to an HTML card, without the app caring what they might refer to. No maps are needed.
+
+## Carry-On Multi-Line Values
 
 For long `<value>` entries that span across multiple lines, a carry-on comment delimiter `;.` will be used. After parsing a key-value pair, the parser will always check if the next line starts by `;.`, and if it does it will carry on parsing the following lines until a non-carry-on comment is encountered (or the end of the block). Example:
 
@@ -123,6 +132,18 @@ When using carry-on values, the value might actually start on the second line al
 
 ... this allows some flexibility, and to have same-width text in the extracted text (most likely, the description text will be rendered as an HTML `<pre>` block, since it often contains significant spacing, ascii lists, etc.).
 
+## URL Value Strings
+
+If an extracted value string contains a valid URL (and nothing else), it will be converted to an HTML link. This is intended to capture links to PB Forum references, or projects websites, as in:
+
+```purebasic
+;: English-Forum: http://www.purebasic.fr/english/viewtopic.php?
+```
+
+URLs that occur in the middle of other text are no converted to links. Here we're only concerned with reference links regarding the project of the current resume card.
+
+## Comments Folding Support
+
 Finally, our special comment delimiters should allow the __special comment marks__ used for folding by PB IDE (`{ }`), as some users might add the folding marks to allow shrinking away the header block:
 
 ```purebasic
@@ -133,6 +154,8 @@ Finally, our special comment delimiters should allow the __special comment marks
 ```
 
 The `-` mark is not expected to be found in this context (and, unlike the folding mark, it would brake due to the adjacent `:` anyhow).
+
+## Resume...
 
 So, resuming: 
 
@@ -151,14 +174,54 @@ Here is a mixture of the TODOs list and what has been currently implemented. Sin
 
 ## WIP TODOs
 
+Currently the project's code is split in different source being built independently, which will be joined into a single program later on, when they are fully functional.
+
+### HTML Template
+
+- `/Template/`
+
+In this folder there are some tests and prototypes for the HTML5 template that will be used to render the project's webpages.
+
+### Project Tree Scanner
+
+- `BuildProjectTree.pb`
+
+The project tree scanner is run agains the `real_files` folder, which contains a selection of real categories taken from the upstream project.
+
+
+- [x] Scans the projects folders recursively
+- [x] build list of categories (not a Tree, just a list).
+- [x] establish if a subfolder is a category or a multifile sub-item
+- [x] build list of files to comment-parse:
+    + [x] all "`*.pb`" and "`*.pbi`" files
+    + [x] "`CodeInfo.txt`" files in multi-file folder sub-items
+
+... when comments-parser is ready, join them and carry on task:
+
+- [ ] for each category build the HTML page:
+    + [ ] build sidebar menu with root categories and links (relative to curr subfolder)
+    + [ ] build breadcrumbs
+    + [ ] PAGE CONTENTS:
+        * [ ] convert category `README.md` to HTML and store in memory
+        * [ ] create links to sub-categories (if any) and append to temp HTML
+        * [ ] comment-parse all files in category and create HTML resume card, and append to in-memory temp HTML
+
+### Comments Parser
+
+- `IndexerPrototype.pb`
+- `comments_parser.pbi`
+
+Currently the comments parser is being developed and run against the custom test files found in the `test_files` folder.
+
+
 - [x] create a resource files list from all "`*.pb`" and "`*.pbi`" files inside "`test_files`" folder.
 - [ ] implement recursive folder scanning
 - [x] iterate through the list of files and for each file invoke `ParseFile(file.s)`:
     + [x] extract header-comments block — via `ExtractHeaderBlock(file.s, List CommentsL.s())`
     + [x] parse the Header Block and extract raw `<key>:<value>` pairs and store them in a structured list — via `ParseComments(List CommentsL.s(), List RawDataL.KeyValPair())`
     + [x] log parsing details to `<filename>.log` to debug the parser's inner workings.
-    + [ ] map raw keys to actual variables used by the Indexer.
-    + [ ] create an HTML resume card for each resource.
+    + [ ] ~~map raw keys to actual variables used by the Indexer~~.
+    + [x] create an HTML resume card for each resource.
 
 ## Comments Parsing Features
 
@@ -170,9 +233,10 @@ Here is a mixture of the TODOs list and what has been currently implemented. Sin
 
 - [x] multiline entries where `<value>` carries on multiple lines:
 
-    `;. [indentation]<value carry-on>`
+    `;. [space]<value carry-on>[space]`
 
-    + [x] left-indentation of first carry-on line sets the base indentation that will be removed from all following carry-on lines (of current key-val pair). Allows preserving intended indentantion.
+    + [x] any leading and trailing space is stripped off and the carry-on line is joined with the previous one (space inserted if previous line was not empty).
+    + [x] Empty carry-on lines are rendered as double EOL.
     
     + [x] `<value>` definition starting on carry-on line: allows an empty value on the `;: <key>` line, so that `<value>` definition begins on carry-on lines. In this case don't add initial empty `<value>` string, to avoid empty line.
 
@@ -185,8 +249,11 @@ Here is a mixture of the TODOs list and what has been currently implemented. Sin
 # Project Structure
 
 - [`/test_files/`](./test_files) — PB source files with header-blocks designed to test comments parsing and edge cases.
+- [`/real_files/`](./real_files) — a selection of categories taken from upstream project.
+- [`Template`](./Template) — tests for building the final HTML5 template.
 - [`IndexerPrototype.pb`](./IndexerPrototype.pb) — Main file.
 - [`comments_parser.pbi`](./comments_parser.pbi) — The comments parser.
+- [`BuildProjectTree.pb`](./BuildProjectTree.pb) — The project's directory tree scanner and indexer.
 - [`erase-logs.bat`](./erase-logs.bat) — Delets all log files.
 
 
