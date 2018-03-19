@@ -15,6 +15,19 @@ Project organization:
 
 the remaining folders are contents taken from the PureBasic CodeArchiv Rebirth project to test the app.
 
+
+
+# License Info
+
+    Copyright (c) Tristano Ajmone, 2018.
+
+At the current stage it's impossible to determine any type of license for this project — ultimately, the final license will depend on the licenses of third party resources employed. As third party resources are added to the project, their license is also added.
+
+You're free to clone this project, edit it, test and experiment with it, but if you wish to reuse or distribute any parts of it, please contact the author or wait until a license is chosen for the project.
+
+
+
+
 [PureBasic CodeArchiv Rebirth]: https://github.com/SicroAtGit/PureBasic-CodeArchive-Rebirth "Visit the 'PureBasic CodeArchiv Rebirth' repository"
 
 [Issue #5]: https://github.com/SicroAtGit/PureBasic-CodeArchive-Rebirth/issues/5
