@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.1 (2018/03/19) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.2 (2018/03/19) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,6 +15,10 @@
 ; ------------------------------------------------------------------------------
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.2 (2018/03/19)
+;    - ScanFolder() Debug now shown as directory tree:
+;      - DBG Lev 3: Show only found Categories and Resources
+;      - DBG Lev 4: Also show ignored files and folders 
 ;  v.0.0.1 (2018/03/19)
 ;    - Incorporate "BuildProjectTree.pb" and adapt it.
 ;    - Introduce DebugLevel filtering of output
@@ -22,7 +26,7 @@
 ; ==============================================================================
 ;-                                   SETTINGS                                   
 ; ==============================================================================
-DebugLevel 0 ; Details Range 0—4:
+DebugLevel 3 ; Details Range 0—4:
              ;  - 0 : No extra info, just the basic feedback.
              ;  - 1 : (currently unused) 
              ;  - 2 : (currently unused) 
@@ -99,11 +103,10 @@ ScanFolder(CategoriesL())
 Debug "- Categories found: "+ Str(totCategories) + " (excluding root folder)"
 Debug "- Resources found: "+ Str(totResources) + " ("+ Str(totSubFRes) +" are subfolders)"
 
-ShowVariableViewer()
-
-Repeat
-  ; Infinte Loop to allow Debugger Inspections
-ForEver
+; ShowVariableViewer()
+; Repeat
+;   ; Infinte Loop to allow Debugger Inspections
+; ForEver
 
 End
 
@@ -115,39 +118,42 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
   ; ------------------------------------------------------------------------------
   ; Recursively scan project folders and build the List of Categories.
   ; ------------------------------------------------------------------------------
-  Static recCnt ; recursion level counter
+  Static recCnt ; recursion level counter 
+  For i=1 To recCnt
+    Ind$ + " |" 
+  Next
   recCnt +1
-  
+
   Shared totCategories, totResources, totSubFRes
-  
-  Debug LSet("", recCnt, ">") + " ScanFolder(): '" + PathSuffix + "'", 3
-  
+   
   If ExamineDirectory(recCnt, PathSuffix, "")
     While NextDirectoryEntry(recCnt)
       
       entryName.s = DirectoryEntryName(recCnt)
+      entryDBG$ = Ind$ + " |-"
       
       If DirectoryEntryType(recCnt) = #PB_DirectoryEntry_File
+        entryDBG$ + "- " + entryName + "  "
         fExt.s = GetExtensionPart(entryName)
         
         If fExt = "pb" Or fExt = "pbi"
           AddElement( CategoriesL()\FilesToParseL() )
           CategoriesL()\FilesToParseL() = entryName ; relative path
           totResources +1
-          Debug " + Enlist: " + PathSuffix + entryName, 3
+          Debug entryDBG$, 3
         Else
           ; Ignore other PB extensions (*.pbp|*.pbf)
-          Debug " - Ignore: " + PathSuffix + entryName, 4
+          Debug entryDBG$ + "(ignore file)", 4
         EndIf
         
       Else ; EntryType is Directory
         
         ; Folder-Ignore patterns
+        ; ----------------------
         If entryName = "." Or entryName = ".." Or 
            entryName = ".git" Or
            Left(entryName, 1) = "_"
-          
-          Debug "(skipping '" + entryName +"')", 4
+          Debug entryDBG$ + "- /" + entryName + "/  (ignore folder)", 4
           Continue 
         EndIf
         
@@ -160,16 +166,16 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
           CategoriesL()\FilesToParseL() = fName
           totResources +1
           totSubFRes +1
-          Debug " + Enlist: " + fName, 3
+          Debug entryDBG$ + "- " + fName, 3
         Else
           ;  =========================
           ;- SubFolder is Sub-Category
           ;  =========================
-          Debug "Folder '"+ PathSuffix + entryName + "' is a category", 4
           AddElement( CategoriesL()\SubCategoriesL() )
           CategoriesL()\SubCategoriesL() = entryName ; just the folder name
           totCategories +1
-          
+          Debug entryDBG$ + "+ /" + entryName + "/", 3          
+          ; -------------------------
           ; Recurse into Sub-Category
           ; -------------------------
           PushListPosition( CategoriesL() )
@@ -184,9 +190,8 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
     FinishDirectory(recCnt)
   EndIf
   
-  Debug LSet("", recCnt, "<") + " ScanFolder(): '" + PathSuffix + "'", 4
   recCnt -1
-  
+  Debug Ind$ ; adds separation after sub-folders ends
 EndProcedure
 
 ;}
