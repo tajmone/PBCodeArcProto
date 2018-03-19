@@ -5,12 +5,18 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "BuildProjectTree.pb" v.0.0.2 (2018/03/14) | PureBasic 5.62
+; "BuildProjectTree.pb" v.0.0.3 (2018/03/19) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Build the project Tree of categories, sub-categories and sub-foldered items
 ; ------------------------------------------------------------------------------
-
-#PROJ_ROOT_REL_PATH = "real_files"
+;{ CHANGELOG
+;  =========
+;  v.0.0.3 (2018/03/19)
+;    - Ignore folders: ".git" or if first name char is underscore.
+;    - Always use "/" as dir separator char (works with all OSs and is the
+;      correct separator to use for HTML links)
+;  v.0.0.2 (2018/03/14)
+;}
 #CodeInfoFile = "CodeInfo.txt"
 
 Structure Category
@@ -32,7 +38,7 @@ CompilerEndIf ;}
 ;                                   INITIALIZE                                  
 ; ==============================================================================
 
-SetCurrentDirectory(#PROJ_ROOT_REL_PATH)
+SetCurrentDirectory("../")
 
 Debug "Curr Dir: " + GetCurrentDirectory()
 
@@ -84,17 +90,22 @@ Procedure ScanFolder(List ProjTreeL.Category(), PathSuffix.s = "")
         EndIf
         
       Else ; EntryType is Directory
-        If entryName = "." Or entryName = ".."
+        
+        ; Folder-Ignore patterns
+        If entryName = "." Or entryName = ".." Or 
+           entryName = ".git" Or
+           Left(entryName, 1) = "_"
+          
           Debug "(skipping '" + entryName +"')"
           Continue 
         EndIf
         
-        If FileSize(PathSuffix + entryName + #CodeInfoFile) >= 0
+        If FileSize(PathSuffix + entryName + "/" + #CodeInfoFile) >= 0
           ;  ================================          
           ;- SubFolder is Multi-File Sub-Item
           ;  ================================
           AddElement( ProjTreeL()\FilesToParseL() )
-          fName.s = PathSuffix + entryName + #DSEP + #CodeInfoFile
+          fName.s = PathSuffix + entryName + "/" + #CodeInfoFile
           ProjTreeL()\FilesToParseL() = fName
           Debug " + Enlist: " + fName
         Else
@@ -108,7 +119,7 @@ Procedure ScanFolder(List ProjTreeL.Category(), PathSuffix.s = "")
           PushListPosition( ProjTreeL() )
           AddElement( ProjTreeL() )
           ProjTreeL()\Path = PathSuffix + entryName
-          ScanFolder(ProjTreeL(), PathSuffix + entryName + #DSEP)
+          ScanFolder(ProjTreeL(), PathSuffix + entryName + "/")
           PopListPosition( ProjTreeL() )
         EndIf
       EndIf
