@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.3 (2018/03/21) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.4 (2018/03/21) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,6 +15,8 @@
 ; ------------------------------------------------------------------------------
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.4 (2018/03/21)
+;    - Add project integrity checks
 ;  v.0.0.3 (2018/03/21)
 ;    - Add CategoriesL()\Name.s to structure
 ;    - CategoriesL()\Path ends in "/" (unless root)
@@ -30,14 +32,15 @@
 ; ==============================================================================
 ;-                                   SETTINGS                                   
 ; ==============================================================================
-DebugLevel 1 ; Details Range 0—4:
-             ;  - 0 : No extra info, just the basic feedback.
-             ;  - 1 : (currently unused) 
-             ;  - 2 : (currently unused) 
-             ;  - 3 : Expose core procedure's internals: their steps, positive
-             ;        findings and results.
-             ;  - 4 : Also expose core procedure's ingnored details (misses,
-             ;        skipped/ignored items, etc.)
+#DBG_LEVEL = 2  ; Details Range 0—4:
+                ;  - 0 : No extra info, just the basic feedback.
+                ;  - 1 : (currently unused) 
+                ;  - 2 : Extra details on Main code 
+                ;  - 3 : Expose core procedure's internals: their steps, positive
+                ;        findings and results.
+                ;  - 4 : Also expose core procedure's ingnored details (misses,
+                ;        skipped/ignored items, etc.)
+DebugLevel #DBG_LEVEL
 
 #CodeInfoFile = "CodeInfo.txt" ; found in multi-file subfoldered resources
 
@@ -61,7 +64,7 @@ CompilerEndIf
 #DIV2$ = "=============================================================================="
 #DIV3$ = "------------------------------------------------------------------------------"
 
-#TOT_STEPS = "2"
+#TOT_STEPS = "3"
 Macro StepHeading(Text)
   StepNum +1
   Debug #DIV2$ + #EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ #EOL + #DIV2$
@@ -109,11 +112,74 @@ ScanFolder(CategoriesL())
 Debug "- Categories found: "+ Str(totCategories) + " (excluding root folder)"
 Debug "- Resources found: "+ Str(totResources) + " ("+ Str(totSubFRes) +" are subfolders)"
 
-; TODO: Build Root Categories List (for sidebar navigation)
-;       Just copy SubCategoriesL() of 1st element of CategoriesL() into a new List.
+; Build Root Categories List (for sidebar navigation)
+; ==========================
+FirstElement( CategoriesL() )
+NewList RootCategoriesL.s()
+CopyList( CategoriesL()\SubCategoriesL(), RootCategoriesL() )
+
+CompilerIf #DBG_LEVEL >= 2
+  Debug "Root Categories:"
+  cnt = 1
+  ForEach RootCategoriesL()
+    Debug RSet(Str(cnt), 3, " ") + ". '" + RootCategoriesL() + "'"
+    cnt +1
+  Next
+CompilerEndIf
+; ==============================================================================
+; - 2. Check Project Integrity
+; ==============================================================================
+StepHeading("Checking Project Integrity")
+
+ForEach CategoriesL()
+  ; Check that every category has a REAMDE file
+  ; ===========================================
+  README$ =  CategoriesL()\Path+"README.md"
+  Select FileSize(README$)
+    Case 0
+      Debug "- WARNING: '" + README$ + "' file size is 0 Kb!"
+      WARN +1
+    Case -1
+      Debug "- WARNING: Missing '" + README$ + "' file!"
+      WARN +1
+    Case -2
+      ; This shouldn't happen; but just in case...
+      Debug "- ERROR: '" + README$ + "' is directory!"
+      ERR +1
+  EndSelect
+  ; Check that every category has a items to parse
+  ; ==============================================
+  If Not ListSize( CategoriesL()\FilesToParseL() ) And
+     CategoriesL()\Name <> "" ; Allow Root Category to empty
+    Debug "- WARNING: Category '" + CategoriesL()\Path + "' has no entries!"
+    WARN +1
+  EndIf
+Next
+; Evaluate Found Warnings/Errors
+; ==============================
+If WARN | ERR = 0
+  Debug "All tests passed."
+Else
+  Debug "Total warnings: " + Str(WARN)
+  Debug "Total errors: " + Str(ERR)
+  If ERR
+    Debug ~"Fix errors and try again!\nAborting..."
+    End 1
+  Else
+    Debug "Please confirm if you wish to continue..."
+    If MessageRequester("WARNING CONFIRMATION", 
+                        ~"Some warnings were issued during project integrity check.\n"+
+                        "Do you wish to continue anyhow?", 
+                        #PB_MessageRequester_YesNo | 
+                        #PB_MessageRequester_Warning) = #PB_MessageRequester_No
+      Debug "Aborting..."
+      End 1
+    EndIf
+  EndIf
+EndIf
 
 ; ==============================================================================
-; - 2. Iterate Categories Lists
+; - 3. Iterate Categories Lists
 ; ==============================================================================
 StepHeading("Iterate Categories List")
 
@@ -122,11 +188,11 @@ ForEach CategoriesL()
   
   catPath.s = CategoriesL()\Path
   Debug "Processing " + Str(cnt) + "/" + Str(totCategories +1) +": './" + catPath + "'"
-  Debug "Category name: '" + CategoriesL()\Name + "'"
-  Debug "Category path: '" + CategoriesL()\Path + "'"
+  Debug "Category name: '" + CategoriesL()\Name + "'", 2
+  Debug "Category path: '" + CategoriesL()\Path + "'", 2
   
   ; ~~~~~~~~~~~~~
-
+  
   ; ====================
   ; Build path2root$ var
   ; ====================
@@ -134,19 +200,17 @@ ForEach CategoriesL()
   For i = 1 To CountString(catPath, "/")
     path2root$ + "../" ; <= Use "/" as URL path separator
   Next 
-  Debug "path2root$: '" + path2root$ + "'"
+  Debug "path2root$: '" + path2root$ + "'", 2
   ; ~~~~~~~~~~~~~
   
   cnt +1
   Debug #DIV1$
 Next
 
-
 ; ShowVariableViewer()
 ; Repeat
 ;   ; Infinte Loop to allow Debugger Inspections
 ; ForEver
-
 End
 
 ;}==============================================================================
@@ -162,9 +226,9 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
     Ind$ + " |" 
   Next
   recCnt +1
-
+  
   Shared totCategories, totResources, totSubFRes
-   
+  
   If ExamineDirectory(recCnt, PathSuffix, "")
     While NextDirectoryEntry(recCnt)
       
