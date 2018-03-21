@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.2 (2018/03/19) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.3 (2018/03/21) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,6 +15,10 @@
 ; ------------------------------------------------------------------------------
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.3 (2018/03/21)
+;    - Add CategoriesL()\Name.s to structure
+;    - CategoriesL()\Path ends in "/" (unless root)
+;    - Setup Categories iteration code-skeleton
 ;  v.0.0.2 (2018/03/19)
 ;    - ScanFolder() Debug now shown as directory tree:
 ;      - DBG Lev 3: Show only found Categories and Resources
@@ -26,7 +30,7 @@
 ; ==============================================================================
 ;-                                   SETTINGS                                   
 ; ==============================================================================
-DebugLevel 3 ; Details Range 0—4:
+DebugLevel 1 ; Details Range 0—4:
              ;  - 0 : No extra info, just the basic feedback.
              ;  - 1 : (currently unused) 
              ;  - 2 : (currently unused) 
@@ -52,14 +56,15 @@ CompilerEndIf
 ;- Procedures Declaration
 
 ; Misc Constants and Vars
-#TOT_STEPS = "1"
 
 #DIV1$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 #DIV2$ = "=============================================================================="
 #DIV3$ = "------------------------------------------------------------------------------"
 
-Macro StepHeading(StepNum, Text)
-  Debug #DIV2$ + #EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" -- "+Text+ #EOL + #DIV2$
+#TOT_STEPS = "2"
+Macro StepHeading(Text)
+  StepNum +1
+  Debug #DIV2$ + #EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ #EOL + #DIV2$
 EndMacro
 ;}==============================================================================
 ;-                                  INITIALIZE                                  
@@ -78,10 +83,11 @@ Debug "Current Work Directory: " + GetCurrentDirectory(), 1
 ; ==============================================================================
 ; Build a list of all the project's categories and their associated resources.
 ; ------------------------------------------------------------------------------
-StepHeading(1, "Build Categories List")
+StepHeading("Build Categories List")
 Debug "Scanning project to build list of categories and resources:"
 
 Structure Category
+  Name.s
   Path.s
   List SubCategoriesL.s() ; Name/Link List to SubCategories
   List FilesToParseL.s()  ; List of files to parse (including "<subf>/CodeInfo.txt")
@@ -102,6 +108,39 @@ ScanFolder(CategoriesL())
 
 Debug "- Categories found: "+ Str(totCategories) + " (excluding root folder)"
 Debug "- Resources found: "+ Str(totResources) + " ("+ Str(totSubFRes) +" are subfolders)"
+
+; TODO: Build Root Categories List (for sidebar navigation)
+;       Just copy SubCategoriesL() of 1st element of CategoriesL() into a new List.
+
+; ==============================================================================
+; - 2. Iterate Categories Lists
+; ==============================================================================
+StepHeading("Iterate Categories List")
+
+cnt = 1
+ForEach CategoriesL()
+  
+  catPath.s = CategoriesL()\Path
+  Debug "Processing " + Str(cnt) + "/" + Str(totCategories +1) +": './" + catPath + "'"
+  Debug "Category name: '" + CategoriesL()\Name + "'"
+  Debug "Category path: '" + CategoriesL()\Path + "'"
+  
+  ; ~~~~~~~~~~~~~
+
+  ; ====================
+  ; Build path2root$ var
+  ; ====================
+  path2root$ = ""
+  For i = 1 To CountString(catPath, "/")
+    path2root$ + "../" ; <= Use "/" as URL path separator
+  Next 
+  Debug "path2root$: '" + path2root$ + "'"
+  ; ~~~~~~~~~~~~~
+  
+  cnt +1
+  Debug #DIV1$
+Next
+
 
 ; ShowVariableViewer()
 ; Repeat
@@ -178,10 +217,12 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
           ; -------------------------
           ; Recurse into Sub-Category
           ; -------------------------
+          entryPath.s = PathSuffix + entryName + "/"
           PushListPosition( CategoriesL() )
           AddElement( CategoriesL() )
-          CategoriesL()\Path = PathSuffix + entryName
-          ScanFolder(CategoriesL(), PathSuffix + entryName + "/")
+          CategoriesL()\name = entryName
+          CategoriesL()\Path = entryPath
+          ScanFolder(CategoriesL(), entryPath)
           PopListPosition( CategoriesL() )
         EndIf
       EndIf
@@ -191,7 +232,7 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
   EndIf
   
   recCnt -1
-  Debug Ind$ ; adds separation after sub-folders ends
+  Debug Ind$, 3 ; adds separation after sub-folders ends
 EndProcedure
 
 ;}
