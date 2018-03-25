@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.4 (2018/03/21) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.5 (2018/03/25) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,6 +15,13 @@
 ; ------------------------------------------------------------------------------
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.5 (2018/03/25)
+;    - Add PandocConvert() procedure (from STDIN gfm to "index.html")
+;    - Now an "index.html" page is created for each Category:
+;        - "README.md" file used in content
+;        - relative paths to assests (CSS) correctly handled
+;    - Implemented first usable darft of "template.html" (breadcrumbs and sidebar
+;      currently show sample contents only)
 ;  v.0.0.4 (2018/03/21)
 ;    - Add project integrity checks
 ;  v.0.0.3 (2018/03/21)
@@ -43,6 +50,7 @@
 DebugLevel #DBG_LEVEL
 
 #CodeInfoFile = "CodeInfo.txt" ; found in multi-file subfoldered resources
+#HTML5_TEMPLATE = "template.html5" ; pandoc template
 
 ; ==============================================================================
 ;-                                    SETUP                                     
@@ -71,19 +79,22 @@ Macro StepHeading(Text)
 EndMacro
 ;}==============================================================================
 ;-                                  INITIALIZE                                  
-; ==============================================================================
+;{==============================================================================
 Debug #DIV1$ + #EOL + "HTMLPagesCreator" + #EOL + #DIV1$
 
-SetCurrentDirectory("../")
+ASSETS$ = GetCurrentDirectory() ; Path to assets folder
 
-Debug "Current Work Directory: " + GetCurrentDirectory(), 1
+SetCurrentDirectory("../")
+PROJ_ROOT$ = GetCurrentDirectory()
+Debug "Project's Root Path: '" +PROJ_ROOT$ + "'", 2
+; TODO: Check that pandoc >=2.0 is available
 ;}==============================================================================
 ;                                      MAIN                                     
 ;{==============================================================================
 
 ; ==============================================================================
 ;- 1. Build Categories List
-; ==============================================================================
+;{==============================================================================
 ; Build a list of all the project's categories and their associated resources.
 ; ------------------------------------------------------------------------------
 StepHeading("Build Categories List")
@@ -126,9 +137,9 @@ CompilerIf #DBG_LEVEL >= 2
     cnt +1
   Next
 CompilerEndIf
-; ==============================================================================
+;}==============================================================================
 ; - 2. Check Project Integrity
-; ==============================================================================
+;{==============================================================================
 StepHeading("Checking Project Integrity")
 
 ForEach CategoriesL()
@@ -178,7 +189,7 @@ Else
   EndIf
 EndIf
 
-; ==============================================================================
+;}==============================================================================
 ; - 3. Iterate Categories Lists
 ; ==============================================================================
 StepHeading("Iterate Categories List")
@@ -191,6 +202,11 @@ ForEach CategoriesL()
   Debug "Category name: '" + CategoriesL()\Name + "'", 2
   Debug "Category path: '" + CategoriesL()\Path + "'", 2
   
+  ; TODO: Add Proc to fix dir sep "/" into "\" for Win Path
+  ;      (Not stritcly required, but might be useful if path splitting operations
+  ;       or other similar path manipulation need to be done).
+  Debug "Current working dir: " + PROJ_ROOT$ + catPath, 2
+  SetCurrentDirectory(PROJ_ROOT$ + catPath)
   ; ~~~~~~~~~~~~~
   
   ; ====================
@@ -203,9 +219,55 @@ ForEach CategoriesL()
   Debug "path2root$: '" + path2root$ + "'", 2
   ; ~~~~~~~~~~~~~
   
+  ;  ===============
+  ;- Get README File
+  ;  ===============
+  README$ = #Empty$
+
+  If FileSize("README.md") >= 0
+    If ReadFile(0, "README.md", #PB_UTF8)
+      While Eof(0) = 0
+        README$ + ReadString(0) + #EOL
+      Wend
+      CloseFile(0)
+      
+;       Debug "README extracted contents:" + #EOL + #DIV3$
+;       Debug README$ + #DIV3$
+      
+    Else
+      Debug "ERROR: Couldn't open README.md"
+      MessageRequester("ERROR!","Couldn't open the README.md file!", #PB_MessageRequester_Error)
+      End 1
+    EndIf
+  Else
+    Debug "Skipping README file for this category (not found)..."
+  EndIf
+  ;  ====================
+  ;- Convert Page to HTML
+  ;  ====================
+  ;  Currently only partially implemented:
+  ;    [x] README.md
+  ;    [ ] Bread Crumbs
+  ;    [ ] Sidbebar Menu
+  ;    [ ] SubCategories Links
+  ;    [ ] Items Resume-Card
+  Declare PandocConvert(options.s)
+  
+  MD_Page.s = README$
+  
+  pandocOpts.s = "-f gfm --template=" + ASSETS$ + #HTML5_TEMPLATE +
+                 " -V ROOT=" + path2root$ +
+                 " -o index.html"
+  
+  If Not PandocConvert(pandocOpts.s)
+    ; TODO: Check if it's Warning or Error
+    Debug "!!! Pandoc returned ERROR or WARNING"
+    Debug "Pandoc STDERR:"+ #EOL + #DIV3$ + #EOL + PandocErr$ + #EOL + #DIV3$
+  EndIf
+  ; ~~~~~~~~~~~~~
   cnt +1
   Debug #DIV1$
-Next
+Next ; <= ForEach CategoriesL()
 
 ; ShowVariableViewer()
 ; Repeat
@@ -299,4 +361,85 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
   Debug Ind$, 3 ; adds separation after sub-folders ends
 EndProcedure
 
+
+
+
+Procedure PandocConvert(options.s)    
+      Debug ">>>>>>>>>> PandocConvert() >>>>>>>>>>"  ; DELME
+  
+  Shared PandocRunErr, PandocExCode, PandocErr$, PandocSTDOUT$
+  
+  Shared MD_Page
+  
+  ; TODO: Move these to PPP::Reset() proc
+  PandocRunErr = #False
+  PandocErr$ = ""
+  PandocSTDOUT$ = ""
+  
+  Enumeration 
+    #Failure
+    #Success
+  EndEnumeration
+  ; ------------------------------------------------------------------------------
+  ;                                 Invoke Pandoc                                 
+  ; ------------------------------------------------------------------------------
+  #PANDOC_PROC_FLAGS = #PB_Program_Open  | #PB_Program_Write | #PB_Program_Read |
+                       #PB_Program_Error | #PB_Program_UTF8
+  currDir.s = GetCurrentDirectory()
+  Pandoc = RunProgram("pandoc", options, currDir, #PANDOC_PROC_FLAGS)
+  Debug "> PANDOC CURR DIR: " + currDir
+  Debug "> PANDOC OPTS: " + options
+  ;     PrintN("options: " + options) ; DBG Pandoc Args
+  If Not Pandoc
+    ; ------------------------------------------------------------------------------
+    ;                               Somethig Wrong...                               
+    ; ------------------------------------------------------------------------------
+    PrintN("Pandoc couldn't be started...") ; DELME
+    PandocRunErr = #True
+    ProcedureReturn #Failure
+  EndIf 
+  
+  ; Feed GFM page to pandoc
+  ; =======================
+  WriteProgramString(Pandoc, MD_Page, #PB_UTF8)
+  WriteProgramData(Pandoc,  #PB_Program_Eof, 0)
+  
+  While ProgramRunning(Pandoc)
+    
+    ; ------------------------------------------------------------------------------
+    ; Capture Pandoc's STDOUT
+    ; ------------------------------------------------------------------------------
+    If AvailableProgramOutput(Pandoc)
+      PandocSTDOUT$ + ReadProgramString(Pandoc) + #EOL
+      ; NOTE: HTML docs must have native End-of-Line sequence/char. Git will handle
+      ;       proper conversion at checkout via .gitattributes settings.
+    EndIf
+    ; ------------------------------------------------------------------------------
+    ; Capture Pandoc's STDERR
+    ; ------------------------------------------------------------------------------
+    err$ = ReadProgramError(Pandoc)
+    If err$
+      If PandocErr$ <> "" ; Add Line-Feed if not empty...
+        PandocErr$ + #LF$
+      EndIf
+      PandocErr$ + err$
+    EndIf
+    
+  Wend
+  
+  PandocExCode = ProgramExitCode(Pandoc)
+  
+  CloseProgram(Pandoc) ; Close the connection to the program
+  
+      Debug "<<<<<<<<<< PandocConvert() <<<<<<<<<<" ; DELME
+  
+  
+  If PandocExCode Or          ; <= Errors
+     PandocErr$ <> ""         ; <= Warnings
+    ProcedureReturn #Failure
+  Else
+    ProcedureReturn #Success
+  EndIf
+  
+EndProcedure
 ;}

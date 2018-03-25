@@ -1,0 +1,164 @@
+$--+---------------------------------------------------------------------------+
+$--| "template.html5" v0.0.3 (2018/03/25) | by Tristano Ajmone                 |
+$--|---------------------------------------------------------------------------|
+$--|                                                                           |
+$--|                        PureBasic CodeArchiv Rebirth                       |
+$--|                                                                           |
+$--|                           pandoc HTML5 template                           |
+$--|                                                                           |
+$--|---------------------------------------------------------------------------|
+$--| https://github.com/SicroAtGit/PureBasic-CodeArchive-Rebirth               |
+$--|---------------------------------------------------------------------------|
+$--| This template was created using the following third party components:     |
+$--| - HTML5 Boilerplate   v6.0.1 (2017/09/11) MIT License                     |
+$--| - Bulma CSS framework v0.6.2 (2018/01/10) MIT License                     |
+$--+---------------------------------------------------------------------------+
+<!DOCTYPE html>
+<html class="no-js" lang="$lang$">
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+$for(author-meta)$
+  <meta name="author" content="$author-meta$" />
+$endfor$
+$if(date-meta)$
+  <meta name="dcterms.date" content="$date-meta$" />
+$endif$
+$if(keywords)$
+  <meta name="keywords" content="$for(keywords)$$keywords$$sep$, $endfor$" />
+$endif$
+  <title>$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- Place favicon.ico in the root directory -->
+
+  <link rel="stylesheet" href="$ROOT$_assets/bulma.css">
+  <link rel="stylesheet" href="$ROOT$_assets/custom.css">
+$for(header-includes)$
+  $header-includes$
+$endfor$
+</head>
+<body>
+<!--[if lte IE 9]>
+    <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
+<![endif]-->
+$for(include-before)$
+$include-before$
+$endfor$
+
+  <!-- Add your site or application content here -->
+
+$---------------------------------------------------------------> WEBSITE HEADER
+<section class="hero is-link">
+<div class="hero-body">
+<div class="container">
+<h1 class="title">PureBasic CodeArchiv Rebirth</h1>
+<h2 class="subtitle">Some subtitle text here</h2>
+</div>
+</div>
+</section>
+$------------------------------------------------------------------> BREADCRUMBS
+<div id="breadcrumbsbar">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="#">System</a></li>
+      <li class="is-active"><a href="#">MacOs</a></li>
+    </ul>
+    </nav>
+  </div>
+</div>
+$------------------------------------------------------------------>
+<div class="container">
+<div class="tile is-ancestor">
+  
+  <!-- LEFT SIDEBAR WITH CATEGORIES -->
+  <div class="tile is-3 is-vertical is-parent">
+    <div class="tile is-child box">
+
+      <aside class="menu tile is-child is-primary">
+        <p class="menu-label">
+          Categories
+        </p>
+        <ul class="menu-list">
+          <li><a>2DDrawing</a></li>
+          <li><a>Cipher</a></li>
+          <li><a>Conditional_Statements</a></li>
+          <li><a>Date</a></li>
+          <li><a>Debug</a></li>
+          <li><a>Desktop</a></li>
+          <li><a>Dialog</a></li>
+          <li><a>DriveSystem</a></li>
+          <li><a>File</a></li>
+          <li><a>FileSystem</a></li>
+          <li><a>Font</a></li>
+          <li><a>Gadget</a></li>
+          <li><a>Hardware</a></li>
+          <li><a>Http</a></li>
+          <li><a>Image</a></li>
+          <li><a>ImagePlugin</a></li>
+          <li><a>Keyboard</a></li>
+          <li><a>Language</a></li>
+          <li><a>Math</a></li>
+          <li><a>Memory</a></li>
+          <li><a>Network</a></li>
+          <li><a>OOP</a></li>
+          <li><a>PB-IDE-Tools</a></li>
+          <li><a>Process</a></li>
+          <li><a>Queue</a></li>
+          <li><a>Requester</a></li>
+          <li><a>SerialPort</a></li>
+          <li><a>Sound</a></li>
+          <li><a>StatusBar</a></li>
+          <li><a>Streaming</a></li>
+          <li><a>String</a></li>
+          <li><a>System</a>
+            <ul>
+            <li><a>Linux</a></li>
+            <li><a class="is-active">MacOs</a></li>
+            <li><a>Windows</a></li>
+            </ul></li>
+          <li><a>Thread</a></li>
+          <li><a>Useful_Things</a></li>
+          <li><a>Window</a>
+          </li>
+        </ul>
+      </aside>
+
+    </div>
+  </div>
+
+$----------------------------------------------------------------> PAGE CONTENTS
+  <div class="tile is-9 is-vertical is-parent">
+  <div class="tile is-child" id="page">
+
+  <section class="section">
+  <div class="content">
+$body$$-------------------------------------------------------------------> BODY
+  </div>
+  </section>
+
+  </div><!--  END/child  -->
+  </div><!--  END/parent  -->
+
+</div><!--  END/ancestor  -->
+</div><!--  END/container  -->
+
+$-----------------------------------------------------------------------> FOOTER
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <p>
+        <strong>Bulma</strong> by <a href="https://jgthms.com">Jeremy Thomas</a>. The source code is licensed
+        <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
+      </p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
