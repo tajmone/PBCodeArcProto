@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.7 (2018/03/28) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.8 (2018/03/28) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,6 +15,8 @@
 ; ------------------------------------------------------------------------------
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.8 (2018/03/28)
+;    - Add links to SubCategories in Category pages.
 ;  v.0.0.7 (2018/03/28)
 ;    - Build BREADCRUMBS$ pandoc var (raw HTML)
 ;  v.0.0.6 (2018/03/28)
@@ -275,8 +277,26 @@ ForEach CategoriesL()
   Else
     Debug "Skipping README file for this category (not found)..."
   EndIf
+  ;  =========================
+  ;- Build SubCategories links
+  ;  =========================
+  SubCatLinks.s = #Empty$
+  With CategoriesL()
+    If ListSize( \SubCategoriesL() )
+      SubCatLinks = #EOL + #EOL + "---" + #EOL + #EOL
+      SubCatLinks + "# Subcategories" +  #EOL + #EOL
+      ForEach  \SubCategoriesL()
+        cat$ = \SubCategoriesL()
+        SubCatLinks + "- [" + cat$ + "](./"+ cat$ +"/index.html)" + #EOL
+      Next
+    Else
+      Debug "No subcategories." ; FIXME
+    EndIf
+  EndWith
   
-  ; TODO: Build SubCategories links
+  Debug "SubCatLinks:" + #EOL + #DIV3$ + #EOL + SubCatLinks + #EOL + #DIV3$ ; FIXME
+  
+  
   ; TODO: Build Resume Cards of items in category
   
   
@@ -291,7 +311,7 @@ ForEach CategoriesL()
   ;    [ ] Items Resume-Card
   Declare PandocConvert(options.s)
   
-  MD_Page.s = README$
+  MD_Page.s = README$ + SubCatLinks
   
   pandocOpts.s = "-f gfm --template=" + ASSETS$ + #HTML5_TEMPLATE +
                  " -V ROOT=" + path2root$ +
