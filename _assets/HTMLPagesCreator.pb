@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.6 (2018/03/28) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.7 (2018/03/28) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,6 +15,8 @@
 ; ------------------------------------------------------------------------------
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.7 (2018/03/28)
+;    - Build BREADCRUMBS$ pandoc var (raw HTML)
 ;  v.0.0.6 (2018/03/28)
 ;    - Build SIDEBAR$ (pandoc var "SIDEBAR") raw HTML string.
 ;      (one level depth only, no "active" class for curr element)
@@ -216,16 +218,31 @@ ForEach CategoriesL()
   ; Build path2root$ var
   ; ====================
   path2root$ = ""
-  For i = 1 To CountString(catPath, "/")
+  pathLevels = CountString(catPath, "/")
+  For i = 1 To pathLevels
     path2root$ + "../" ; <= Use "/" as URL path separator
   Next 
   Debug "path2root$: '" + path2root$ + "'", 2
-  ; ~~~~~~~~~~~~~
+  ; ===================
+  ;- Build Bread Crumbs
+  ; ===================
+  BREADCRUMBS$ = "<li><a href='" + path2root$ + "index.html'>Home</a></li>" + #EOL
   
+  For i = 1 To pathLevels
+    crumb.s = StringField(catPath, i, "/")
+    relPath.s = #Empty$
+    For n = pathLevels To i+1 Step -1
+      relPath + "../"
+    Next
+    BREADCRUMBS$ + "<li><a href='" + relPath + "index.html'>"+ crumb +"</a></li>" + #EOL
+  Next
+  
+  Debug "BREADCRUMBS:" + #EOL + #DIV3$ + #EOL + BREADCRUMBS$ + #EOL + #DIV3$ ; FIXME
   ;  =============
   ;- Build Sidebar
   ;  =============
   ; TODO: Implement 3 Levels Sidebar
+  ; TODO: Set active element
   SIDEBAR$ = #Empty$
   ForEach RootCategoriesL()
     SIDEBAR$ + "<li><a href='" + path2root$ + RootCategoriesL() + "/index.html'>" +
@@ -258,6 +275,11 @@ ForEach CategoriesL()
   Else
     Debug "Skipping README file for this category (not found)..."
   EndIf
+  
+  ; TODO: Build SubCategories links
+  ; TODO: Build Resume Cards of items in category
+  
+  
   ;  ====================
   ;- Convert Page to HTML
   ;  ====================
@@ -273,6 +295,7 @@ ForEach CategoriesL()
   
   pandocOpts.s = "-f gfm --template=" + ASSETS$ + #HTML5_TEMPLATE +
                  " -V ROOT=" + path2root$ +
+                 ~" -V BREADCRUMBS=\"" + BREADCRUMBS$ + ~"\"" +
                  ~" -V SIDEBAR=\"" + SIDEBAR$ + ~"\"" +
                  " -o index.html"
   

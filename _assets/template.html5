@@ -1,5 +1,5 @@
 $--+---------------------------------------------------------------------------+
-$--| "template.html5" v0.0.4 (2018/03/28) | by Tristano Ajmone                 |
+$--| "template.html5" v0.0.5 (2018/03/28) | by Tristano Ajmone                 |
 $--|---------------------------------------------------------------------------|
 $--|                                                                           |
 $--|                        PureBasic CodeArchiv Rebirth                       |
@@ -61,19 +61,17 @@ $---------------------------------------------------------------> WEBSITE HEADER
 </div>
 </div>
 </section>
-$------------------------------------------------------------------> BREADCRUMBS
+$------------------------------------------------------------>>> BREADCRUMBS BAR
 <div id="breadcrumbsbar">
   <div class="container">
     <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
-      <li><a href="#">Home</a></li>
-      <li><a href="#">System</a></li>
-      <li class="is-active"><a href="#">MacOs</a></li>
+$BREADCRUMBS$$-----------------------------------------------------> BREADCRUMBS
     </ul>
     </nav>
   </div>
 </div>
-$------------------------------------------------------------------>
+$------------------------------------------------------------<<< BREADCRUMBS BAR
 <div class="container">
 <div class="tile is-ancestor">
   
