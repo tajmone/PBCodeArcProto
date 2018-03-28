@@ -1,5 +1,5 @@
 $--+---------------------------------------------------------------------------+
-$--| "template.html5" v0.0.3 (2018/03/25) | by Tristano Ajmone                 |
+$--| "template.html5" v0.0.4 (2018/03/28) | by Tristano Ajmone                 |
 $--|---------------------------------------------------------------------------|
 $--|                                                                           |
 $--|                        PureBasic CodeArchiv Rebirth                       |
@@ -86,47 +86,7 @@ $------------------------------------------------------------------>
           Categories
         </p>
         <ul class="menu-list">
-          <li><a>2DDrawing</a></li>
-          <li><a>Cipher</a></li>
-          <li><a>Conditional_Statements</a></li>
-          <li><a>Date</a></li>
-          <li><a>Debug</a></li>
-          <li><a>Desktop</a></li>
-          <li><a>Dialog</a></li>
-          <li><a>DriveSystem</a></li>
-          <li><a>File</a></li>
-          <li><a>FileSystem</a></li>
-          <li><a>Font</a></li>
-          <li><a>Gadget</a></li>
-          <li><a>Hardware</a></li>
-          <li><a>Http</a></li>
-          <li><a>Image</a></li>
-          <li><a>ImagePlugin</a></li>
-          <li><a>Keyboard</a></li>
-          <li><a>Language</a></li>
-          <li><a>Math</a></li>
-          <li><a>Memory</a></li>
-          <li><a>Network</a></li>
-          <li><a>OOP</a></li>
-          <li><a>PB-IDE-Tools</a></li>
-          <li><a>Process</a></li>
-          <li><a>Queue</a></li>
-          <li><a>Requester</a></li>
-          <li><a>SerialPort</a></li>
-          <li><a>Sound</a></li>
-          <li><a>StatusBar</a></li>
-          <li><a>Streaming</a></li>
-          <li><a>String</a></li>
-          <li><a>System</a>
-            <ul>
-            <li><a>Linux</a></li>
-            <li><a class="is-active">MacOs</a></li>
-            <li><a>Windows</a></li>
-            </ul></li>
-          <li><a>Thread</a></li>
-          <li><a>Useful_Things</a></li>
-          <li><a>Window</a>
-          </li>
+$SIDEBAR$$-------------------------------------------------------------> SIDEBAR
         </ul>
       </aside>
 

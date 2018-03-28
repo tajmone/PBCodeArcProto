@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.5 (2018/03/25) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.6 (2018/03/28) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,6 +15,9 @@
 ; ------------------------------------------------------------------------------
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.6 (2018/03/28)
+;    - Build SIDEBAR$ (pandoc var "SIDEBAR") raw HTML string.
+;      (one level depth only, no "active" class for curr element)
 ;  v.0.0.5 (2018/03/25)
 ;    - Add PandocConvert() procedure (from STDIN gfm to "index.html")
 ;    - Now an "index.html" page is created for each Category:
@@ -38,7 +41,7 @@
 ;}
 ; ==============================================================================
 ;-                                   SETTINGS                                   
-; ==============================================================================
+;{==============================================================================
 #DBG_LEVEL = 2  ; Details Range 0—4:
                 ;  - 0 : No extra info, just the basic feedback.
                 ;  - 1 : (currently unused) 
@@ -52,7 +55,7 @@ DebugLevel #DBG_LEVEL
 #CodeInfoFile = "CodeInfo.txt" ; found in multi-file subfoldered resources
 #HTML5_TEMPLATE = "template.html5" ; pandoc template
 
-; ==============================================================================
+;}==============================================================================
 ;-                                    SETUP                                     
 ;{==============================================================================
 ; Cross Platform Settings
@@ -219,6 +222,19 @@ ForEach CategoriesL()
   Debug "path2root$: '" + path2root$ + "'", 2
   ; ~~~~~~~~~~~~~
   
+  ;  =============
+  ;- Build Sidebar
+  ;  =============
+  ; TODO: Implement 3 Levels Sidebar
+  SIDEBAR$ = #Empty$
+  ForEach RootCategoriesL()
+    SIDEBAR$ + "<li><a href='" + path2root$ + RootCategoriesL() + "/index.html'>" +
+               RootCategoriesL() + "</a></li>" + #EOL ; single quotes only!
+  Next
+  
+  Debug "SIDEBAR:" + #EOL + #DIV3$ + #EOL + SIDEBAR$ + #EOL + #DIV3$ ; FIXME
+
+  
   ;  ===============
   ;- Get README File
   ;  ===============
@@ -257,6 +273,7 @@ ForEach CategoriesL()
   
   pandocOpts.s = "-f gfm --template=" + ASSETS$ + #HTML5_TEMPLATE +
                  " -V ROOT=" + path2root$ +
+                 ~" -V SIDEBAR=\"" + SIDEBAR$ + ~"\"" +
                  " -o index.html"
   
   If Not PandocConvert(pandocOpts.s)
