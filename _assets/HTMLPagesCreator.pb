@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.8 (2018/03/28) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.9 (2018/03/31) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,6 +15,12 @@
 ; ------------------------------------------------------------------------------
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.9 (2018/03/31)
+;     - Read "_asstes/meta.yaml" and append it to MD source doc
+;       (if README file contains YAML header, its vars definitions will prevail
+;        over those of "meta.yaml" -- first definition is not overridable)
+;     - Pandoc from format now "github_markdown" (because "gfm" doesn't support
+;       "yaml_headers" extension"
 ;  v.0.0.8 (2018/03/28)
 ;    - Add links to SubCategories in Category pages.
 ;  v.0.0.7 (2018/03/28)
@@ -57,7 +63,11 @@
 DebugLevel #DBG_LEVEL
 
 #CodeInfoFile = "CodeInfo.txt" ; found in multi-file subfoldered resources
-#HTML5_TEMPLATE = "template.html5" ; pandoc template
+
+; Pandoc settings
+; ===============
+#PANDOC_TEMPLATE = "template.html5" ; pandoc template
+#PANDOC_FORMAT_IN = "markdown_github+yaml_metadata_block"
 
 ;}==============================================================================
 ;-                                    SETUP                                     
@@ -201,6 +211,25 @@ EndIf
 ; ==============================================================================
 StepHeading("Iterate Categories List")
 
+; TODO: Load a common YAML settings file into str to append at end of every doc source
+
+; =========================
+; Load Common YAML Metadata
+; =========================
+If ReadFile(0, ASSETS$ + "meta.yaml")
+  While Eof(0) = 0
+    YAML$ + ReadString(0) + #EOL
+  Wend
+  CloseFile(0)
+Else
+  ; TODO: Move to Error() procedure
+  MessageRequester("ERROR","Couldn't open 'meta.yaml' file!")
+  Debug "ERROR: Couldn't open 'meta.yaml' file!"
+  End 1
+EndIf
+
+Debug #DIV2$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV2$ ; DELME
+
 cnt = 1
 ForEach CategoriesL()
   
@@ -240,6 +269,7 @@ ForEach CategoriesL()
   Next
   
   Debug "BREADCRUMBS:" + #EOL + #DIV3$ + #EOL + BREADCRUMBS$ + #EOL + #DIV3$ ; FIXME
+  
   ;  =============
   ;- Build Sidebar
   ;  =============
@@ -252,13 +282,13 @@ ForEach CategoriesL()
   Next
   
   Debug "SIDEBAR:" + #EOL + #DIV3$ + #EOL + SIDEBAR$ + #EOL + #DIV3$ ; FIXME
-
+  
   
   ;  ===============
   ;- Get README File
   ;  ===============
   README$ = #Empty$
-
+  
   If FileSize("README.md") >= 0
     If ReadFile(0, "README.md", #PB_UTF8)
       While Eof(0) = 0
@@ -266,8 +296,8 @@ ForEach CategoriesL()
       Wend
       CloseFile(0)
       
-;       Debug "README extracted contents:" + #EOL + #DIV3$
-;       Debug README$ + #DIV3$
+      ;       Debug "README extracted contents:" + #EOL + #DIV3$
+      ;       Debug README$ + #DIV3$
       
     Else
       Debug "ERROR: Couldn't open README.md"
@@ -305,15 +335,25 @@ ForEach CategoriesL()
   ;  ====================
   ;  Currently only partially implemented:
   ;    [x] README.md
-  ;    [ ] Bread Crumbs
-  ;    [ ] Sidbebar Menu
-  ;    [ ] SubCategories Links
+  ;    [x] Bread Crumbs
+  ;    [x] Sidbebar Menu
+  ;        [ ] 3 Levels Depth
+  ;    [x] SubCategories Links
   ;    [ ] Items Resume-Card
+  ;    [ ] METADATA:
+  ;        [ ] Create Title template var (for <title>)
+  ;        [x] Append "common.yaml" metadata file
+  ;            [x] $header-title$
+  ;            [x] $header-subtitle$
+  ;            [x] $description$
+  ;            [x] $keywords$
+  
+  
   Declare PandocConvert(options.s)
   
-  MD_Page.s = README$ + SubCatLinks
-  
-  pandocOpts.s = "-f gfm --template=" + ASSETS$ + #HTML5_TEMPLATE +
+  MD_Page.s = README$ + #EOL + #EOL + SubCatLinks + #EOL + #EOL + YAML$
+  pandocOpts.s = "-f "+ #PANDOC_FORMAT_IN +
+                 " --template=" + ASSETS$ + #PANDOC_TEMPLATE +
                  " -V ROOT=" + path2root$ +
                  ~" -V BREADCRUMBS=\"" + BREADCRUMBS$ + ~"\"" +
                  ~" -V SIDEBAR=\"" + SIDEBAR$ + ~"\"" +
@@ -425,7 +465,7 @@ EndProcedure
 
 
 Procedure PandocConvert(options.s)    
-      Debug ">>>>>>>>>> PandocConvert() >>>>>>>>>>"  ; DELME
+  Debug ">>>>>>>>>> PandocConvert() >>>>>>>>>>"  ; DELME
   
   Shared PandocRunErr, PandocExCode, PandocErr$, PandocSTDOUT$
   
@@ -491,7 +531,7 @@ Procedure PandocConvert(options.s)
   
   CloseProgram(Pandoc) ; Close the connection to the program
   
-      Debug "<<<<<<<<<< PandocConvert() <<<<<<<<<<" ; DELME
+  Debug "<<<<<<<<<< PandocConvert() <<<<<<<<<<" ; DELME
   
   
   If PandocExCode Or          ; <= Errors

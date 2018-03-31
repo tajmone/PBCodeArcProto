@@ -1,5 +1,5 @@
 $--+---------------------------------------------------------------------------+
-$--| "template.html5" v0.0.5 (2018/03/28) | by Tristano Ajmone                 |
+$--| "template.html5" v0.0.6 (2018/03/31) | by Tristano Ajmone                 |
 $--|---------------------------------------------------------------------------|
 $--|                                                                           |
 $--|                        PureBasic CodeArchiv Rebirth                       |
@@ -29,7 +29,9 @@ $if(keywords)$
   <meta name="keywords" content="$for(keywords)$$keywords$$sep$, $endfor$" />
 $endif$
   <title>$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$</title>
-  <meta name="description" content="">
+$if(description)$
+  <meta name="description" content="$description$">
+$endif$
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="manifest" href="site.webmanifest">
@@ -56,8 +58,8 @@ $---------------------------------------------------------------> WEBSITE HEADER
 <section class="hero is-link">
 <div class="hero-body">
 <div class="container">
-<h1 class="title">PureBasic CodeArchiv Rebirth</h1>
-<h2 class="subtitle">Some subtitle text here</h2>
+<h1 class="title">$header-title$</h1>
+<h2 class="subtitle">$header-subtitle$</h2>
 </div>
 </div>
 </section>
