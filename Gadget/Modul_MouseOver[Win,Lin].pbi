@@ -1,8 +1,8 @@
-﻿;   Description: Adds support for the events #PB_EventType_MouseEnter and #PB_EventType_MouseLeave to all gadgets
-;            OS: Windows, Linux
-; English-Forum: 
-;  French-Forum: 
-;  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=29047
+﻿;:   Description: Adds support for the events #PB_EventType_MouseEnter and #PB_EventType_MouseLeave to all gadgets
+;:            OS: Windows, Linux
+;: English-Forum: 
+;:  French-Forum: 
+;:  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=29047
 ; -----------------------------------------------------------------------------
 
 ; MIT License

@@ -1,8 +1,8 @@
-﻿;   Description: Find out the what class is behind a gadget
-;            OS: Mac
-; English-Forum: http://www.purebasic.fr/english/viewtopic.php?p=391571#p391571
-;  French-Forum: 
-;  German-Forum: 
+﻿;:   Description: Find out the what class is behind a gadget
+;:            OS: Mac
+;: English-Forum: http://www.purebasic.fr/english/viewtopic.php?p=391571#p391571
+;:  French-Forum: 
+;:  German-Forum: 
 ; -----------------------------------------------------------------------------
 
 ; MIT License

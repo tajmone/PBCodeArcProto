@@ -1,8 +1,8 @@
-﻿;   Description: Transformation of gadgets at runtime
-;            OS: Windows, Linux, Mac
-; English-Forum: 
-;  French-Forum: 
-;  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=29423
+﻿;:   Description: Transformation of gadgets at runtime
+;:            OS: Windows, Linux, Mac
+;: English-Forum: 
+;:  French-Forum: 
+;:  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=29423
 ; -----------------------------------------------------------------------------
 
 ; MIT License

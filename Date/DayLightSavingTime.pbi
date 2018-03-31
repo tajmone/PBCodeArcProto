@@ -1,8 +1,8 @@
-﻿;   Description: Returns the status of whether the current time is daylight saving time
-;            OS: Windows, Linux, Mac
-; English-Forum: 
-;  French-Forum: 
-;  German-Forum: 
+﻿;:   Description: Returns the status of whether the current time is daylight saving time
+;:            OS: Windows, Linux, Mac
+;: English-Forum: 
+;:  French-Forum: 
+;:  German-Forum: 
 ; -----------------------------------------------------------------------------
 
 ; MIT License

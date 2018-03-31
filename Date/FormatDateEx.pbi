@@ -1,8 +1,8 @@
-﻿;   Description: Extends the possibilities of PB's FormatDate() function
-;            OS: Windows, Linux, Mac
-; English-Forum: http://www.purebasic.fr/english/viewtopic.php?f=12&t=49633
-;  French-Forum: 
-;  German-Forum: 
+﻿;:   Description: Extends the possibilities of PB's FormatDate() function
+;:            OS: Windows, Linux, Mac
+;: English-Forum: http://www.purebasic.fr/english/viewtopic.php?f=12&t=49633
+;:  French-Forum: 
+;:  German-Forum: 
 ; -----------------------------------------------------------------------------
 
 ; MIT License

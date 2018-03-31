@@ -1,8 +1,8 @@
-﻿;   Description: Adds a function to get the number of days in a month
-;            OS: Windows, Linux, Mac
-; English-Forum: 
-;  French-Forum: 
-;  German-Forum: 
+﻿;:   Description: Adds a function to get the number of days in a month
+;:            OS: Windows, Linux, Mac
+;: English-Forum: 
+;:  French-Forum: 
+;:  German-Forum: 
 ; -----------------------------------------------------------------------------
 
 ; MIT License

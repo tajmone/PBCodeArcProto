@@ -1,8 +1,8 @@
-﻿;   Description: Add more Events to Gadgets (MouseEnter, MouseLeave, etc.)
-;            OS: Windows (min. XP/2000)
-; English-Forum: 
-;  French-Forum: 
-;  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=27701
+﻿;:   Description: Add more Events to Gadgets (MouseEnter, MouseLeave, etc.)
+;:            OS: Windows (min. XP/2000)
+;: English-Forum: 
+;:  French-Forum: 
+;:  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=27701
 ; -----------------------------------------------------------------------------
 
 ; MIT License

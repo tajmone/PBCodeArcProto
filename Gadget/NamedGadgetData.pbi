@@ -1,8 +1,8 @@
-﻿;   Description: Named GadgetData (Under windows and linux objects are automatic released)
-;            OS: Windows, Linux, Mac
-; English-Forum: http://www.purebasic.fr/english/viewtopic.php?f=12&t=63937
-;  French-Forum: 
-;  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=29255
+﻿;:   Description: Named GadgetData (Under windows and linux objects are automatic released)
+;:            OS: Windows, Linux, Mac
+;: English-Forum: http://www.purebasic.fr/english/viewtopic.php?f=12&t=63937
+;:  French-Forum: 
+;:  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=29255
 ;-----------------------------------------------------------------------------
 
 ; MIT License

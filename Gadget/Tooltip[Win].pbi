@@ -1,8 +1,8 @@
-﻿;   Description: Show Custom Tooltip 
-;            OS: Windows
-; English-Forum: 
-;  French-Forum: 
-;  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=27773&start=10#p323826
+﻿;:   Description: Show Custom Tooltip 
+;:            OS: Windows
+;: English-Forum: 
+;:  French-Forum: 
+;:  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=27773&start=10#p323826
 ; -----------------------------------------------------------------------------
 
 ; MIT License

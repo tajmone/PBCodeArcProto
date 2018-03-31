@@ -1,8 +1,8 @@
-﻿;   Description: Hide/Change Cursor over Gadgets without OS-API
-;            OS: Windows, Linux, Mac
-; English-Forum: http://www.purebasic.fr/english/viewtopic.php?f=12&t=68169
-;  French-Forum: 
-;  German-Forum: 
+﻿;:   Description: Hide/Change Cursor over Gadgets without OS-API
+;:            OS: Windows, Linux, Mac
+;: English-Forum: http://www.purebasic.fr/english/viewtopic.php?f=12&t=68169
+;:  French-Forum: 
+;:  German-Forum: 
 ; -----------------------------------------------------------------------------
 
 ; MIT License

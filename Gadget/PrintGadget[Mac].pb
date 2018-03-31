@@ -1,8 +1,8 @@
-﻿;   Description: Print the Gadget
-;            OS: Mac
-; English-Forum: http://www.purebasic.fr/english/viewtopic.php?p=386831#p386831
-;  French-Forum: 
-;  German-Forum: 
+﻿;:   Description: Print the Gadget
+;:            OS: Mac
+;: English-Forum: http://www.purebasic.fr/english/viewtopic.php?p=386831#p386831
+;:  French-Forum: 
+;:  German-Forum: 
 ; -----------------------------------------------------------------------------
 
 ; MIT License

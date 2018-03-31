@@ -1,8 +1,8 @@
-﻿;   Description: Change cursor hovering over HyperLinkGadget
-;            OS: Mac
-; English-Forum: http://www.purebasic.fr/english/viewtopic.php?p=425502#p425502
-;  French-Forum: 
-;  German-Forum: 
+﻿;:   Description: Change cursor hovering over HyperLinkGadget
+;:            OS: Mac
+;: English-Forum: http://www.purebasic.fr/english/viewtopic.php?p=425502#p425502
+;:  French-Forum: 
+;:  German-Forum: 
 ; -----------------------------------------------------------------------------
 
 ; MIT License

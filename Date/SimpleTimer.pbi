@@ -1,8 +1,8 @@
-﻿;   Description: Timer module for code execution when a specific time has elapsed.
-;            OS: Windows, Linux, Mac
-; English-Forum: 
-;  French-Forum: 
-;  German-Forum: http://www.purebasic.fr/german/viewtopic.php?p=334679#p334679
+﻿;:   Description: Timer module for code execution when a specific time has elapsed.
+;:            OS: Windows, Linux, Mac
+;: English-Forum: 
+;:  French-Forum: 
+;:  German-Forum: http://www.purebasic.fr/german/viewtopic.php?p=334679#p334679
 ; -----------------------------------------------------------------------------
 
 ; MIT License

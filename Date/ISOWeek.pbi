@@ -1,8 +1,8 @@
-﻿;   Description: Adds a function to get the week number (ISO 8601)
-;            OS: Windows, Linux, Mac
-; English-Forum: http://www.purebasic.fr/english/viewtopic.php?p=420707#p420707
-;  French-Forum: 
-;  German-Forum: 
+﻿;:   Description: Adds a function to get the week number (ISO 8601)
+;:            OS: Windows, Linux, Mac
+;: English-Forum: http://www.purebasic.fr/english/viewtopic.php?p=420707#p420707
+;:  French-Forum: 
+;:  German-Forum: 
 ; -----------------------------------------------------------------------------
 
 ; MIT License

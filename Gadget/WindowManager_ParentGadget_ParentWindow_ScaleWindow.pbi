@@ -1,8 +1,8 @@
-﻿;   Description: Manage gadgets to make ParentGadget(), ParentWindow(), ScaleWindow() possible
-;            OS: Windows, Linux, Mac
-; English-Forum: 
-;  French-Forum: 
-;  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=27970
+﻿;:   Description: Manage gadgets to make ParentGadget(), ParentWindow(), ScaleWindow() possible
+;:            OS: Windows, Linux, Mac
+;: English-Forum: 
+;:  French-Forum: 
+;:  German-Forum: http://www.purebasic.fr/german/viewtopic.php?f=8&t=27970
 ; -----------------------------------------------------------------------------
 
 ; MIT License

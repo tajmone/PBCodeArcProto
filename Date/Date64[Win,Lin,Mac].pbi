@@ -1,8 +1,8 @@
-﻿;   Description: Support for enlarged date range (64 bit unix timestamp)
-;            OS: Windows, Linux, Mac
-; English-Forum: 
-;  French-Forum: 
-;  German-Forum: http://www.purebasic.fr/german/viewtopic.php?p=335727#p335727
+﻿;:   Description: Support for enlarged date range (64 bit unix timestamp)
+;:            OS: Windows, Linux, Mac
+;: English-Forum: 
+;:  French-Forum: 
+;:  German-Forum: http://www.purebasic.fr/german/viewtopic.php?p=335727#p335727
 ; -----------------------------------------------------------------------------
 
 ; MIT License
