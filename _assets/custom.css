@@ -18,14 +18,14 @@ div.container {
 	background-color: #f00;
 }
 */
-#page table {
+#page table.res-card {
 	width: 100%;	
 }
-#page table td {
+#page table.res-card td {
 	padding: 0 1em;
 }
 
-#page table td:first-child {
+#page table.res-card td:first-child {
 	text-align: right;
 	background-color: rgba(50, 115, 220, 0.1);
 	width: 220px;

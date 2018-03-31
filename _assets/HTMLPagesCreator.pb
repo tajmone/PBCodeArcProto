@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.10 (2018/03/31) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.11 (2018/03/31) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,6 +15,9 @@
 ; ------------------------------------------------------------------------------
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.11 (2018/03/31)
+;     - Add Bulma-styled HTML Tags to Resume Card
+;     - Add filename to card title bar
 ;  v.0.0.10 (2018/03/31)
 ;     - Integrated "comments_parser.pbi" code:
 ;       - ParseFile() now returns HTML Card string
@@ -607,13 +610,15 @@ EndStructure
 ;{ Procs Declarations
 Declare   ExtractHeaderBlock(file.s, List CommentsL.s())
 Declare   ParseComments(List CommentsL.s(), List RawDataL.KeyValPair())
-Declare.s BuildCard(List RawDataL.KeyValPair())
+Declare.s BuildCard(List RawDataL.KeyValPair(), fileName.s)
 ;}
 
 
 
 ; ------------------------------------------------------------------------------
 Procedure.s ParseFile(file.s)
+  ; FIXME: Return Error instead of HTML str
+  ;        Add str pointer to pass HTML results to main code, instead of return str
   
   ;{ check file exists
   Select FileSize(file.s)
@@ -654,7 +659,7 @@ Procedure.s ParseFile(file.s)
   
   NewList RawDataL.KeyValPair()
   ParseComments(CommentsL(), RawDataL())
-  CardHTML.s = BuildCard( RawDataL() )
+  CardHTML.s = BuildCard( RawDataL(), file )
   
   ; TODO: Handle Empty Cards (don't return anything)
   ProcedureReturn CardHTML
@@ -787,11 +792,18 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
   Debug "<<< ParseComments()"
 EndProcedure
 ; ------------------------------------------------------------------------------
-Procedure.s BuildCard( List RawDataL.KeyValPair() )
+Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
   Debug ">>> BuildCard()"
   
- 
-  Card.s = "<table><tbody>" + #EOL  
+  ; TODO: Add link to fileName
+  ; TODO: If file is "CodeInfo.txt" just add folder path
+  
+  Card.s = "<article class='message is-link'>" + #EOL +
+           "<div class='message-header'>" + #EOL +
+           "<p>" + fileName + "</p>" + #EOL +
+           "</div>" + #EOL +
+           "<div class='message-body is-paddingless'>" + #EOL +
+           "<table class='res-card'><tbody>" + #EOL  
   
   ; TODO: Insert <p> tags?
   ForEach RawDataL()
@@ -825,7 +837,8 @@ Procedure.s BuildCard( List RawDataL.KeyValPair() )
     
   Next
   
-  Card + "</tbody></table>"  + #EOL + #EOL
+  Card + "</tbody></table>" + #EOL +
+         "</div></article>" + #EOL + #EOL
   
   Debug "<<< BuildCard()"
   ProcedureReturn Card
