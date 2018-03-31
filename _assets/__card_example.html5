@@ -1,0 +1,47 @@
+$----------------------------------------------------------------> PAGE CONTENTS
+  <div class="tile is-9 is-vertical is-parent">
+  <div class="tile is-child" id="page">
+
+  <section class="section">
+  <div class="content">
+$body$$-------------------------------------------------------------------> BODY
+  </div>
+  </section>
+
+
+  <!-- CARD 1 -->
+  <article class="message is-link">
+    <div class="message-header">
+      <p>Access_Adress_Book[Mac].pbi</p>
+    </div>
+    <div class="message-body is-paddingless">
+    <table class="_table"><tbody>
+      <tr>
+        <td>Description:</td>
+        <td>Access the address book</td>
+      </tr>
+      <tr>
+        <td>OS:</td>
+        <td>Mac</td>
+      </tr>
+      <tr>
+        <td>English-Forum:</td>
+        <td><a href="http://www.purebasic.fr/english/viewtopic.php?p=414714">http://www.purebasic.fr/english/viewtopic.php?p=414714</a></td>
+      </tr>
+      <tr>
+        <td>French-Forum:</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>German-Forum:</td>
+        <td></td>
+      </tr>
+    </tbody></table>
+    </div>
+  </article>
+
+  </div><!--  END/child  -->
+  </div><!--  END/parent  -->
+
+</div><!--  END/ancestor  -->
+</div><!--  END/container  -->
