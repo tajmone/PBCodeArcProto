@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.9 (2018/03/31) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.10 (2018/03/31) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,6 +15,23 @@
 ; ------------------------------------------------------------------------------
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.10 (2018/03/31)
+;     - Integrated "comments_parser.pbi" code:
+;       - ParseFile() now returns HTML Card string
+;       - Fixed Bug in ParseComments(): Carry-On parsing didn't check if the
+;         curr List Element was the last one, causing an infinite loop (only
+;         in "CodeInfo.txt" files that didn't contain extra lines beside the
+;         key-val comment lines)
+;     - Now Resume Cards are created
+;     - pandoc input format + extensions now is:
+;         markdown_github + yaml_metadata_block + raw_attribute
+; 
+;     Still very drafty, the original parser code must be adapted to the host app:
+;       - Error handling must be implemented for resources that yeld no key-vals
+;       - Currently, a Card <table> is created even if no key-vals were extracted.
+;       - CSS must be adapted (doen't look good)
+;       - Must add table header with filename or app name
+;
 ;  v.0.0.9 (2018/03/31)
 ;     - Read "_asstes/meta.yaml" and append it to MD source doc
 ;       (if README file contains YAML header, its vars definitions will prevail
@@ -67,7 +84,7 @@ DebugLevel #DBG_LEVEL
 ; Pandoc settings
 ; ===============
 #PANDOC_TEMPLATE = "template.html5" ; pandoc template
-#PANDOC_FORMAT_IN = "markdown_github+yaml_metadata_block"
+#PANDOC_FORMAT_IN = "markdown_github+yaml_metadata_block+raw_attribute"
 
 ;}==============================================================================
 ;-                                    SETUP                                     
@@ -88,6 +105,19 @@ CompilerEndIf
 #DIV1$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 #DIV2$ = "=============================================================================="
 #DIV3$ = "------------------------------------------------------------------------------"
+
+;- RegEx
+Enumeration RegExs
+  #RE_URL
+EndEnumeration
+
+#RE_URL$ = "^(https?://([-\w\.]+)+(:\d+)?(/([\w/_\.]*(\?\S+)?)?)?)$"
+
+If Not CreateRegularExpression(#RE_URL, #RE_URL$)
+  Debug "RegEx URL Error: " + RegularExpressionError()
+  MessageRequester("ERROR", "Error while creating URL RegEx!", #PB_MessageRequester_Error)
+  End 1
+EndIf
 
 #TOT_STEPS = "3"
 Macro StepHeading(Text)
@@ -327,8 +357,28 @@ ForEach CategoriesL()
   Debug "SubCatLinks:" + #EOL + #DIV3$ + #EOL + SubCatLinks + #EOL + #DIV3$ ; FIXME
   
   
-  ; TODO: Build Resume Cards of items in category
-  
+  ; ===================
+  ;- Build Resume Cards
+  ; ===================
+  CARDS$ = "~~~{=html5}" + #EOL ; <= Raw content via panodc "raw_attribute" Extension
+  Declare.s ParseFile(file.s)
+  With CategoriesL()
+    totItems = ListSize( \FilesToParseL() )
+    Debug "Create Items Cards ("+ Str(totItems) +")"
+    cnt = 1
+    
+    ForEach \FilesToParseL()
+      file.s = \FilesToParseL()
+      Debug Str(cnt) + ") '" + file +"'"
+      Cards.s = ParseFile(file)
+      CARDS$ + Cards
+      ; Temporary Debug
+      Debug "EXTRACTED CARD:" + #EOL + #DIV3$ + #EOL + Cards + #EOL + #DIV3$ ; FIXME
+      cnt +1
+    Next
+    
+  EndWith
+  CARDS$ + "~~~" ; <= end Raw Content fenced block
   
   ;  ====================
   ;- Convert Page to HTML
@@ -351,7 +401,9 @@ ForEach CategoriesL()
   
   Declare PandocConvert(options.s)
   
-  MD_Page.s = README$ + #EOL + #EOL + SubCatLinks + #EOL + #EOL + YAML$
+  MD_Page.s = README$ + #EOL + #EOL + SubCatLinks + #EOL + #EOL + CARDS$ +
+              #EOL + #EOL + YAML$
+  
   pandocOpts.s = "-f "+ #PANDOC_FORMAT_IN +
                  " --template=" + ASSETS$ + #PANDOC_TEMPLATE +
                  " -V ROOT=" + path2root$ +
@@ -542,4 +594,241 @@ Procedure PandocConvert(options.s)
   EndIf
   
 EndProcedure
+;}==============================================================================
+;                             Header Comments Parser                            
+;{==============================================================================
+
+
+Structure KeyValPair
+  key.s
+  val.s
+EndStructure
+
+;{ Procs Declarations
+Declare   ExtractHeaderBlock(file.s, List CommentsL.s())
+Declare   ParseComments(List CommentsL.s(), List RawDataL.KeyValPair())
+Declare.s BuildCard(List RawDataL.KeyValPair())
 ;}
+
+
+
+; ------------------------------------------------------------------------------
+Procedure.s ParseFile(file.s)
+  
+  ;{ check file exists
+  Select FileSize(file.s)
+    Case -1
+      Debug "File not found: '" + file + "'"
+      ;       ProcedureReturn #False
+      ProcedureReturn
+    Case -2
+      Debug "File is a directory: '" + file + "'"
+      ;       ProcedureReturn #False
+      ProcedureReturn
+  EndSelect ;}
+  
+  ;{ open file
+  If Not ReadFile(0, file, #PB_UTF8)
+    Debug "Can't open file: '" + file + "'"
+    ;     ProcedureReturn #False
+    ProcedureReturn
+  EndIf
+  ; Skip BOM
+  ; TODO: Check enconding and if not UTF8 use it in read operations?
+  ReadStringFormat(0) ;}
+  
+  NewList CommentsL.s()
+  ExtractHeaderBlock(file, CommentsL())
+  CloseFile(0)
+  
+  ;{ Debug Header Comments
+  ;  =====================
+  Debug "Header Block:"
+  Debug LSet("--+", 80, "-")
+  cnt=1
+  ForEach CommentsL()
+    Debug RSet(Str(cnt), 2, "0") + "| "+ CommentsL()
+    cnt+1
+  Next
+  Debug LSet("--+", 80, "-") ;}
+  
+  NewList RawDataL.KeyValPair()
+  ParseComments(CommentsL(), RawDataL())
+  CardHTML.s = BuildCard( RawDataL() )
+  
+  ; TODO: Handle Empty Cards (don't return anything)
+  ProcedureReturn CardHTML
+  
+EndProcedure
+; ------------------------------------------------------------------------------
+Procedure ExtractHeaderBlock(file.s, List CommentsL.s())
+  Debug ">>> ExtractHeaderBlock("+file+", List CommentsL.s())"
+  
+  lineNum = 1
+  
+  Repeat
+    
+    line.s = ReadString(0)
+    
+    If Left(line, 1) <> ";"
+      Debug "non comment line found at line " + Str(lineNum)
+      Break
+    Else
+      AddElement(CommentsL())
+      CommentsL() = line
+      lineNum +1
+    EndIf
+    
+  ForEver
+  
+  Debug "Total comments lines read: " + Str(lineNum -1)
+  
+  Debug "<<< ExtractHeaderBlock("+file+", List CommentsL.s())"
+EndProcedure
+; ------------------------------------------------------------------------------
+Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
+  Debug ">>> ParseComments()"
+  
+  totLines = ListSize( CommentsL() )
+  
+  lineCnt = 1
+  dbgIndent.s = "  | "
+  
+  ForEach CommentsL()
+    lineNum.s = RSet(Str(lineCnt), 2, "0") + "| "
+    commDelim.s = Left(CommentsL(), 3)
+    If commDelim = ";: " Or commDelim = ";{:"  Or commDelim = ";}:"
+      ; TODO: capture also ";{:" and ";}:"
+      Debug lineNum + "Parse:"
+      ;  ===========
+      ;- Extract Key
+      ;  ===========
+      key.s = Trim(StringField(CommentsL(), 2, ":"))
+      Debug dbgIndent + "- key found: '" + key +"'"
+      ;  =============
+      ;- Extract Value
+      ;  =============
+      valueStart = FindString(CommentsL(), ":", 4)
+      value.s = Trim(Mid(CommentsL(), valueStart +1))
+      If value = #Empty$
+        Debug dbgIndent + "- value found: (empty)"
+        newParagraph = #True
+      Else
+        Debug dbgIndent + "- value found: '" + value +"'"
+        newParagraph = #False
+      EndIf
+      ;  =======================
+      ;- Look for Carry-On Value
+      ;  =======================
+      carryOn = #False
+      Repeat
+        
+        If lineCnt = totLines
+          Break
+        EndIf
+        
+        NextElement(CommentsL())
+        lineCnt +1
+        
+        commDelim.s = Left(CommentsL(), 3)
+        If Left(commDelim, 2) = ";." Or commDelim = ";{."  Or commDelim = ";}."
+          
+          ;- Carry-on line found
+          ;  ~~~~~~~~~~~~~~~~~~~
+          carryOn = #True
+          valueNew.s = Trim(Mid(CommentsL(), 4))
+          lineNum.s = RSet(Str(lineCnt), 2, "0") + "| "
+          Debug lineNum + "Detected value carry-on:"
+          Debug dbgIndent + "- carry-on value found: '" + valueNew +"'"
+          ;  ------------------------------
+          ;- Append Carry-On Value to Value
+          ;  ------------------------------
+          If valueNew <> #Empty$
+            If newParagraph
+              value + valueNew
+            Else
+              value + " " + valueNew
+            EndIf
+            newParagraph = #False
+          Else
+            value + #EOL + #EOL
+            newParagraph = #True
+          EndIf
+          
+        Else ;- No carry-on line found (or no more)
+             ;  ~~~~~~~~~~~~~~~~~~~~~~
+          If carryOn ; (there were carry-on lines)
+                     ; Debug final value string
+            Debug dbgIndent + "- Assembled value:"
+            Debug LSet("", 80, "-")
+            Debug value
+          EndIf
+          ;- Add <key> & <value> to list
+          AddElement(RawDataL())
+          RawDataL()\key = key
+          RawDataL()\val = value
+          ; Roll-back List Element and line counter...
+          PreviousElement(CommentsL())
+          lineCnt -1
+          Break
+        EndIf
+        
+      ForEver
+      
+    Else
+      Debug lineNum + "Skip"
+    EndIf
+    lineCnt +1
+    Debug LSet("", 80, "-")
+  Next
+  
+  
+  
+  Debug "<<< ParseComments()"
+EndProcedure
+; ------------------------------------------------------------------------------
+Procedure.s BuildCard( List RawDataL.KeyValPair() )
+  Debug ">>> BuildCard()"
+  
+ 
+  Card.s = "<table><tbody>" + #EOL  
+  
+  ; TODO: Insert <p> tags?
+  ForEach RawDataL()
+    key.s   = EscapeString( RawDataL()\key, #PB_String_EscapeXML )
+    Card + "<tr><td>" + key + ":</td><td>"
+    
+    value.s = RawDataL()\val
+    
+    value = EscapeString( value, #PB_String_EscapeXML )
+    
+    ;- Capture Links
+    ;  =============
+    ;  Only capture links if they are the sole content of value string.
+    If ExamineRegularExpression(#RE_URL, value)
+      While NextRegularExpressionMatch(#RE_URL)
+        URL.s = RegularExpressionMatchString(#RE_URL)
+        Link.s = ~"<a href=\"" + URL + ~"\">" + URL + "</a>"
+        Debug "! URL Match: " + URL
+        Debug "! URL Link: " + Link
+        value = ReplaceString(value, URL, Link, #PB_String_CaseSensitive, 1, 1)
+        ;         Debug "! URL Position: " + Str(RegularExpressionMatchPosition(#RE_URL))
+        ;         Debug "! URL Length: " + Str(RegularExpressionMatchLength(#RE_URL))
+      Wend
+    EndIf
+    
+    ;- Convert EOLs to <br>
+    ;  ====================
+      value = ReplaceString(value, #EOL+#EOL, "<br /><br />") ; <= The optional " /" is for XML compatibility
+      Card + value + "</td></tr>" + #EOL
+      
+    
+  Next
+  
+  Card + "</tbody></table>"  + #EOL + #EOL
+  
+  Debug "<<< BuildCard()"
+  ProcedureReturn Card
+  
+EndProcedure
+;}==============================================================================
