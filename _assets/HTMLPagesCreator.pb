@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.13 (2018/04/03) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.14 (2018/04/03) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -15,8 +15,13 @@
 ; ------------------------------------------------------------------------------
 ; TODO: Implement Warnings tracking to allow a resume at the end of execution.
 ; TODO: Fix debug messages in Comments Parser (according to Debug Level)
+; TODO: Implement Comments Parser errors returning (empty cards handling)
+; TODO: 
+; TODO: 
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.14 (2018/04/03)
+;     - Cards Builder checks if curr Category contains resources or not.
 ;  v.0.0.13 (2018/04/03)
 ;     - Renamed ParseFile() -> ParseFileComments()
 ;     - Changed: ParseFileComments() doesn't return string, instead uses
@@ -379,26 +384,32 @@ ForEach CategoriesL()
   ; ===================
   ;- Build Resume Cards
   ; ===================
-  CARDS$ = "~~~{=html5}" + #EOL ; <= Raw content via panodc "raw_attribute" Extension
   Declare ParseFileComments(resourcefile.s)
   With CategoriesL()
     totItems = ListSize( \FilesToParseL() )
-    Debug "Create Items Cards ("+ Str(totItems) +")"
-    cnt = 1
-    
-    ForEach \FilesToParseL()
-      file.s = \FilesToParseL()
-      Debug Str(cnt) + ") '" + file +"'"
-      currCardHTML.s = #Empty$ ; <= Shared in Parsing procedures!
-      ParseFileComments(file)
-      CARDS$ + currCardHTML
-      ; Temporary Debug
-      Debug "EXTRACTED CARD:" + #EOL + #DIV3$ + #EOL + currCardHTML + #EOL + #DIV3$ ; FIXME
-      cnt +1
-    Next
-    
+    If totItems ; if Category contains Resources...
+      
+      CARDS$ = "~~~{=html5}" + #EOL ; <= Raw content via panodc "raw_attribute" Extension
+      Debug "Create Items Cards ("+ Str(totItems) +")"
+      cnt = 1
+      
+      ForEach \FilesToParseL()
+        file.s = \FilesToParseL()
+        Debug Str(cnt) + ") '" + file +"'"
+        currCardHTML.s = #Empty$ ; <= Shared in Parsing procedures!
+        ParseFileComments(file)
+        CARDS$ + currCardHTML
+        ; Temporary Debug
+        Debug "EXTRACTED CARD:" + #EOL + #DIV3$ + #EOL + currCardHTML + #EOL + #DIV3$ ; FIXME
+        cnt +1
+      Next
+      CARDS$ + "~~~" ; <= end Raw Content fenced block
+    Else  
+      ; Current Category doesn't have any Resources...
+      Debug "!!! Current Category has no Resources !!!"
+      ; TODO: issue a warning is Category is not Root?
+    EndIf    
   EndWith
-  CARDS$ + "~~~" ; <= end Raw Content fenced block
   
   ;  ====================
   ;- Convert Page to HTML
