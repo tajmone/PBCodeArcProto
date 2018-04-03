@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.11 (2018/03/31) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.12 (2018/04/03) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -13,8 +13,14 @@
 ; as introduction text, and a resume card is built for each resource in the
 ; category (via header comments parsing)
 ; ------------------------------------------------------------------------------
+; TODO: Implement Warnings tracking to allow a resume at the end of execution.
+; TODO: Fix debug messages in Comments Parser (according to Debug Level)
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.12 (2018/04/03)
+;     - Add Abort() procedure -- starting to laying down the foundations for a
+;       proper Warnings/Errors tracking and handling system. Still need to decide
+;       if some issues should be treated as Warnings or Errors (see Issue #8).
 ;  v.0.0.11 (2018/03/31)
 ;     - Add Bulma-styled HTML Tags to Resume Card
 ;     - Add filename to card title bar
@@ -103,6 +109,8 @@ CompilerEndIf
 
 ;- Procedures Declaration
 
+Declare Abort(ErrorMsg.s)
+
 ; Misc Constants and Vars
 
 #DIV1$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -117,6 +125,7 @@ EndEnumeration
 #RE_URL$ = "^(https?://([-\w\.]+)+(:\d+)?(/([\w/_\.]*(\?\S+)?)?)?)$"
 
 If Not CreateRegularExpression(#RE_URL, #RE_URL$)
+  ; FIXME: Internal Error (Bug) needs special Error Report
   Debug "RegEx URL Error: " + RegularExpressionError()
   MessageRequester("ERROR", "Error while creating URL RegEx!", #PB_MessageRequester_Error)
   End 1
@@ -191,7 +200,7 @@ CompilerEndIf
 ; - 2. Check Project Integrity
 ;{==============================================================================
 StepHeading("Checking Project Integrity")
-
+; FIXME: Missing README should be Error, not warning.
 ForEach CategoriesL()
   ; Check that every category has a REAMDE file
   ; ===========================================
@@ -218,6 +227,13 @@ ForEach CategoriesL()
 Next
 ; Evaluate Found Warnings/Errors
 ; ==============================
+; TODO: Check which warnings need to be enlisted in the Warnings-Tracker
+;       Some warnings might be catched later on, and they don't need to be enlisted here.
+;       But some other types of warning might not be catched later on (eg: For loops where
+;       there are 0 elements) and I must ensure they get all mentioned in the final report.
+;       The ideal solution would be to catch all of them in their place instead of here
+;       (this is just an overall integrity check), so it might be worth implemening some
+;       checks on For loops, to catch skipped iterations.
 If WARN | ERR = 0
   Debug "All tests passed."
 Else
@@ -244,8 +260,6 @@ EndIf
 ; ==============================================================================
 StepHeading("Iterate Categories List")
 
-; TODO: Load a common YAML settings file into str to append at end of every doc source
-
 ; =========================
 ; Load Common YAML Metadata
 ; =========================
@@ -255,10 +269,7 @@ If ReadFile(0, ASSETS$ + "meta.yaml")
   Wend
   CloseFile(0)
 Else
-  ; TODO: Move to Error() procedure
-  MessageRequester("ERROR","Couldn't open 'meta.yaml' file!")
-  Debug "ERROR: Couldn't open 'meta.yaml' file!"
-  End 1
+  Abort("Couldn't open '_assets/meta.yaml' file!") ;- ABORT: missing "meta.yaml"
 EndIf
 
 Debug #DIV2$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV2$ ; DELME
@@ -333,12 +344,10 @@ ForEach CategoriesL()
       ;       Debug README$ + #DIV3$
       
     Else
-      Debug "ERROR: Couldn't open README.md"
-      MessageRequester("ERROR!","Couldn't open the README.md file!", #PB_MessageRequester_Error)
-      End 1
+      Abort("Couldn't open the README file: '"+ catPath +"README.md'") ;- ABORT: Can't open README
     EndIf
   Else
-    Debug "Skipping README file for this category (not found)..."
+    Abort("Missing README file: '"+ catPath +"README.md'") ;- ABORT: missing README
   EndIf
   ;  =========================
   ;- Build SubCategories links
@@ -428,7 +437,7 @@ Next ; <= ForEach CategoriesL()
 ; Repeat
 ;   ; Infinte Loop to allow Debugger Inspections
 ; ForEver
-End
+End ; <<< Main Ends Here
 
 ;}==============================================================================
 ;                                   PROCEDURES                                  
@@ -597,6 +606,29 @@ Procedure PandocConvert(options.s)
   EndIf
   
 EndProcedure
+
+; ==============================================================================
+;                               ERRORS & WARNINGS                               
+; ==============================================================================
+; TODO: Add Warnings-Tracking Procedure
+; TODO: Add Warning Resume Procedure
+Procedure Abort(ErrorMsg.s)
+  
+  Debug LSet("", 78, "\")
+  Debug LSet("", 78, "*")
+  Debug "FATAL ERROR: " + ErrorMsg + #EOL
+  Debug "             Aborting program execution..."
+  Debug LSet("", 78, "*")
+  Debug LSet("", 78, "/")
+  
+  MessageRequester("FATAL ERROR", ErrorMsg + #EOL + #EOL + "Aborting execution...",
+                   #PB_MessageRequester_Error)
+  
+  ; TODO: Show Warnings resume before aborting
+  End 1
+  
+EndProcedure
+
 ;}==============================================================================
 ;                             Header Comments Parser                            
 ;{==============================================================================
