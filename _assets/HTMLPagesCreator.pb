@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.12 (2018/04/03) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.13 (2018/04/03) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -17,6 +17,13 @@
 ; TODO: Fix debug messages in Comments Parser (according to Debug Level)
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.13 (2018/04/03)
+;     - Renamed ParseFile() -> ParseFileComments()
+;     - Changed: ParseFileComments() doesn't return string, instead uses
+;       `Shared currCardHTML.s` to avoid passing strings around or using pointers
+;       (I tried to use string pointers but the app hanged, even though tests
+;        on a small scale were working; there seems to be a problem when handling
+;        big strings via pointers, maybe a bug in PureBasic?)
 ;  v.0.0.12 (2018/04/03)
 ;     - Add Abort() procedure -- starting to laying down the foundations for a
 ;       proper Warnings/Errors tracking and handling system. Still need to decide
@@ -373,7 +380,7 @@ ForEach CategoriesL()
   ;- Build Resume Cards
   ; ===================
   CARDS$ = "~~~{=html5}" + #EOL ; <= Raw content via panodc "raw_attribute" Extension
-  Declare.s ParseFile(file.s)
+  Declare ParseFileComments(resourcefile.s)
   With CategoriesL()
     totItems = ListSize( \FilesToParseL() )
     Debug "Create Items Cards ("+ Str(totItems) +")"
@@ -382,10 +389,11 @@ ForEach CategoriesL()
     ForEach \FilesToParseL()
       file.s = \FilesToParseL()
       Debug Str(cnt) + ") '" + file +"'"
-      Cards.s = ParseFile(file)
-      CARDS$ + Cards
+      currCardHTML.s = #Empty$ ; <= Shared in Parsing procedures!
+      ParseFileComments(file)
+      CARDS$ + currCardHTML
       ; Temporary Debug
-      Debug "EXTRACTED CARD:" + #EOL + #DIV3$ + #EOL + Cards + #EOL + #DIV3$ ; FIXME
+      Debug "EXTRACTED CARD:" + #EOL + #DIV3$ + #EOL + currCardHTML + #EOL + #DIV3$ ; FIXME
       cnt +1
     Next
     
@@ -648,9 +656,9 @@ Declare.s BuildCard(List RawDataL.KeyValPair(), fileName.s)
 
 
 ; ------------------------------------------------------------------------------
-Procedure.s ParseFile(file.s)
-  ; FIXME: Return Error instead of HTML str
-  ;        Add str pointer to pass HTML results to main code, instead of return str
+Procedure ParseFileComments(file.s)
+  ; TODO: ParseFileComments() return Errors
+  Shared currCardHTML
   
   ;{ check file exists
   Select FileSize(file.s)
@@ -691,10 +699,10 @@ Procedure.s ParseFile(file.s)
   
   NewList RawDataL.KeyValPair()
   ParseComments(CommentsL(), RawDataL())
-  CardHTML.s = BuildCard( RawDataL(), file )
+  ; NOTE: instead of returning HTML string, handle it in BuildCard() via Shared currCardHTML
+  currCardHTML = BuildCard( RawDataL(), file )
   
-  ; TODO: Handle Empty Cards (don't return anything)
-  ProcedureReturn CardHTML
+  ; TODO: Handle Empty Cards Error
   
 EndProcedure
 ; ------------------------------------------------------------------------------
