@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.14 (2018/04/03) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.15 (2018/04/03) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -16,10 +16,30 @@
 ; TODO: Implement Warnings tracking to allow a resume at the end of execution.
 ; TODO: Fix debug messages in Comments Parser (according to Debug Level)
 ; TODO: Implement Comments Parser errors returning (empty cards handling)
-; TODO: 
+; TODO: Terminology: implement more precise and consistent terminolgy in var
+;       and procs naming, documentation and comments:
+;       - Category » SubCategory
+;       - Resource: can mean a single-file resource or a multi-file resource.
+;                   But I need a further term to indicate the latter (resource
+;                   folder; multi-file resource?)
+; TODO: "curr" vars: The Warnings tracking system need to access at any time of
+;       the Categories/Resources iteration process some vars referring to the
+;       current elements being processed, in order to store the appropriate
+;       references in the warning messages for the final report:
+; 
+;       - currCategory : full path (from root) of curr Category being processed
+;       - currResource : full path (from root) of curr Resource being processed
+;                        (if multi-file, just the folder name?)
+;
+;       Some of these are already in place, just need to rename them.
 ; TODO: 
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.15 (2018/04/03)
+;     - #EOL2 (= #EOL + #EOL)
+;     - Delimit Category being process by "DIV Ascii headers"
+;     - Fix Category counter varname: "cnt" -> "cntCat" (was being overriden)
+;     - When finished, save Debug Window to "_/assets/session.log" (unless Aborted)
 ;  v.0.0.14 (2018/04/03)
 ;     - Cards Builder checks if curr Category contains resources or not.
 ;  v.0.0.13 (2018/04/03)
@@ -111,6 +131,7 @@ DebugLevel #DBG_LEVEL
 ;-                                    SETUP                                     
 ;{==============================================================================
 ; Cross Platform Settings
+; TODO: Add #EOL_Wrong for fixing paths
 CompilerIf #PB_Compiler_OS = #PB_OS_Windows
   #DSEP = "\"     ; Directory Separator Character
   #EOL = #CRLF$   ; End-Of-Line Sequence
@@ -118,6 +139,7 @@ CompilerElse
   #DSEP = "/"
   #EOL = #LF$
 CompilerEndIf
+#EOL2 = #EOL + #EOL ; double EOL sequences
 
 ;- Procedures Declaration
 
@@ -125,8 +147,8 @@ Declare Abort(ErrorMsg.s)
 
 ; Misc Constants and Vars
 
-#DIV1$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-#DIV2$ = "=============================================================================="
+#DIV1$ = "=============================================================================="
+#DIV2$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 #DIV3$ = "------------------------------------------------------------------------------"
 
 ;- RegEx
@@ -146,12 +168,12 @@ EndIf
 #TOT_STEPS = "3"
 Macro StepHeading(Text)
   StepNum +1
-  Debug #DIV2$ + #EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ #EOL + #DIV2$
+  Debug #DIV1$ + #EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ #EOL + #DIV1$
 EndMacro
 ;}==============================================================================
 ;-                                  INITIALIZE                                  
 ;{==============================================================================
-Debug #DIV1$ + #EOL + "HTMLPagesCreator" + #EOL + #DIV1$
+Debug #DIV2$ + #EOL + "HTMLPagesCreator" + #EOL + #DIV2$
 
 ASSETS$ = GetCurrentDirectory() ; Path to assets folder
 
@@ -284,13 +306,15 @@ Else
   Abort("Couldn't open '_assets/meta.yaml' file!") ;- ABORT: missing "meta.yaml"
 EndIf
 
-Debug #DIV2$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV2$ ; DELME
+Debug #DIV3$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV3$ ; DELME
 
-cnt = 1
+cntCat = 1
 ForEach CategoriesL()
   
   catPath.s = CategoriesL()\Path
-  Debug "Processing " + Str(cnt) + "/" + Str(totCategories +1) +": './" + catPath + "'"
+  Debug #DIV2$ + #EOL + "CATEGORY " + Str(cntCat) + "/" + Str(totCategories +1) +
+        " | ./" + catPath + #EOL + #DIV2$
+;   Debug "Processing " + Str(cnt) + "/" + Str(totCategories +1) +": './" + catPath + "'" ; DELME
   Debug "Category name: '" + CategoriesL()\Name + "'", 2
   Debug "Category path: '" + CategoriesL()\Path + "'", 2
   
@@ -367,8 +391,8 @@ ForEach CategoriesL()
   SubCatLinks.s = #Empty$
   With CategoriesL()
     If ListSize( \SubCategoriesL() )
-      SubCatLinks = #EOL + #EOL + "---" + #EOL + #EOL
-      SubCatLinks + "# Subcategories" +  #EOL + #EOL
+      SubCatLinks = #EOL2 + "---" + #EOL2
+      SubCatLinks + "# Subcategories" +  #EOL2
       ForEach  \SubCategoriesL()
         cat$ = \SubCategoriesL()
         SubCatLinks + "- [" + cat$ + "](./"+ cat$ +"/index.html)" + #EOL
@@ -432,8 +456,8 @@ ForEach CategoriesL()
   
   Declare PandocConvert(options.s)
   
-  MD_Page.s = README$ + #EOL + #EOL + SubCatLinks + #EOL + #EOL + CARDS$ +
-              #EOL + #EOL + YAML$
+  MD_Page.s = README$ + #EOL2 + SubCatLinks + #EOL2 + CARDS$ +
+              #EOL2 + YAML$
   
   pandocOpts.s = "-f "+ #PANDOC_FORMAT_IN +
                  " --template=" + ASSETS$ + #PANDOC_TEMPLATE +
@@ -448,15 +472,18 @@ ForEach CategoriesL()
     Debug "Pandoc STDERR:"+ #EOL + #DIV3$ + #EOL + PandocErr$ + #EOL + #DIV3$
   EndIf
   ; ~~~~~~~~~~~~~
-  cnt +1
-  Debug #DIV1$
+  cntCat +1
+  Debug #DIV2$
 Next ; <= ForEach CategoriesL()
 
 ; ShowVariableViewer()
 ; Repeat
 ;   ; Infinte Loop to allow Debugger Inspections
 ; ForEver
-End ; <<< Main Ends Here
+
+;- Log Debug Window to File
+SaveDebugOutput(ASSETS$ + "session.log")
+End ;- <<< Main Ends Here <<<
 
 ;}==============================================================================
 ;                                   PROCEDURES                                  
@@ -640,7 +667,7 @@ Procedure Abort(ErrorMsg.s)
   Debug LSet("", 78, "*")
   Debug LSet("", 78, "/")
   
-  MessageRequester("FATAL ERROR", ErrorMsg + #EOL + #EOL + "Aborting execution...",
+  MessageRequester("FATAL ERROR", ErrorMsg + #EOL2 + "Aborting execution...",
                    #PB_MessageRequester_Error)
   
   ; TODO: Show Warnings resume before aborting
@@ -807,7 +834,7 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
             EndIf
             newParagraph = #False
           Else
-            value + #EOL + #EOL
+            value + #EOL2
             newParagraph = #True
           EndIf
           
@@ -882,14 +909,14 @@ Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
     
     ;- Convert EOLs to <br>
     ;  ====================
-      value = ReplaceString(value, #EOL+#EOL, "<br /><br />") ; <= The optional " /" is for XML compatibility
+      value = ReplaceString(value, #EOL2, "<br /><br />") ; <= The optional " /" is for XML compatibility
       Card + value + "</td></tr>" + #EOL
       
     
   Next
   
   Card + "</tbody></table>" + #EOL +
-         "</div></article>" + #EOL + #EOL
+         "</div></article>" + #EOL2
   
   Debug "<<< BuildCard()"
   ProcedureReturn Card
