@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.15 (2018/04/03) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.16 (2018/04/04) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -35,6 +35,8 @@
 ; TODO: 
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.16 (2018/04/04)
+;     - Minor code cleanup
 ;  v.0.0.15 (2018/04/03)
 ;     - #EOL2 (= #EOL + #EOL)
 ;     - Delimit Category being process by "DIV Ascii headers"
@@ -165,7 +167,7 @@ If Not CreateRegularExpression(#RE_URL, #RE_URL$)
   End 1
 EndIf
 
-#TOT_STEPS = "3"
+#TOT_STEPS = "4"
 Macro StepHeading(Text)
   StepNum +1
   Debug #DIV1$ + #EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ #EOL + #DIV1$
@@ -179,6 +181,8 @@ ASSETS$ = GetCurrentDirectory() ; Path to assets folder
 
 SetCurrentDirectory("../")
 PROJ_ROOT$ = GetCurrentDirectory()
+
+Debug "Debug Level: " + Str(#DBG_LEVEL)
 Debug "Project's Root Path: '" +PROJ_ROOT$ + "'", 2
 ; TODO: Check that pandoc >=2.0 is available
 ;}==============================================================================
@@ -231,10 +235,11 @@ CompilerIf #DBG_LEVEL >= 2
   Next
 CompilerEndIf
 ;}==============================================================================
-; - 2. Check Project Integrity
+;- 2. Check Project Integrity
 ;{==============================================================================
 StepHeading("Checking Project Integrity")
-; FIXME: Missing README should be Error, not warning.
+; FIXME: Missing README should be Error, not warning?
+; TODO: Cleanup TESTS Reporting
 ForEach CategoriesL()
   ; Check that every category has a REAMDE file
   ; ===========================================
@@ -290,9 +295,9 @@ Else
 EndIf
 
 ;}==============================================================================
-; - 3. Iterate Categories Lists
-; ==============================================================================
-StepHeading("Iterate Categories List")
+;- 3. Process Categories
+;{==============================================================================
+StepHeading("Process Categories")
 
 ; =========================
 ; Load Common YAML Metadata
@@ -306,7 +311,7 @@ Else
   Abort("Couldn't open '_assets/meta.yaml' file!") ;- ABORT: missing "meta.yaml"
 EndIf
 
-Debug #DIV3$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV3$ ; DELME
+; Debug #DIV3$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV3$ ; DELME
 
 cntCat = 1
 ForEach CategoriesL()
@@ -475,6 +480,13 @@ ForEach CategoriesL()
   cntCat +1
   Debug #DIV2$
 Next ; <= ForEach CategoriesL()
+
+;}==============================================================================
+;- 4. Final Report And Quit
+;{==============================================================================
+StepHeading("Final Report")
+
+; TODO: Implement Warning-Tracker Report
 
 ; ShowVariableViewer()
 ; Repeat
