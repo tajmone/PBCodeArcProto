@@ -1,7 +1,3 @@
----
-header-title: OVERRIDEN BY YAML HEADER IN README
----
-
 # Gadget Category
 
 Some text describing the category.
