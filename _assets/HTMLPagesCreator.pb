@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.18 (2018/04/06) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.19 (2018/04/06) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -37,84 +37,86 @@
 
 ;{ CHANGELOG
 ;  =========
-;  v.0.0.18 (2018/04/06)
-;     - ExtractHeaderBlock() now returns number of comment lines extracted
-;     - ParseFileComments() now checks wether ExtractHeaderBlock() found a Header
-;       Comments block, and only prints it out (DBG LEVEL 3) if it was found, and
-;       issues a warning otherwise (still needs improvement in the warnings area)
-;  v.0.0.17 (2018/04/06)
-;     - Cleanup comments
-;  v.0.0.16 (2018/04/04)
-;     - Minor code cleanup
-;  v.0.0.15 (2018/04/03)
-;     - #EOL2 (= #EOL + #EOL)
-;     - Delimit Category being process by "DIV Ascii headers"
-;     - Fix Category counter varname: "cnt" -> "cntCat" (was being overriden)
-;     - When finished, save Debug Window to "_/assets/session.log" (unless Aborted)
-;  v.0.0.14 (2018/04/03)
-;     - Cards Builder checks if curr Category contains resources or not.
-;  v.0.0.13 (2018/04/03)
-;     - Renamed ParseFile() -> ParseFileComments()
-;     - Changed: ParseFileComments() doesn't return string, instead uses
-;       `Shared currCardHTML.s` to avoid passing strings around or using pointers
-;       (I tried to use string pointers but the app hanged, even though tests
-;        on a small scale were working; there seems to be a problem when handling
-;        big strings via pointers, maybe a bug in PureBasic?)
-;  v.0.0.12 (2018/04/03)
-;     - Add Abort() procedure -- starting to laying down the foundations for a
-;       proper Warnings/Errors tracking and handling system. Still need to decide
-;       if some issues should be treated as Warnings or Errors (see Issue #8).
-;  v.0.0.11 (2018/03/31)
-;     - Add Bulma-styled HTML Tags to Resume Card
-;     - Add filename to card title bar
-;  v.0.0.10 (2018/03/31)
-;     - Integrated "comments_parser.pbi" code:
-;       - ParseFile() now returns HTML Card string
-;       - Fixed Bug in ParseComments(): Carry-On parsing didn't check if the
-;         curr List Element was the last one, causing an infinite loop (only
-;         in "CodeInfo.txt" files that didn't contain extra lines beside the
-;         key-val comment lines)
-;     - Now Resume Cards are created
-;     - pandoc input format + extensions now is:
-;         markdown_github + yaml_metadata_block + raw_attribute
+;  v0.0.19 (2018/04/06)
+;    - Cleanup bits and pieces
+;  v0.0.18 (2018/04/06)
+;    - ExtractHeaderBlock() now returns number of comment lines extracted
+;    - ParseFileComments() now checks wether ExtractHeaderBlock() found a Header
+;      Comments block, and only prints it out (DBG LEVEL 3) if it was found, and
+;      issues a warning otherwise (still needs improvement in the warnings area)
+;  v0.0.17 (2018/04/06)
+;    - Cleanup comments
+;  v0.0.16 (2018/04/04)
+;    - Minor code cleanup
+;  v0.0.15 (2018/04/03)
+;    - #EOL2 (= #EOL + #EOL)
+;    - Delimit Category being process by "DIV Ascii headers"
+;    - Fix Category counter varname: "cnt" -> "cntCat" (was being overriden)
+;    - When finished, save Debug Window to "_/assets/session.log" (unless Aborted)
+;  v0.0.14 (2018/04/03)
+;    - Cards Builder checks if curr Category contains resources or not.
+;  v0.0.13 (2018/04/03)
+;    - Renamed ParseFile() -> ParseFileComments()
+;    - Changed: ParseFileComments() doesn't return string, instead uses
+;      `Shared currCardHTML.s` to avoid passing strings around or using pointers
+;      (I tried to use string pointers but the app hanged, even though tests
+;       on a small scale were working; there seems to be a problem when handling
+;       big strings via pointers, maybe a bug in PureBasic?)
+;  v0.0.12 (2018/04/03)
+;    - Add Abort() procedure -- starting to laying down the foundations for a
+;      proper Warnings/Errors tracking and handling system. Still need to decide
+;      if some issues should be treated as Warnings or Errors (see Issue #8).
+;  v0.0.11 (2018/03/31)
+;    - Add Bulma-styled HTML Tags to Resume Card
+;    - Add filename to card title bar
+;  v0.0.10 (2018/03/31)
+;    - Integrated "comments_parser.pbi" code:
+;      - ParseFile() now returns HTML Card string
+;      - Fixed Bug in ParseComments(): Carry-On parsing didn't check if the
+;        curr List Element was the last one, causing an infinite loop (only
+;        in "CodeInfo.txt" files that didn't contain extra lines beside the
+;        key-val comment lines)
+;    - Now Resume Cards are created
+;    - pandoc input format + extensions now is:
+;        markdown_github + yaml_metadata_block + raw_attribute
 ; 
-;     Still very drafty, the original parser code must be adapted to the host app:
-;       - Error handling must be implemented for resources that yeld no key-vals
-;       - Currently, a Card <table> is created even if no key-vals were extracted.
-;       - CSS must be adapted (doen't look good)
-;       - Must add table header with filename or app name
+;    Still very drafty, the original parser code must be adapted to the host app:
+;      - Error handling must be implemented for resources that yeld no key-vals
+;      - Currently, a Card <table> is created even if no key-vals were extracted.
+;      - CSS must be adapted (doen't look good)
+;      - Must add table header with filename or app name
 ;
-;  v.0.0.9 (2018/03/31)
-;     - Read "_asstes/meta.yaml" and append it to MD source doc
-;       (if README file contains YAML header, its vars definitions will prevail
+;  v0.0.9 (2018/03/31)
+;    - Read "_asstes/meta.yaml" and append it to MD source doc
+;      (if README file contains YAML header, its vars definitions will prevail
 ;        over those of "meta.yaml" -- first definition is not overridable)
-;     - Pandoc from format now "github_markdown" (because "gfm" doesn't support
-;       "yaml_headers" extension"
-;  v.0.0.8 (2018/03/28)
+;    - Pandoc from format now "github_markdown" (because "gfm" doesn't support
+;      "yaml_headers" extension"
+;  v0.0.8 (2018/03/28)
 ;    - Add links to SubCategories in Category pages.
-;  v.0.0.7 (2018/03/28)
+;  v0.0.7 (2018/03/28)
 ;    - Build BREADCRUMBS$ pandoc var (raw HTML)
-;  v.0.0.6 (2018/03/28)
+;  v0.0.6 (2018/03/28)
 ;    - Build SIDEBAR$ (pandoc var "SIDEBAR") raw HTML string.
 ;      (one level depth only, no "active" class for curr element)
-;  v.0.0.5 (2018/03/25)
+;  v0.0.5 (2018/03/25)
 ;    - Add PandocConvert() procedure (from STDIN gfm to "index.html")
 ;    - Now an "index.html" page is created for each Category:
-;        - "README.md" file used in content
-;        - relative paths to assests (CSS) correctly handled
+;      - "README.md" file used in content
+;      - relative paths to assests (CSS) correctly handled
 ;    - Implemented first usable darft of "template.html" (breadcrumbs and sidebar
 ;      currently show sample contents only)
-;  v.0.0.4 (2018/03/21)
+;  v0.0.4 (2018/03/21)
 ;    - Add project integrity checks
-;  v.0.0.3 (2018/03/21)
+;  v0.0.3 (2018/03/21)
 ;    - Add CategoriesL()\Name.s to structure
 ;    - CategoriesL()\Path ends in "/" (unless root)
 ;    - Setup Categories iteration code-skeleton
-;  v.0.0.2 (2018/03/19)
+;  v0.0.2 (2018/03/19)
 ;    - ScanFolder() Debug now shown as directory tree:
 ;      - DBG Lev 3: Show only found Categories and Resources
 ;      - DBG Lev 4: Also show ignored files and folders 
-;  v.0.0.1 (2018/03/19)
+;  v0.0.1 (2018/03/19)
 ;    - Incorporate "BuildProjectTree.pb" and adapt it.
 ;    - Introduce DebugLevel filtering of output
 ;}
@@ -158,9 +160,6 @@ Declare Abort(ErrorMsg.s)
 
 ; Misc Constants and Vars
 
-#DIV1$ = "=============================================================================="
-#DIV2$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-#DIV3$ = "------------------------------------------------------------------------------"
 
 ;- RegEx
 Enumeration RegExs
@@ -175,6 +174,15 @@ If Not CreateRegularExpression(#RE_URL, #RE_URL$)
   MessageRequester("ERROR", "Error while creating URL RegEx!", #PB_MessageRequester_Error)
   End 1
 EndIf
+
+; ==> Debugging <===============================================================
+#DIV1$ = "================================================================================"
+#DIV2$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+#DIV3$ = "~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~="
+#DIV4$ = "--------------------------------------------------------------------------------"
+; #DIV3$ = "~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-"
+; #DIV3$ = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+
 
 #TOT_STEPS = "4"
 Macro StepHeading(Text)
@@ -320,7 +328,7 @@ Else
   Abort("Couldn't open '_assets/meta.yaml' file!") ;- ABORT: missing "meta.yaml"
 EndIf
 
-; Debug #DIV3$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV3$ ; DELME
+; Debug #DIV4$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV4$ ; DELME
 
 cntCat = 1
 ForEach CategoriesL()
@@ -328,7 +336,6 @@ ForEach CategoriesL()
   catPath.s = CategoriesL()\Path
   Debug #DIV2$ + #EOL + "CATEGORY " + Str(cntCat) + "/" + Str(totCategories +1) +
         " | ./" + catPath + #EOL + #DIV2$
-;   Debug "Processing " + Str(cnt) + "/" + Str(totCategories +1) +": './" + catPath + "'" ; DELME
   Debug "Category name: '" + CategoriesL()\Name + "'", 2
   Debug "Category path: '" + CategoriesL()\Path + "'", 2
   
@@ -362,7 +369,7 @@ ForEach CategoriesL()
     BREADCRUMBS$ + "<li><a href='" + relPath + "index.html'>"+ crumb +"</a></li>" + #EOL
   Next
   
-  Debug "BREADCRUMBS:" + #EOL + #DIV3$ + #EOL + BREADCRUMBS$ + #EOL + #DIV3$ ; FIXME
+  Debug "BREADCRUMBS:" + #EOL + #DIV4$ + #EOL + BREADCRUMBS$ + #EOL + #DIV4$ ; FIXME
   
   ;  =============
   ;- Build Sidebar
@@ -375,7 +382,7 @@ ForEach CategoriesL()
                RootCategoriesL() + "</a></li>" + #EOL ; single quotes only!
   Next
   
-  Debug "SIDEBAR:" + #EOL + #DIV3$ + #EOL + SIDEBAR$ + #EOL + #DIV3$ ; FIXME
+  Debug "SIDEBAR:" + #EOL + #DIV4$ + #EOL + SIDEBAR$ + #EOL + #DIV4$ ; FIXME
   
   
   ;  ===============
@@ -390,8 +397,8 @@ ForEach CategoriesL()
       Wend
       CloseFile(0)
       
-      ;       Debug "README extracted contents:" + #EOL + #DIV3$
-      ;       Debug README$ + #DIV3$
+      ;       Debug "README extracted contents:" + #EOL + #DIV4$
+      ;       Debug README$ + #DIV4$
       
     Else
       Abort("Couldn't open the README file: '"+ catPath +"README.md'") ;- ABORT: Can't open README
@@ -416,7 +423,7 @@ ForEach CategoriesL()
     EndIf
   EndWith
   
-  Debug "SubCatLinks:" + #EOL + #DIV3$ + #EOL + SubCatLinks + #EOL + #DIV3$ ; FIXME
+  Debug "SubCatLinks:" + #EOL + #DIV4$ + #EOL + SubCatLinks + #EOL + #DIV4$ ; FIXME
   
   
   ; ===================
@@ -424,22 +431,27 @@ ForEach CategoriesL()
   ; ===================
   Declare ParseFileComments(resourcefile.s)
   With CategoriesL()
-    totItems = ListSize( \FilesToParseL() )
-    If totItems ; if Category contains Resources...
+    totResources = ListSize( \FilesToParseL() )
+    If totResources ; if Category contains Resources...
       
       CARDS$ = "~~~{=html5}" + #EOL ; <= Raw content via panodc "raw_attribute" Extension
-      Debug "Create Items Cards ("+ Str(totItems) +")"
-      cnt = 1
+      Debug "Create Items Cards ("+ Str(totResources) +")"
+      cntRes = 1
       
       ForEach \FilesToParseL()
         file.s = \FilesToParseL()
-        Debug Str(cnt) + ") '" + file +"'"
+        
+        ;         Debug Str(cntRes) + ") '" + file +"'" ; DELME
+        
+        Debug #DIV3$ + #EOL + "RESOURCE " + Str(cntRes) + "/" + Str(totResources +1) +
+              " | ./" + catPath + file + #EOL + #DIV3$
+        
         currCardHTML.s = #Empty$ ; <= Shared in Parsing procedures!
         ParseFileComments(file)
         CARDS$ + currCardHTML
         ; Temporary Debug
-        Debug "EXTRACTED CARD:" + #EOL + #DIV3$ + #EOL + currCardHTML + #EOL + #DIV3$ ; FIXME
-        cnt +1
+        Debug "EXTRACTED CARD:" + #EOL + #DIV4$ + #EOL + currCardHTML + #EOL + #DIV4$ ; FIXME
+        cntRes +1
       Next
       CARDS$ + "~~~" ; <= end Raw Content fenced block
     Else  
@@ -483,7 +495,7 @@ ForEach CategoriesL()
   If Not PandocConvert(pandocOpts.s)
     ; TODO: Check if it's Warning or Error
     Debug "!!! Pandoc returned ERROR or WARNING"
-    Debug "Pandoc STDERR:"+ #EOL + #DIV3$ + #EOL + PandocErr$ + #EOL + #DIV3$
+    Debug "Pandoc STDERR:"+ #EOL + #DIV4$ + #EOL + PandocErr$ + #EOL + #DIV4$
   EndIf
   ; ~~~~~~~~~~~~~
   cntCat +1
@@ -685,12 +697,12 @@ EndProcedure
 ; TODO: Add Warning Resume Procedure
 Procedure Abort(ErrorMsg.s)
   
-  Debug LSet("", 78, "\")
-  Debug LSet("", 78, "*")
+  Debug LSet("", 80, "\")
+  Debug LSet("", 80, "*")
   Debug "FATAL ERROR: " + ErrorMsg + #EOL
   Debug "             Aborting program execution..."
-  Debug LSet("", 78, "*")
-  Debug LSet("", 78, "/")
+  Debug LSet("", 80, "*")
+  Debug LSet("", 80, "/")
   
   MessageRequester("FATAL ERROR", ErrorMsg + #EOL2 + "Aborting execution...",
                    #PB_MessageRequester_Error)
@@ -939,9 +951,9 @@ Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
     
     ;- Convert EOLs to <br>
     ;  ====================
-      value = ReplaceString(value, #EOL2, "<br /><br />") ; <= The optional " /" is for XML compatibility
-      Card + value + "</td></tr>" + #EOL
-      
+    value = ReplaceString(value, #EOL2, "<br /><br />") ; <= The optional " /" is for XML compatibility
+    Card + value + "</td></tr>" + #EOL
+    
     
   Next
   
