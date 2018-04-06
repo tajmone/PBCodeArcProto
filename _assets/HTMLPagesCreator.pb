@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.17 (2018/04/06) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.18 (2018/04/06) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -37,6 +37,11 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.18 (2018/04/06)
+;     - ExtractHeaderBlock() now returns number of comment lines extracted
+;     - ParseFileComments() now checks wether ExtractHeaderBlock() found a Header
+;       Comments block, and only prints it out (DBG LEVEL 3) if it was found, and
+;       issues a warning otherwise (still needs improvement in the warnings area)
 ;  v.0.0.17 (2018/04/06)
 ;     - Cleanup comments
 ;  v.0.0.16 (2018/04/04)
@@ -116,7 +121,7 @@
 ; ==============================================================================
 ;-                                   SETTINGS                                   
 ;{==============================================================================
-#DBG_LEVEL = 2  ; Details Range 0—4:
+#DBG_LEVEL = 3  ; Details Range 0—4:
                 ;  - 0 : No extra info, just the basic feedback.
                 ;  - 1 : (currently unused) 
                 ;  - 2 : Extra details on Main code 
@@ -706,7 +711,7 @@ Structure KeyValPair
 EndStructure
 
 ;{ Procs Declarations
-Declare   ExtractHeaderBlock(file.s, List CommentsL.s())
+Declare.i ExtractHeaderBlock(file.s, List CommentsL.s())
 Declare   ParseComments(List CommentsL.s(), List RawDataL.KeyValPair())
 Declare.s BuildCard(List RawDataL.KeyValPair(), fileName.s)
 ;}
@@ -741,19 +746,27 @@ Procedure ParseFileComments(file.s)
   ReadStringFormat(0) ;}
   
   NewList CommentsL.s()
-  ExtractHeaderBlock(file, CommentsL())
+  If Not ExtractHeaderBlock(file, CommentsL())
+    ; FIXME: Should be handled by Warnings Tracker
+    Debug "WARNING: Missing Header Comments Blocks in '" + file +"'"
+    ; FIXME: Should exit returning Err Code
+  ElseIf #DBG_LEVEL >= 3
+    ; ===========================
+    ; Debug Header Comments Block
+    ; ===========================
+    ; TODO: Polish output text (and indentation?)
+    Debug "Header Block:"
+    Debug LSet("--+", 80, "-")
+    cnt=1
+    ForEach CommentsL()
+      Debug RSet(Str(cnt), 2, "0") + "| "+ CommentsL()
+      cnt+1
+    Next
+    Debug LSet("--+", 80, "-")
+  EndIf
   CloseFile(0)
   
-  ;{ Debug Header Comments
-  ;  =====================
-  Debug "Header Block:"
-  Debug LSet("--+", 80, "-")
-  cnt=1
-  ForEach CommentsL()
-    Debug RSet(Str(cnt), 2, "0") + "| "+ CommentsL()
-    cnt+1
-  Next
-  Debug LSet("--+", 80, "-") ;}
+  
   
   NewList RawDataL.KeyValPair()
   ParseComments(CommentsL(), RawDataL())
@@ -764,29 +777,26 @@ Procedure ParseFileComments(file.s)
   
 EndProcedure
 ; ------------------------------------------------------------------------------
-Procedure ExtractHeaderBlock(file.s, List CommentsL.s())
-  Debug ">>> ExtractHeaderBlock("+file+", List CommentsL.s())"
-  
-  lineNum = 1
-  
+Procedure.i ExtractHeaderBlock(file.s, List CommentsL.s())
+  ; ----------------------------------------------------------------------------
+  ; Extracts every consecutive comment line from beginning of `file` up to the
+  ; first non-comment line encountered. Comment lines are stored as isolated
+  ; string in `CommentsL()` list.
+  ; Returns the number of total comment lines extracted.   
+  ; ----------------------------------------------------------------------------
+  Define.i totLines = 0
   Repeat
-    
     line.s = ReadString(0)
     
     If Left(line, 1) <> ";"
-      Debug "non comment line found at line " + Str(lineNum)
-      Break
+      ProcedureReturn totLines
     Else
       AddElement(CommentsL())
       CommentsL() = line
-      lineNum +1
+      totLines +1
     EndIf
-    
   ForEver
   
-  Debug "Total comments lines read: " + Str(lineNum -1)
-  
-  Debug "<<< ExtractHeaderBlock("+file+", List CommentsL.s())"
 EndProcedure
 ; ------------------------------------------------------------------------------
 Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
