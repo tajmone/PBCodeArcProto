@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.19 (2018/04/06) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.20 (2018/04/06) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -37,6 +37,15 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.20 (2018/04/06)
+;    - Improved README file errors handling reports (via Select block):
+;      - 0 Kb README File
+;      - Missing README File
+;      - "README.md" is directory
+;    None of the above errors causes any longer the app to abort -- because user
+;    was already informed about them at STEP 2 (Integrity Check) and chose to carry
+;    on. Instead, these errors will be tracked by the Warning Tracker so that they
+;    will show up in the final report.
 ;  v0.0.19 (2018/04/06)
 ;    - Cleanup bits and pieces
 ;  v0.0.18 (2018/04/06)
@@ -270,11 +279,11 @@ ForEach CategoriesL()
       WARN +1
     Case -2
       ; This shouldn't happen; but just in case...
-      Debug "- ERROR: '" + README$ + "' is directory!"
-      ERR +1
+      Debug "- WARNING: '" + README$ + "' is directory!"
+      WARN +1
   EndSelect
-  ; Check that every category has a items to parse
-  ; ==============================================
+  ; Check that every category has resources
+  ; =======================================
   If Not ListSize( CategoriesL()\FilesToParseL() ) And
      CategoriesL()\Name <> "" ; Allow Root Category to empty
     Debug "- WARNING: Category '" + CategoriesL()\Path + "' has no entries!"
@@ -390,22 +399,39 @@ ForEach CategoriesL()
   ;  ===============
   README$ = #Empty$
   
-  If FileSize("README.md") >= 0
-    If ReadFile(0, "README.md", #PB_UTF8)
-      While Eof(0) = 0
-        README$ + ReadString(0) + #EOL
-      Wend
-      CloseFile(0)
-      
-      ;       Debug "README extracted contents:" + #EOL + #DIV4$
-      ;       Debug README$ + #DIV4$
-      
-    Else
-      Abort("Couldn't open the README file: '"+ catPath +"README.md'") ;- ABORT: Can't open README
-    EndIf
-  Else
-    Abort("Missing README file: '"+ catPath +"README.md'") ;- ABORT: missing README
-  EndIf
+  ; TODO: Change "If" to "Select" statement
+  Select FileSize("README.md")
+      ; ~~~~~~~~~~~~~~~~~~~~
+      ; README File Problems
+      ; ~~~~~~~~~~~~~~~~~~~~
+      ; Don't abort, just warn
+      ; (user was already warned about these and chose to continue!)
+      ; NOTE: All three error cases tested!
+    Case 0
+      Debug "WARNING!! README.md has size 0 Kb!"
+    Case -1 ; File not found
+      Debug "WARNING!!! Missing README file: '"+ catPath +"README.md'"
+    Case -2 ; File is a directory
+      Debug "WARNING!! README.md is a directory!"
+    Default
+      ; ========================
+      ; Get README File Contents
+      ; ========================
+      If ReadFile(0, "README.md", #PB_UTF8)
+        While Eof(0) = 0
+          README$ + ReadString(0) + #EOL
+        Wend
+        CloseFile(0)
+        ;       Debug "README extracted contents:" + #EOL + #DIV4$ ; DELME
+        ;       Debug README$ + #DIV4$
+      Else
+        ; ~~~~~~~~~~~~~~~~~~~~~~~~
+        ; Can't Access README File
+        ; ~~~~~~~~~~~~~~~~~~~~~~~~
+        ; TODO: This should be reported as a FILE ACCESS error
+        Abort("Couldn't open the README file: '"+ catPath +"README.md'") ;- ABORT: Can't open README
+      EndIf
+  EndSelect
   ;  =========================
   ;- Build SubCategories links
   ;  =========================
