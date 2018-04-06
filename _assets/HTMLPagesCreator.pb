@@ -5,14 +5,14 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v.0.0.16 (2018/04/04) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v.0.0.17 (2018/04/06) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
 ; An "index.html" is built for each category, using the folder's "README.md"
 ; as introduction text, and a resume card is built for each resource in the
 ; category (via header comments parsing)
-; ------------------------------------------------------------------------------
+;{ -- TODOs LIST »»»------------------------------------------------------------
 ; TODO: Implement Warnings tracking to allow a resume at the end of execution.
 ; TODO: Fix debug messages in Comments Parser (according to Debug Level)
 ; TODO: Implement Comments Parser errors returning (empty cards handling)
@@ -33,8 +33,12 @@
 ;
 ;       Some of these are already in place, just need to rename them.
 ; TODO: 
+;} -- TODOs LIST «««------------------------------------------------------------
+
 ;{ CHANGELOG
 ;  =========
+;  v.0.0.17 (2018/04/06)
+;     - Cleanup comments
 ;  v.0.0.16 (2018/04/04)
 ;     - Minor code cleanup
 ;  v.0.0.15 (2018/04/03)
@@ -495,12 +499,15 @@ StepHeading("Final Report")
 
 ;- Log Debug Window to File
 SaveDebugOutput(ASSETS$ + "session.log")
-End ;- <<< Main Ends Here <<<
+End ;}- <<< Main Ends Here <<<
 
 ;}==============================================================================
 ;                                   PROCEDURES                                  
 ;{==============================================================================
 
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;-> PROJECT DATA & ACCESS
+;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
   ; ------------------------------------------------------------------------------
   ; Recursively scan project folders and build the List of Categories.
@@ -583,8 +590,9 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
   Debug Ind$, 3 ; adds separation after sub-folders ends
 EndProcedure
 
-
-
+;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;-> PANDOC RELATED PROCEDURES
+;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Procedure PandocConvert(options.s)    
   Debug ">>>>>>>>>> PandocConvert() >>>>>>>>>>"  ; DELME
@@ -665,9 +673,9 @@ Procedure PandocConvert(options.s)
   
 EndProcedure
 
-; ==============================================================================
-;                               ERRORS & WARNINGS                               
-; ==============================================================================
+;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;-> ERRORS & WARNINGS HANDLING
+;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; TODO: Add Warnings-Tracking Procedure
 ; TODO: Add Warning Resume Procedure
 Procedure Abort(ErrorMsg.s)
@@ -687,9 +695,9 @@ Procedure Abort(ErrorMsg.s)
   
 EndProcedure
 
-;}==============================================================================
-;                             Header Comments Parser                            
-;{==============================================================================
+;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;-> RESOURCES PARSER
+;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Structure KeyValPair
@@ -934,4 +942,5 @@ Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
   ProcedureReturn Card
   
 EndProcedure
+;} <<< PROCEDURES <<<
 ;}==============================================================================
