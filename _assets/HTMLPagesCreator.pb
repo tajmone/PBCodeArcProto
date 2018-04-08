@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.20 (2018/04/06) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.21 (2018/04/08) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -37,6 +37,9 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.21 (2018/04/08)
+;    - Proj.Integrity Check:
+;      - Check integrity of "_assets/meta.yaml"
 ;  v0.0.20 (2018/04/06)
 ;    - Improved README file errors handling reports (via Select block):
 ;      - 0 Kb README File
@@ -266,6 +269,29 @@ CompilerEndIf
 StepHeading("Checking Project Integrity")
 ; FIXME: Missing README should be Error, not warning?
 ; TODO: Cleanup TESTS Reporting
+
+; Check status of YAML Metadata file
+; ==================================
+; TODO: test all errors with real scenarios
+Select FileSize(ASSETS$ + "meta.yaml")
+  Case 0 ; File is 0 Kb
+         ; ~~~~~~~~~~~~
+    Debug "ERROR!! meta.yaml has size 0 Kb!"
+    WARN +1
+  Case -1 ; File not found
+          ; ~~~~~~~~~~~~~~
+    Debug "ERROR!!! Missing meta.yaml file"
+    WARN +1
+  Case -2 ; File is a directory
+          ; ~~~~~~~~~~~~~~~~~~~~
+    Debug "ERROR!! meta.yaml is a directory!"
+    WARN +1
+  Default ; TEST Passed
+          ; ===========
+    Debug "meta.yaml file seems Ok.", 2 ; FIXME Debug Level
+EndSelect
+
+
 ForEach CategoriesL()
   ; Check that every category has a REAMDE file
   ; ===========================================
@@ -407,7 +433,7 @@ ForEach CategoriesL()
       ; Don't abort, just warn
       ; (user was already warned about these and chose to continue!)
       ; NOTE: All three error cases tested!
-    Case 0
+    Case 0 ; File is 0 Kb
       Debug "WARNING!! README.md has size 0 Kb!"
     Case -1 ; File not found
       Debug "WARNING!!! Missing README file: '"+ catPath +"README.md'"
