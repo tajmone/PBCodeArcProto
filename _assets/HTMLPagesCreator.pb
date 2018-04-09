@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.23 (2018/04/09) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.24 (2018/04/09) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -37,6 +37,11 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.24 (2018/04/09)
+;    - Handle pandoc Error/Warnings:
+;      - Pandoc invocation failed (Abort)
+;      - Pandoc exited with error (Abort)
+;      - Pandoc exited with warning (report it)
 ;  v0.0.23 (2018/04/09)
 ;    - Code Cleanup
 ;    - Fix existing Abort() calls to include Error-Type
@@ -145,7 +150,7 @@
 ; ==============================================================================
 ;-                                   SETTINGS                                   
 ;{==============================================================================
-#DBG_LEVEL = 3  ; Details Range 0—4:
+#DBG_LEVEL = 1  ; Details Range 0—4:
                 ;  - 0 : No extra info, just the basic feedback.
                 ;  - 1 : (currently unused) 
                 ;  - 2 : Extra details on Main code 
@@ -231,6 +236,7 @@ Enumeration AbortErrorsTypes
   #ABORT_GENERIC_ERROR
   #ABORT_INTERNAL_ERROR
   #ABORT_FILE_ACCESS_ERROR
+  #ABORT_PANDOC_ERROR
 EndEnumeration
 totAbortErrorsTypes = #PB_Compiler_EnumerationValue -1
 
@@ -252,6 +258,7 @@ DataSection
   Data.s "FATAL ERROR", "The application encountered an fatal error."
   Data.s "INTERNAL ERROR", "The application encountered an internal error; if the problem persists contact the author."
   Data.s "FILE ACCESS ERROR", "The application encountered an error while trying to access a project file for I/O operations."
+  Data.s "PANDOC ERROR", "An error was encountered while interacting with pandoc."
 ;   Data.s "", ""
 EndDataSection
 
@@ -641,11 +648,34 @@ ForEach CategoriesL()
                  ~" -V SIDEBAR=\"" + SIDEBAR$ + ~"\"" +
                  " -o index.html"
   
+  Define PandocRunErr ; (bool) success/failure in invoking pandoc
+  Define PandocExCode ; copy of pandoc exit code
+  
   If Not PandocConvert(pandocOpts.s)
-    ; TODO: Check if it's Warning or Error
-    Debug "!!! Pandoc returned ERROR or WARNING:"
-    Debug QuoteText( PandocErr$ )
-;     Debug "Pandoc STDERR:"+ #EOL + #DIV4$ + #EOL + PandocErr$ + #EOL + #DIV4$
+    ; Something went wrong with pandoc invocation...
+    If PandocRunErr
+      ; ~~~~~~~~~~~~~~~~~~~~~~~~
+      ; Pandoc invocation failed
+      ; ~~~~~~~~~~~~~~~~~~~~~~~~
+      ; NOTE: Tested!
+      Abort("Failed to invoke/run pandoc! Please, check that pandoc is correctly setup.",
+            #ABORT_PANDOC_ERROR)
+    ElseIf PandocExCode
+      ; ~~~~~~~~~~~~~~~~~~~~~~~~
+      ; Pandoc exited with Error
+      ; ~~~~~~~~~~~~~~~~~~~~~~~~
+      ; NOTE: Tested!
+      Abort("Pandoc exited with error (" + Str(PandocExCode) + "):" + #EOL +
+            QuoteText( PandocErr$ ), #ABORT_PANDOC_ERROR)
+    Else
+      ; ~~~~~~~~~~~~~~~~~~~~~~~
+      ; Pandoc returned Warning
+      ; ~~~~~~~~~~~~~~~~~~~~~~~
+      ; FIXME: Polishe Warning text
+      ; FIXME: Track Warning
+      Debug "!!! Pandoc returned a WARNING:"
+      Debug QuoteText( PandocErr$ )
+    EndIf
   EndIf
   ; ~~~~~~~~~~~~~
   cntCat +1
@@ -791,7 +821,6 @@ Procedure PandocConvert(options.s)
     ; ------------------------------------------------------------------------------
     ;                               Somethig Wrong...                               
     ; ------------------------------------------------------------------------------
-    PrintN("Pandoc couldn't be started...") ; DELME
     PandocRunErr = #True
     ProcedureReturn #Failure
   EndIf 

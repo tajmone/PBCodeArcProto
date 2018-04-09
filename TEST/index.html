@@ -69,6 +69,21 @@
   <div class="content">
 <h1>TEST FOLDER</h1>
 <p>This is just a test folder for testing errors and warnings handling.</p>
+<h1>Pandoc Errors</h1>
+<p>See source file:</p>
+<ul>
+<li><a href="https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/Error.hs"><code>Error.hs</code></a></li>
+</ul>
+<h2>Pandoc Warning</h2>
+<p>To test warnings, you can redefine twice a reference link:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb1-1" data-line-number="1">[foo]</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="ot">[foo]: bar</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="ot">[foo]: baz</span></a></code></pre></div>
+<p><a href="baz">foo</a></p>
+<h2>Pandoc Error</h2>
+<p>Need to find a way to raise error from within markdown document.</p>
 <article class='message is-link'>
 <div class='message-header'>
 <p>comments-only.pb</p>
