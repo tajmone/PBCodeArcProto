@@ -37,6 +37,13 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.22 (2018/04/09)
+;    - Improved Abort() Procedure: not handles Error Types in messages, with a
+;      default error message for every type of error, followed by the specific
+;      error description.
+;    - New AbortTypeMsg() structured Array with \Title and \Desc
+;    - New FixLineEndings(StrToFix$) Procedure
+;    - New QuoteText(text$) Procedure
 ;  v0.0.21 (2018/04/08)
 ;    - Proj.Integrity Check:
 ;      - Check integrity of "_assets/meta.yaml"
@@ -158,20 +165,108 @@ DebugLevel #DBG_LEVEL
 ; Cross Platform Settings
 ; TODO: Add #EOL_Wrong for fixing paths
 CompilerIf #PB_Compiler_OS = #PB_OS_Windows
-  #DSEP = "\"     ; Directory Separator Character
-  #EOL = #CRLF$   ; End-Of-Line Sequence
+  #DSEP = "\"       ; Directory Separator Character
+  #EOL = #CRLF$     ; End-Of-Line Sequence
+  #EOL_WRONG = #LF$ ; Wrong End-Of-Line Sequence
 CompilerElse
   #DSEP = "/"
   #EOL = #LF$
+  #EOL_WRONG = #CRLF$
 CompilerEndIf
 #EOL2 = #EOL + #EOL ; double EOL sequences
 
 ;- Procedures Declaration
 
-Declare Abort(ErrorMsg.s)
 
 ; Misc Constants and Vars
 
+
+
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;-> DEBUGGING
+;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#DIV1$ = "================================================================================"
+#DIV2$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+#DIV3$ = "~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~="
+#DIV4$ = "--------------------------------------------------------------------------------"
+
+#TOT_STEPS = "4"
+Macro StepHeading(Text)
+  StepNum +1
+  Debug #DIV1$ + #EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ #EOL + #DIV1$
+EndMacro
+
+Procedure.s FixLineEndings(StrToFix$)
+  ; Fix newline chars (CRLF/LF) according to OS.
+  ; ------------------------------------------------------------------------------
+  FixedStr$ = ReplaceString(StrToFix$, #EOL_WRONG, #EOL)
+  ProcedureReturn FixedStr$
+EndProcedure
+
+Procedure.s QuoteText(text$)
+  ; Convert string to quoted text by adding " | " at the beginning of each line.
+  ; ------------------------------------------------------------------------------
+  text$ = FixLineEndings(text$)
+  text$ = " | " + ReplaceString(text$, #EOL, #EOL + " | ")
+  ProcedureReturn text$
+  
+EndProcedure
+  
+;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;-> ERRORS & WARNINGS HANDLING
+;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; TODO: Add Warnings-Tracking Procedure
+; TODO: Add Warning Resume Procedure
+
+Enumeration AbortErrorsTypes
+  #ABORT_GENERIC_ERROR
+  #ABORT_INTERNAL_ERROR
+  #ABORT_FILE_ACCESS_ERROR
+EndEnumeration
+totAbortErrorsTypes = #PB_Compiler_EnumerationValue -1
+
+Structure ErrMessage
+  Title.s
+  Desc.s
+EndStructure
+
+Dim AbortTypeMsg.ErrMessage(totAbortErrorsTypes)
+
+For i=0 To totAbortErrorsTypes
+  Read.s AbortTypeMsg(i)\Title 
+  Read.s AbortTypeMsg(i)\Desc 
+Next
+
+AbortErrorMessages:
+DataSection
+  Data.s "FATAL ERROR", "The application encountered an fatal error."
+  Data.s "INTERNAL ERROR", "The application encountered an internal error; if the problem persists contact the author."
+  Data.s "FILE ACCESS ERROR", "The application encountered an error while trying to access a project file for I/O operations."
+;   Data.s "", ""
+EndDataSection
+
+
+Procedure Abort(ErrorMsg.s, ErrorType = #ABORT_GENERIC_ERROR)
+  Shared AbortTypeMsg()
+  
+  ErrTypeTitle.s = AbortTypeMsg(ErrorType)\Title
+  ErrTypeDesc.s  = AbortTypeMsg(ErrorType)\Desc
+  
+  Debug LSet("", 80, "\")
+  Debug LSet("", 80, "*")
+  Debug ErrTypeTitle + " — " + ErrTypeDesc + #EOL2 + ErrorMsg + #EOL
+  Debug "Aborting program execution..."
+  Debug LSet("", 80, "*")
+  Debug LSet("", 80, "/")
+  
+  MessageRequester(ErrTypeTitle, ErrTypeDesc + #EOL2 + ErrorMsg + #EOL2 + "Aborting execution...",
+                   #PB_MessageRequester_Error)
+  
+  ; TODO: Show Warnings resume before aborting
+  End 1
+  
+EndProcedure
+;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ;- RegEx
 Enumeration RegExs
@@ -181,26 +276,13 @@ EndEnumeration
 #RE_URL$ = "^(https?://([-\w\.]+)+(:\d+)?(/([\w/_\.]*(\?\S+)?)?)?)$"
 
 If Not CreateRegularExpression(#RE_URL, #RE_URL$)
-  ; FIXME: Internal Error (Bug) needs special Error Report
-  Debug "RegEx URL Error: " + RegularExpressionError()
-  MessageRequester("ERROR", "Error while creating URL RegEx!", #PB_MessageRequester_Error)
-  End 1
+  ; NOTE: Error tested!
+  ErrMSG$ = "Error while trying to create the following RegEx:" + #EOL2 + #RE_URL$ + #EOL2 +
+            "The Regular Expression library returned the following error:" + #EOL +
+            QuoteText( RegularExpressionError() )
+  Abort(ErrMSG$, #ABORT_INTERNAL_ERROR)
 EndIf
 
-; ==> Debugging <===============================================================
-#DIV1$ = "================================================================================"
-#DIV2$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-#DIV3$ = "~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~="
-#DIV4$ = "--------------------------------------------------------------------------------"
-; #DIV3$ = "~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-"
-; #DIV3$ = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-
-
-#TOT_STEPS = "4"
-Macro StepHeading(Text)
-  StepNum +1
-  Debug #DIV1$ + #EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ #EOL + #DIV1$
-EndMacro
 ;}==============================================================================
 ;-                                  INITIALIZE                                  
 ;{==============================================================================
@@ -742,27 +824,6 @@ Procedure PandocConvert(options.s)
   
 EndProcedure
 
-;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;-> ERRORS & WARNINGS HANDLING
-;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; TODO: Add Warnings-Tracking Procedure
-; TODO: Add Warning Resume Procedure
-Procedure Abort(ErrorMsg.s)
-  
-  Debug LSet("", 80, "\")
-  Debug LSet("", 80, "*")
-  Debug "FATAL ERROR: " + ErrorMsg + #EOL
-  Debug "             Aborting program execution..."
-  Debug LSet("", 80, "*")
-  Debug LSet("", 80, "/")
-  
-  MessageRequester("FATAL ERROR", ErrorMsg + #EOL2 + "Aborting execution...",
-                   #PB_MessageRequester_Error)
-  
-  ; TODO: Show Warnings resume before aborting
-  End 1
-  
-EndProcedure
 
 ;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;-> RESOURCES PARSER
