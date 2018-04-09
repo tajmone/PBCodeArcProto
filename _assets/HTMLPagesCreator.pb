@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.25 (2018/04/09) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.26 (2018/04/09) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -37,6 +37,18 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.26 (2018/04/09)
+;    - Implement Error Handling in Comments Parser (draft):
+;      - Now ParseFileComments() returns #Success/#Failure (1/0) and card is only
+;        build on successeful return value.
+;      - All Resource Parsing Errors are catched and handled inside the parsing procs:
+;        - Resouce File errors:
+;          - Res File is 0Kb
+;          - Res File not found
+;          - Res File is directory
+;          - Res File can't be read
+;        - No header comments block found
+;        - No keys found in comments parsing
 ;  v0.0.25 (2018/04/09)
 ;    - Clenaup DBG messages in Comments Parser (according to DBG Level)
 ;    - Add #DBGL1-#DBGL4 constants for use in DebugLevel (to allow quickly locating
@@ -237,6 +249,9 @@ EndProcedure
 ; Some helpers to handle Warning and Errors, keep track of Warning to create a
 ; final report at the end, and handle messages when aborting on fatal errors.
 ; ------------------------------------------------------------------------------
+
+#Failure = #False
+#Success = #True
 
 ; TODO: Add Warnings-Tracking Procedure
 ; TODO: Add Warning Résumé Procedure
@@ -613,15 +628,23 @@ ForEach CategoriesL()
               " | ./" + catPath + file + #EOL + #DIV3$
         
         currCardHTML.s = #Empty$ ; <= Shared in Parsing procedures!
-        ParseFileComments(file)
-        CARDS$ + currCardHTML
-        ; Temporary Debug
-        Debug "EXTRACTED CARD:" + #EOL + #DIV4$ + #EOL + currCardHTML + #EOL + #DIV4$ ; FIXME
-        cntRes +1
+        If ParseFileComments(file)
+          CARDS$ + currCardHTML
+          ; Temporary Debug
+          Debug "EXTRACTED CARD:" + #EOL + #DIV4$ + #EOL + currCardHTML + #EOL + #DIV4$ ; FIXME
+          cntRes +1
+        Else
+          ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          ; Resume Card Creation Failure
+          ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          Debug "!!! Card creation for this resource failed !!!"
+        EndIf
       Next
       CARDS$ + "~~~" ; <= end Raw Content fenced block
     Else  
-      ; Current Category doesn't have any Resources...
+      ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ; Current Category doesn't have any Resources
+      ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       Debug "!!! Current Category has no Resources !!!"
       ; TODO: issue a warning is Category is not Root?
     EndIf    
@@ -813,10 +836,7 @@ Procedure PandocConvert(options.s)
   PandocErr$ = ""
   PandocSTDOUT$ = ""
   
-  Enumeration 
-    #Failure
-    #Success
-  EndEnumeration
+
   ; ------------------------------------------------------------------------------
   ;                                 Invoke Pandoc                                 
   ; ------------------------------------------------------------------------------
@@ -898,28 +918,40 @@ Declare.s BuildCard(List RawDataL.KeyValPair(), fileName.s)
 
 
 
-; ------------------------------------------------------------------------------
 Procedure ParseFileComments(file.s)
+  ; ------------------------------------------------------------------------------
+  ; Parse key-value pairs in resource file's comments header block.
+  ; Returns #Success (=1) on success, or #Failure (=0) in case of errors.
+  ; Errors and Warnings details are handled locally.
+  ; ------------------------------------------------------------------------------
   ; TODO: ParseFileComments() return Errors
   Shared currCardHTML
   
-  ;{ check file exists
+  ;{ check if Resource file exists
   Select FileSize(file.s)
-    Case -1
-      Debug "File not found: '" + file + "'"
-      ;       ProcedureReturn #False
-      ProcedureReturn
-    Case -2
-      Debug "File is a directory: '" + file + "'"
-      ;       ProcedureReturn #False
-      ProcedureReturn
+    Case  0 ; File is 0 Kb
+            ; ~~~~~~~~~~~~
+            ; FIXME: Handle Error/Warning
+      Debug "Resource file has size 0 Kb: '" + file + "'"
+      ProcedureReturn #Failure
+    Case -1 ; File not found
+            ; ~~~~~~~~~~~~~~
+            ; FIXME: Handle Error/Warning
+      Debug "Resource file not found: '" + file + "'"
+      ProcedureReturn #Failure
+    Case -2 ; File is a directory
+            ; ~~~~~~~~~~~~~~~~~~~~
+            ; FIXME: Handle Error/Warning
+      Debug "Resource file is a directory: '" + file + "'"
+      ProcedureReturn #Failure
   EndSelect ;}
   
   ;{ open file
   If Not ReadFile(0, file, #PB_UTF8)
+    ; FIXME: Handle Error/Warning
     Debug "Can't open file: '" + file + "'"
-    ;     ProcedureReturn #False
-    ProcedureReturn
+    ProcedureReturn #Failure
+    
   EndIf
   ; Skip BOM
   ; TODO: Check enconding and if not UTF8 use it in read operations?
@@ -927,9 +959,12 @@ Procedure ParseFileComments(file.s)
   
   NewList CommentsL.s()
   If Not ExtractHeaderBlock(file, CommentsL())
-    ; FIXME: Should be handled by Warnings Tracker
+    ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ; No Comments Header Block Found
+    ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ; FIXME: Handle Error/Warning
     Debug "WARNING: Missing Header Comments Blocks in '" + file +"'"
-    ; FIXME: Should exit returning Err Code
+    ProcedureReturn #Failure
   ElseIf #DBG_LEVEL >= 3
     ; ===========================
     ; Debug Header Comments Block
@@ -946,14 +981,20 @@ Procedure ParseFileComments(file.s)
   EndIf
   CloseFile(0)
   
-  
-  
   NewList RawDataL.KeyValPair()
-  ParseComments(CommentsL(), RawDataL())
-  ; NOTE: instead of returning HTML string, handle it in BuildCard() via Shared currCardHTML
-  currCardHTML = BuildCard( RawDataL(), file )
-  
-  ; TODO: Handle Empty Cards Error
+  If ParseComments(CommentsL(), RawDataL())
+    ; NOTE: instead of returning HTML string, handle it in BuildCard() via Shared currCardHTML
+    currCardHTML = BuildCard( RawDataL(), file )    
+    ; TODO: Handle Empty Cards Error
+    ProcedureReturn #Success
+  Else
+    ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ; No Keys Found in Comments Parsing
+    ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ; FIXME: Handle Error/Warning
+    Debug "WARNING: No key-value pairs where found in '" + file +"'"
+    ProcedureReturn #Failure
+  EndIf
   
 EndProcedure
 ; ------------------------------------------------------------------------------
@@ -962,7 +1003,7 @@ Procedure.i ExtractHeaderBlock(file.s, List CommentsL.s())
   ; Extracts every consecutive comment line from beginning of `file` up to the
   ; first non-comment line encountered. Comment lines are stored as isolated
   ; string in `CommentsL()` list.
-  ; Returns the number of total comment lines extracted.   
+  ; Returns the number of total comment lines extracted (or zero if none).   
   ; ----------------------------------------------------------------------------
   Define.i totLines = 0
   Repeat
@@ -978,8 +1019,13 @@ Procedure.i ExtractHeaderBlock(file.s, List CommentsL.s())
   ForEver
   
 EndProcedure
-; ------------------------------------------------------------------------------
+
 Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
+  ; ----------------------------------------------------------------------------
+  ; Parse the List of extracted comment-lines and extrapolate key-value pairs.
+  ; Keys with empty values are preserved! FIXME: Drop empty keys
+  ; Returns the number of total keys extracted (or zero if none).   
+  ; ----------------------------------------------------------------------------
   Debug ">>> ParseComments()", #DBGL4
   
   totLines = ListSize( CommentsL() )
@@ -1074,9 +1120,8 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
     Debug #DIV4$, #DBGL4
   Next
   
-  
-  
   Debug "<<< ParseComments()", #DBGL4
+  ProcedureReturn ListSize( RawDataL() )
 EndProcedure
 ; ------------------------------------------------------------------------------
 Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
