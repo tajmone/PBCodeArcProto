@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.21 (2018/04/08) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.23 (2018/04/09) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -37,6 +37,9 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.23 (2018/04/09)
+;    - Code Cleanup
+;    - Fix existing Abort() calls to include Error-Type
 ;  v0.0.22 (2018/04/09)
 ;    - Improved Abort() Procedure: not handles Error Types in messages, with a
 ;      default error message for every type of error, followed by the specific
@@ -185,6 +188,8 @@ CompilerEndIf
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;-> DEBUGGING
 ;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Some helpers to handle text formatting in the debug output window.
+; ------------------------------------------------------------------------------
 #DIV1$ = "================================================================================"
 #DIV2$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 #DIV3$ = "~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~="
@@ -209,15 +214,19 @@ Procedure.s QuoteText(text$)
   text$ = FixLineEndings(text$)
   text$ = " | " + ReplaceString(text$, #EOL, #EOL + " | ")
   ProcedureReturn text$
-  
 EndProcedure
   
 ;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;-> ERRORS & WARNINGS HANDLING
 ;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; TODO: Add Warnings-Tracking Procedure
-; TODO: Add Warning Resume Procedure
+; Some helpers to handle Warning and Errors, keep track of Warning to create a
+; final report at the end, and handle messages when aborting on fatal errors.
+; ------------------------------------------------------------------------------
 
+; TODO: Add Warnings-Tracking Procedure
+; TODO: Add Warning Résumé Procedure
+
+; Define Error-Types which lead to aborting execution:
 Enumeration AbortErrorsTypes
   #ABORT_GENERIC_ERROR
   #ABORT_INTERNAL_ERROR
@@ -226,10 +235,11 @@ EndEnumeration
 totAbortErrorsTypes = #PB_Compiler_EnumerationValue -1
 
 Structure ErrMessage
-  Title.s
-  Desc.s
+  Title.s     ; Error-Type Title
+  Desc.s      ; Error-Type Description
 EndStructure
 
+; Array to associate Error-Types to their messages:
 Dim AbortTypeMsg.ErrMessage(totAbortErrorsTypes)
 
 For i=0 To totAbortErrorsTypes
@@ -247,6 +257,11 @@ EndDataSection
 
 
 Procedure Abort(ErrorMsg.s, ErrorType = #ABORT_GENERIC_ERROR)
+  ; ------------------------------------------------------------------------------
+  ; Abort execution by reporting the Error-Type and its default description,
+  ; followed by the specific error description. Abort message is both printed to
+  ; debug output window and shown in MessageRequester.
+  ; ------------------------------------------------------------------------------
   Shared AbortTypeMsg()
   
   ErrTypeTitle.s = AbortTypeMsg(ErrorType)\Title
@@ -259,8 +274,8 @@ Procedure Abort(ErrorMsg.s, ErrorType = #ABORT_GENERIC_ERROR)
   Debug LSet("", 80, "*")
   Debug LSet("", 80, "/")
   
-  MessageRequester(ErrTypeTitle, ErrTypeDesc + #EOL2 + ErrorMsg + #EOL2 + "Aborting execution...",
-                   #PB_MessageRequester_Error)
+  MessageRequester(ErrTypeTitle, ErrTypeDesc + #EOL2 + ErrorMsg + #EOL2 +
+                                 "Aborting execution...", #PB_MessageRequester_Error)
   
   ; TODO: Show Warnings resume before aborting
   End 1
@@ -442,7 +457,7 @@ If ReadFile(0, ASSETS$ + "meta.yaml")
   Wend
   CloseFile(0)
 Else
-  Abort("Couldn't open '_assets/meta.yaml' file!") ;- ABORT: missing "meta.yaml"
+  Abort("Couldn't read '_assets/meta.yaml' file!", #ABORT_FILE_ACCESS_ERROR) ;- ABORT: missing "meta.yaml"
 EndIf
 
 ; Debug #DIV4$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV4$ ; DELME
@@ -537,7 +552,7 @@ ForEach CategoriesL()
         ; Can't Access README File
         ; ~~~~~~~~~~~~~~~~~~~~~~~~
         ; TODO: This should be reported as a FILE ACCESS error
-        Abort("Couldn't open the README file: '"+ catPath +"README.md'") ;- ABORT: Can't open README
+        Abort("Couldn't read the README file: '"+ catPath +"README.md'", #ABORT_FILE_ACCESS_ERROR) ;- ABORT: Can't open README
       EndIf
   EndSelect
   ;  =========================
@@ -628,8 +643,9 @@ ForEach CategoriesL()
   
   If Not PandocConvert(pandocOpts.s)
     ; TODO: Check if it's Warning or Error
-    Debug "!!! Pandoc returned ERROR or WARNING"
-    Debug "Pandoc STDERR:"+ #EOL + #DIV4$ + #EOL + PandocErr$ + #EOL + #DIV4$
+    Debug "!!! Pandoc returned ERROR or WARNING:"
+    Debug QuoteText( PandocErr$ )
+;     Debug "Pandoc STDERR:"+ #EOL + #DIV4$ + #EOL + PandocErr$ + #EOL + #DIV4$
   EndIf
   ; ~~~~~~~~~~~~~
   cntCat +1
