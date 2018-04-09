@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.24 (2018/04/09) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.25 (2018/04/09) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -14,7 +14,7 @@
 ; category (via header comments parsing)
 ;{ -- TODOs LIST »»»------------------------------------------------------------
 ; TODO: Implement Warnings tracking to allow a resume at the end of execution.
-; TODO: Fix debug messages in Comments Parser (according to Debug Level)
+; TODO: Polish debug messages in Comments Parser (according to Debug Level)
 ; TODO: Implement Comments Parser errors returning (empty cards handling)
 ; TODO: Terminology: implement more precise and consistent terminolgy in var
 ;       and procs naming, documentation and comments:
@@ -37,6 +37,10 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.25 (2018/04/09)
+;    - Clenaup DBG messages in Comments Parser (according to DBG Level)
+;    - Add #DBGL1-#DBGL4 constants for use in DebugLevel (to allow quickly locating
+;      Debug lines via Search)
 ;  v0.0.24 (2018/04/09)
 ;    - Handle pandoc Error/Warnings:
 ;      - Pandoc invocation failed (Abort)
@@ -150,7 +154,7 @@
 ; ==============================================================================
 ;-                                   SETTINGS                                   
 ;{==============================================================================
-#DBG_LEVEL = 1  ; Details Range 0—4:
+#DBG_LEVEL = 4  ; Details Range 0—4:
                 ;  - 0 : No extra info, just the basic feedback.
                 ;  - 1 : (currently unused) 
                 ;  - 2 : Extra details on Main code 
@@ -171,7 +175,6 @@ DebugLevel #DBG_LEVEL
 ;-                                    SETUP                                     
 ;{==============================================================================
 ; Cross Platform Settings
-; TODO: Add #EOL_Wrong for fixing paths
 CompilerIf #PB_Compiler_OS = #PB_OS_Windows
   #DSEP = "\"       ; Directory Separator Character
   #EOL = #CRLF$     ; End-Of-Line Sequence
@@ -185,16 +188,23 @@ CompilerEndIf
 
 ;- Procedures Declaration
 
-
-; Misc Constants and Vars
-
-
+;- Misc Constants and Vars
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;-> DEBUGGING
 ;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Some helpers to handle text formatting in the debug output window.
 ; ------------------------------------------------------------------------------
+
+; These constants are just to simplify finding Debug lines in the code by their
+; DBG Level (no practical use beside that):
+Enumeration DBG_Levels 1
+  #DBGL1
+  #DBGL2
+  #DBGL3
+  #DBGL4
+EndEnumeration
+
 #DIV1$ = "================================================================================"
 #DIV2$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 #DIV3$ = "~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~="
@@ -220,7 +230,7 @@ Procedure.s QuoteText(text$)
   text$ = " | " + ReplaceString(text$, #EOL, #EOL + " | ")
   ProcedureReturn text$
 EndProcedure
-  
+
 ;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;-> ERRORS & WARNINGS HANDLING
 ;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -259,7 +269,7 @@ DataSection
   Data.s "INTERNAL ERROR", "The application encountered an internal error; if the problem persists contact the author."
   Data.s "FILE ACCESS ERROR", "The application encountered an error while trying to access a project file for I/O operations."
   Data.s "PANDOC ERROR", "An error was encountered while interacting with pandoc."
-;   Data.s "", ""
+  ;   Data.s "", ""
 EndDataSection
 
 
@@ -316,7 +326,7 @@ SetCurrentDirectory("../")
 PROJ_ROOT$ = GetCurrentDirectory()
 
 Debug "Debug Level: " + Str(#DBG_LEVEL)
-Debug "Project's Root Path: '" +PROJ_ROOT$ + "'", 2
+Debug "Project's Root Path: '" +PROJ_ROOT$ + "'", #DBGL2
 ; TODO: Check that pandoc >=2.0 is available
 ;}==============================================================================
 ;                                      MAIN                                     
@@ -359,7 +369,7 @@ FirstElement( CategoriesL() )
 NewList RootCategoriesL.s()
 CopyList( CategoriesL()\SubCategoriesL(), RootCategoriesL() )
 
-CompilerIf #DBG_LEVEL >= 2
+CompilerIf #DBG_LEVEL >= #DBGL2
   Debug "Root Categories:"
   cnt = 1
   ForEach RootCategoriesL()
@@ -392,7 +402,7 @@ Select FileSize(ASSETS$ + "meta.yaml")
     WARN +1
   Default ; TEST Passed
           ; ===========
-    Debug "meta.yaml file seems Ok.", 2 ; FIXME Debug Level
+    Debug "meta.yaml file seems Ok.", #DBGL2 ; FIXME Debug Level
 EndSelect
 
 
@@ -475,13 +485,13 @@ ForEach CategoriesL()
   catPath.s = CategoriesL()\Path
   Debug #DIV2$ + #EOL + "CATEGORY " + Str(cntCat) + "/" + Str(totCategories +1) +
         " | ./" + catPath + #EOL + #DIV2$
-  Debug "Category name: '" + CategoriesL()\Name + "'", 2
-  Debug "Category path: '" + CategoriesL()\Path + "'", 2
+  Debug "Category name: '" + CategoriesL()\Name + "'", #DBGL2
+  Debug "Category path: '" + CategoriesL()\Path + "'", #DBGL2
   
   ; TODO: Add Proc to fix dir sep "/" into "\" for Win Path
   ;      (Not stritcly required, but might be useful if path splitting operations
   ;       or other similar path manipulation need to be done).
-  Debug "Current working dir: " + PROJ_ROOT$ + catPath, 2
+  Debug "Current working dir: " + PROJ_ROOT$ + catPath, #DBGL2
   SetCurrentDirectory(PROJ_ROOT$ + catPath)
   ; ~~~~~~~~~~~~~
   
@@ -493,7 +503,7 @@ ForEach CategoriesL()
   For i = 1 To pathLevels
     path2root$ + "../" ; <= Use "/" as URL path separator
   Next 
-  Debug "path2root$: '" + path2root$ + "'", 2
+  Debug "path2root$: '" + path2root$ + "'", #DBGL2
   ; ===================
   ;- Build Bread Crumbs
   ; ===================
@@ -731,10 +741,10 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
           AddElement( CategoriesL()\FilesToParseL() )
           CategoriesL()\FilesToParseL() = entryName ; relative path
           totResources +1
-          Debug entryDBG$, 3
+          Debug entryDBG$, #DBGL3
         Else
           ; Ignore other PB extensions (*.pbp|*.pbf)
-          Debug entryDBG$ + "(ignore file)", 4
+          Debug entryDBG$ + "(ignore file)", #DBGL4
         EndIf
         
       Else ; EntryType is Directory
@@ -744,7 +754,7 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
         If entryName = "." Or entryName = ".." Or 
            entryName = ".git" Or
            Left(entryName, 1) = "_"
-          Debug entryDBG$ + "- /" + entryName + "/  (ignore folder)", 4
+          Debug entryDBG$ + "- /" + entryName + "/  (ignore folder)", #DBGL4
           Continue 
         EndIf
         
@@ -757,7 +767,7 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
           CategoriesL()\FilesToParseL() = fName
           totResources +1
           totSubFRes +1
-          Debug entryDBG$ + "- " + fName, 3
+          Debug entryDBG$ + "- " + fName, #DBGL3
         Else
           ;  =========================
           ;- SubFolder is Sub-Category
@@ -765,7 +775,7 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
           AddElement( CategoriesL()\SubCategoriesL() )
           CategoriesL()\SubCategoriesL() = entryName ; just the folder name
           totCategories +1
-          Debug entryDBG$ + "+ /" + entryName + "/", 3          
+          Debug entryDBG$ + "+ /" + entryName + "/", #DBGL3          
           ; -------------------------
           ; Recurse into Sub-Category
           ; -------------------------
@@ -784,7 +794,7 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
   EndIf
   
   recCnt -1
-  Debug Ind$, 3 ; adds separation after sub-folders ends
+  Debug Ind$, #DBGL3 ; adds separation after sub-folders ends
 EndProcedure
 
 ;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -970,7 +980,7 @@ Procedure.i ExtractHeaderBlock(file.s, List CommentsL.s())
 EndProcedure
 ; ------------------------------------------------------------------------------
 Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
-  Debug ">>> ParseComments()"
+  Debug ">>> ParseComments()", #DBGL4
   
   totLines = ListSize( CommentsL() )
   
@@ -982,22 +992,22 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
     commDelim.s = Left(CommentsL(), 3)
     If commDelim = ";: " Or commDelim = ";{:"  Or commDelim = ";}:"
       ; TODO: capture also ";{:" and ";}:"
-      Debug lineNum + "Parse:"
+      Debug lineNum + "Parse:", #DBGL4
       ;  ===========
       ;- Extract Key
       ;  ===========
       key.s = Trim(StringField(CommentsL(), 2, ":"))
-      Debug dbgIndent + "- key found: '" + key +"'"
+      Debug dbgIndent + "- key found: '" + key +"'", #DBGL4
       ;  =============
       ;- Extract Value
       ;  =============
       valueStart = FindString(CommentsL(), ":", 4)
       value.s = Trim(Mid(CommentsL(), valueStart +1))
       If value = #Empty$
-        Debug dbgIndent + "- value found: (empty)"
+        Debug dbgIndent + "- value found: (empty)", #DBGL4
         newParagraph = #True
       Else
-        Debug dbgIndent + "- value found: '" + value +"'"
+        Debug dbgIndent + "- value found: '" + value +"'", #DBGL4
         newParagraph = #False
       EndIf
       ;  =======================
@@ -1021,8 +1031,8 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
           carryOn = #True
           valueNew.s = Trim(Mid(CommentsL(), 4))
           lineNum.s = RSet(Str(lineCnt), 2, "0") + "| "
-          Debug lineNum + "Detected value carry-on:"
-          Debug dbgIndent + "- carry-on value found: '" + valueNew +"'"
+          Debug lineNum + "Detected value carry-on:", #DBGL4
+          Debug dbgIndent + "- carry-on value found: '" + valueNew +"'", #DBGL4
           ;  ------------------------------
           ;- Append Carry-On Value to Value
           ;  ------------------------------
@@ -1042,9 +1052,8 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
              ;  ~~~~~~~~~~~~~~~~~~~~~~
           If carryOn ; (there were carry-on lines)
                      ; Debug final value string
-            Debug dbgIndent + "- Assembled value:"
-            Debug LSet("", 80, "-")
-            Debug value
+            Debug dbgIndent + "- Assembled value:" + #EOL + #DIV4$, #DBGL4
+            Debug value, #DBGL4
           EndIf
           ;- Add <key> & <value> to list
           AddElement(RawDataL())
@@ -1059,19 +1068,19 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
       ForEver
       
     Else
-      Debug lineNum + "Skip"
+      Debug lineNum + "Skip", #DBGL4
     EndIf
     lineCnt +1
-    Debug LSet("", 80, "-")
+    Debug #DIV4$, #DBGL4
   Next
   
   
   
-  Debug "<<< ParseComments()"
+  Debug "<<< ParseComments()", #DBGL4
 EndProcedure
 ; ------------------------------------------------------------------------------
 Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
-  Debug ">>> BuildCard()"
+  Debug ">>> BuildCard()", #DBGL4
   
   ; TODO: Add link to fileName
   ; TODO: If file is "CodeInfo.txt" just add folder path
@@ -1089,9 +1098,8 @@ Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
     Card + "<tr><td>" + key + ":</td><td>"
     
     value.s = RawDataL()\val
-    
     value = EscapeString( value, #PB_String_EscapeXML )
-    
+    ;  =============
     ;- Capture Links
     ;  =============
     ;  Only capture links if they are the sole content of value string.
@@ -1099,26 +1107,25 @@ Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
       While NextRegularExpressionMatch(#RE_URL)
         URL.s = RegularExpressionMatchString(#RE_URL)
         Link.s = ~"<a href=\"" + URL + ~"\">" + URL + "</a>"
-        Debug "! URL Match: " + URL
-        Debug "! URL Link: " + Link
+        Debug "! URL Match: " + URL, #DBGL4
+        Debug "! URL Link: " + Link, #DBGL4
         value = ReplaceString(value, URL, Link, #PB_String_CaseSensitive, 1, 1)
         ;         Debug "! URL Position: " + Str(RegularExpressionMatchPosition(#RE_URL))
         ;         Debug "! URL Length: " + Str(RegularExpressionMatchLength(#RE_URL))
       Wend
     EndIf
-    
+    ;  ====================
     ;- Convert EOLs to <br>
     ;  ====================
     value = ReplaceString(value, #EOL2, "<br /><br />") ; <= The optional " /" is for XML compatibility
     Card + value + "</td></tr>" + #EOL
-    
     
   Next
   
   Card + "</tbody></table>" + #EOL +
          "</div></article>" + #EOL2
   
-  Debug "<<< BuildCard()"
+  Debug "<<< BuildCard()", #DBGL4
   ProcedureReturn Card
   
 EndProcedure
