@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.26 (2018/04/09) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.27 (2018/04/09) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -37,6 +37,9 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.27 (2018/04/09)
+;    - Purge Empty Keys: If user sets #PURGE_EMPTY_KEYS to #True, all parsed keys
+;      with empty values will not be kept in HTML Resume Card; otherwise yes.
 ;  v0.0.26 (2018/04/09)
 ;    - Implement Error Handling in Comments Parser (draft):
 ;      - Now ParseFileComments() returns #Success/#Failure (1/0) and card is only
@@ -175,6 +178,9 @@
                 ;  - 4 : Also expose core procedure's ingnored details (misses,
                 ;        skipped/ignored items, etc.)
 DebugLevel #DBG_LEVEL
+
+#PURGE_EMPTY_KEYS = #True ; If #True, extracted keys with empty value are purged
+                          ; from HTML Resume Card. If #False, they are kept.
 
 #CodeInfoFile = "CodeInfo.txt" ; found in multi-file subfoldered resources
 
@@ -1101,10 +1107,19 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
             Debug dbgIndent + "- Assembled value:" + #EOL + #DIV4$, #DBGL4
             Debug value, #DBGL4
           EndIf
-          ;- Add <key> & <value> to list
-          AddElement(RawDataL())
-          RawDataL()\key = key
-          RawDataL()\val = value
+            ;  ===========================
+            ;- Add <key> & <value> to list
+            ;  ===========================
+          If Not ( value = #Empty$ And #PURGE_EMPTY_KEYS ); <= customizable setting
+            AddElement(RawDataL())
+            RawDataL()\key = key
+            RawDataL()\val = value
+          Else
+            ; Skip Empty Key
+            ; ~~~~~~~~~~~~~~
+            ; TODO: Should debug this differently according to current DBG Level
+;             Debug "~ Purged empty key: " + key, #DBGL3           
+          EndIf
           ; Roll-back List Element and line counter...
           PreviousElement(CommentsL())
           lineCnt -1
