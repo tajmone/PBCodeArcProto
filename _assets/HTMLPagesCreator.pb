@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.27 (2018/04/09) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.28 (2018/04/15) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -32,11 +32,23 @@
 ;                        (if multi-file, just the folder name?)
 ;
 ;       Some of these are already in place, just need to rename them.
+; TODO: DEBUG LEVEL 0 should show only Project stats and final report
 ; TODO: 
 ;} -- TODOs LIST «««------------------------------------------------------------
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.28 (2018/04/15)
+;    - Added new DIV constants: #DIV5$ (***…)  #DIV6$ (\\\…)  #DIV7$ (//…) and
+;      removed use of LSet() to printout line dividers.
+;    - Warnings Tracker — started fleshing out the basis for the tracker:
+;      - New List WarningsL.s() to store warning messages
+;      - New Procedure RaiseWarning(ProblemFile.s, WarningMessage.s) to print out
+;        warning message at time of occurence and store it for final report.
+; 
+;      Currently, only pandoc warnings are handled with new RaiseWarning(), for
+;      testing, and no report is actually printed out at the end (still need to fix
+;      some stuff before implementing globally).
 ;  v0.0.27 (2018/04/09)
 ;    - Purge Empty Keys: If user sets #PURGE_EMPTY_KEYS to #True, all parsed keys
 ;      with empty values will not be kept in HTML Resume Card; otherwise yes.
@@ -227,6 +239,9 @@ EndEnumeration
 #DIV2$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 #DIV3$ = "~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~="
 #DIV4$ = "--------------------------------------------------------------------------------"
+#DIV5$ = "********************************************************************************"
+#DIV6$ = "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"
+#DIV7$ = "////////////////////////////////////////////////////////////////////////////////"
 
 #TOT_STEPS = "4"
 Macro StepHeading(Text)
@@ -305,12 +320,10 @@ Procedure Abort(ErrorMsg.s, ErrorType = #ABORT_GENERIC_ERROR)
   ErrTypeTitle.s = AbortTypeMsg(ErrorType)\Title
   ErrTypeDesc.s  = AbortTypeMsg(ErrorType)\Desc
   
-  Debug LSet("", 80, "\")
-  Debug LSet("", 80, "*")
+  Debug #DIV6$ + #EOL + #DIV5$
   Debug ErrTypeTitle + " — " + ErrTypeDesc + #EOL2 + ErrorMsg + #EOL
   Debug "Aborting program execution..."
-  Debug LSet("", 80, "*")
-  Debug LSet("", 80, "/")
+  Debug #DIV5$ + #EOL + #DIV7$
   
   MessageRequester(ErrTypeTitle, ErrTypeDesc + #EOL2 + ErrorMsg + #EOL2 +
                                  "Aborting execution...", #PB_MessageRequester_Error)
@@ -320,6 +333,39 @@ Procedure Abort(ErrorMsg.s, ErrorType = #ABORT_GENERIC_ERROR)
   
 EndProcedure
 ;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+; FIXME: Should use a Structure instead:
+;   \ProblemPath.s
+;   \WarningMessage.s
+
+;-***************
+
+NewList WarningsL.s() ; List of str to store Warning messages
+
+Procedure RaiseWarning(ProblemFile.s, WarningMessage.s)
+  ; ------------------------------------------------------------------------------
+  ; Capture Warnings and their messages. Show warning at time of occurence (if curr
+  ; DebugLevel or setttings allow it) and store it for the final resume.
+  ; ------------------------------------------------------------------------------
+  ; FIXME: Instead of having the ProblemFile paramater, implement a currFile str
+  ;        that always refers to the resource currently being processed (can be
+  ;        category path, README.md, or resource file, etc.).
+  
+  Shared WarningsL()
+  ; =========================================
+  ; Show Warning message at time of occurence
+  ; =========================================
+  Debug #DIV6$ + #EOL + #DIV5$
+  Debug "WARNING!!! While processing: " + ProblemFile  + #EOL + #DIV4$ + #EOL +
+        WarningMessage
+  Debug #DIV5$ + #EOL + #DIV7$
+  ; ======================================
+  ; Store Warning message for final report
+  ; ======================================
+  AddElement( WarningsL() )
+  WarningsL() = ProblemFile + #EOL + #DIV4$ + #EOL + WarningMessage
+  
+EndProcedure
 
 ;- RegEx
 Enumeration RegExs
@@ -712,8 +758,11 @@ ForEach CategoriesL()
       ; ~~~~~~~~~~~~~~~~~~~~~~~
       ; FIXME: Polishe Warning text
       ; FIXME: Track Warning
-      Debug "!!! Pandoc returned a WARNING:"
-      Debug QuoteText( PandocErr$ )
+;       Debug "!!! Pandoc returned a WARNING:"
+;       Debug QuoteText( PandocErr$ )
+;-***************
+      Warn$ = ~"Pandoc reported the following warnings:\n" + QuoteText( PandocErr$ )
+      RaiseWarning(catPath, Warn$) ; FIXME: Should use something like currFile instead of catPath!
     EndIf
   EndIf
   ; ~~~~~~~~~~~~~
