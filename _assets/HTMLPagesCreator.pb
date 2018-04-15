@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.28 (2018/04/15) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.29 (2018/04/16) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -38,6 +38,10 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.29 (2018/04/16)
+;    - Warnings Tracker — Improved system:
+;      - `currCat` e `currRes` strings now track what is currently being processed
+;        and the Warning Tracker shares these to determine where the problem occured.
 ;  v0.0.28 (2018/04/15)
 ;    - Added new DIV constants: #DIV5$ (***…)  #DIV6$ (\\\…)  #DIV7$ (//…) and
 ;      removed use of LSet() to printout line dividers.
@@ -342,7 +346,10 @@ EndProcedure
 
 NewList WarningsL.s() ; List of str to store Warning messages
 
-Procedure RaiseWarning(ProblemFile.s, WarningMessage.s)
+Define.s currCat ; Always = crurrent Category path (relative to project root)
+Define.s currRes ; Always = crurrent Resource filename OR empty if none.
+
+Procedure RaiseWarning(WarningMessage.s)
   ; ------------------------------------------------------------------------------
   ; Capture Warnings and their messages. Show warning at time of occurence (if curr
   ; DebugLevel or setttings allow it) and store it for the final resume.
@@ -352,18 +359,19 @@ Procedure RaiseWarning(ProblemFile.s, WarningMessage.s)
   ;        category path, README.md, or resource file, etc.).
   
   Shared WarningsL()
+  Shared currCat, currRes
   ; =========================================
   ; Show Warning message at time of occurence
   ; =========================================
   Debug #DIV6$ + #EOL + #DIV5$
-  Debug "WARNING!!! While processing: " + ProblemFile  + #EOL + #DIV4$ + #EOL +
+  Debug "WARNING!!! While processing: " + currCat + currRes + #EOL + #DIV4$ + #EOL +
         WarningMessage
   Debug #DIV5$ + #EOL + #DIV7$
   ; ======================================
   ; Store Warning message for final report
   ; ======================================
   AddElement( WarningsL() )
-  WarningsL() = ProblemFile + #EOL + #DIV4$ + #EOL + WarningMessage
+  WarningsL() = currCat + currRes + #EOL + #DIV4$ + #EOL + WarningMessage
   
 EndProcedure
 
@@ -532,6 +540,27 @@ EndIf
 ;{==============================================================================
 StepHeading("Process Categories")
 
+; ===================================
+; Warnings/Errors Tracking References
+; ===================================
+; From here onward, the following vars are used by the Warnings Tracking system
+; to store references to the problems, for the final report:
+; (1) `currCat` -- holds the path of the category currently being processed
+;                  (empty if it's Root). Path is relative to the project's root.
+; (2) `currRes` -- holds the filename of the resource currently being processed
+;                  (with "CodeInfo.txt" resources, also stores the subfolder).
+;
+; The warning tracker will interpret an empty `currRes` string as indicating that
+; the error refers to the Category itself (eg: an empty category), rather than 
+; to a specific resource file. For this reason, it's important that:
+; -- When beginning to process a resource, `currRes` must be immeditaely set to
+;    hold its filename;
+; -- After a resource has been processed, `currRes` must be immeditaely set to
+;    an empty string.
+; -----------------------------------
+currCat.s = #Empty$ ; Always = crurrent Category path (relative to project root)
+currRes.s = #Empty$ ; Always = crurrent Resource filename OR empty if none.
+
 ; =========================
 ; Load Common YAML Metadata
 ; =========================
@@ -546,14 +575,19 @@ EndIf
 
 ; Debug #DIV4$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV4$ ; DELME
 
+;  ==========================
+;- Iterate Through Categories
+;  ==========================
 cntCat = 1
 ForEach CategoriesL()
   
   catPath.s = CategoriesL()\Path
+  currCat = catPath
+  ; TODO: Use a macro to print category header? (looks cleaner)
   Debug #DIV2$ + #EOL + "CATEGORY " + Str(cntCat) + "/" + Str(totCategories +1) +
         " | ./" + catPath + #EOL + #DIV2$
   Debug "Category name: '" + CategoriesL()\Name + "'", #DBGL2
-  Debug "Category path: '" + CategoriesL()\Path + "'", #DBGL2
+  Debug "Category path: '" + catPath + "'", #DBGL2
   
   ; TODO: Add Proc to fix dir sep "/" into "\" for Win Path
   ;      (Not stritcly required, but might be useful if path splitting operations
@@ -604,6 +638,7 @@ ForEach CategoriesL()
   ;  ===============
   ;- Get README File
   ;  ===============
+  currRes = "README.md"
   README$ = #Empty$
   
   ; TODO: Change "If" to "Select" statement
@@ -615,11 +650,11 @@ ForEach CategoriesL()
       ; (user was already warned about these and chose to continue!)
       ; NOTE: All three error cases tested!
     Case 0 ; File is 0 Kb
-      Debug "WARNING!! README.md has size 0 Kb!"
-    Case -1 ; File not found
-      Debug "WARNING!!! Missing README file: '"+ catPath +"README.md'"
-    Case -2 ; File is a directory
-      Debug "WARNING!! README.md is a directory!"
+      Debug "WARNING!! README.md has size 0 Kb!" ; FIXME: Track Warning
+    Case -1                                      ; File not found
+      Debug "WARNING!!! Missing README file: '"+ catPath +"README.md'" ; FIXME: Track Warning
+    Case -2                                                            ; File is a directory
+      Debug "WARNING!! README.md is a directory!"                      ; FIXME: Track Warning
     Default
       ; ========================
       ; Get README File Contents
@@ -639,6 +674,7 @@ ForEach CategoriesL()
         Abort("Couldn't read the README file: '"+ catPath +"README.md'", #ABORT_FILE_ACCESS_ERROR) ;- ABORT: Can't open README
       EndIf
   EndSelect
+  currRes = #Empty$
   ;  =========================
   ;- Build SubCategories links
   ;  =========================
@@ -673,6 +709,7 @@ ForEach CategoriesL()
       
       ForEach \FilesToParseL()
         file.s = \FilesToParseL()
+        currRes = file
         
         ;         Debug Str(cntRes) + ") '" + file +"'" ; DELME
         
@@ -692,6 +729,7 @@ ForEach CategoriesL()
           Debug "!!! Card creation for this resource failed !!!"
         EndIf
       Next
+      currRes = #Empty$
       CARDS$ + "~~~" ; <= end Raw Content fenced block
     Else  
       ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -720,7 +758,10 @@ ForEach CategoriesL()
   ;            [x] $description$
   ;            [x] $keywords$
   
-  
+  currRes = "index.html" ; <= Any errors here will have to be reported as pertaining
+                         ;    the output HTML doc because they could be caused by a
+                         ;    variety of factors in pandoc (options, one of the strings
+                         ;    that are fed via STDIN, etc.)   
   Declare PandocConvert(options.s)
   
   MD_Page.s = README$ + #EOL2 + SubCatLinks + #EOL2 + CARDS$ +
@@ -756,15 +797,14 @@ ForEach CategoriesL()
       ; ~~~~~~~~~~~~~~~~~~~~~~~
       ; Pandoc returned Warning
       ; ~~~~~~~~~~~~~~~~~~~~~~~
-      ; FIXME: Polishe Warning text
-      ; FIXME: Track Warning
-;       Debug "!!! Pandoc returned a WARNING:"
-;       Debug QuoteText( PandocErr$ )
-;-***************
+      ; FIXME: There could be more than one warnings, should split the err report into
+      ;        multiple warning by counting occurences of "[WARNING]"
+      ;-***************
       Warn$ = ~"Pandoc reported the following warnings:\n" + QuoteText( PandocErr$ )
-      RaiseWarning(catPath, Warn$) ; FIXME: Should use something like currFile instead of catPath!
+      RaiseWarning(Warn$)
     EndIf
   EndIf
+  currRes = #Empty$
   ; ~~~~~~~~~~~~~
   cntCat +1
   Debug #DIV2$
@@ -891,7 +931,7 @@ Procedure PandocConvert(options.s)
   PandocErr$ = ""
   PandocSTDOUT$ = ""
   
-
+  
   ; ------------------------------------------------------------------------------
   ;                                 Invoke Pandoc                                 
   ; ------------------------------------------------------------------------------
@@ -1156,9 +1196,9 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
             Debug dbgIndent + "- Assembled value:" + #EOL + #DIV4$, #DBGL4
             Debug value, #DBGL4
           EndIf
-            ;  ===========================
-            ;- Add <key> & <value> to list
-            ;  ===========================
+          ;  ===========================
+          ;- Add <key> & <value> to list
+          ;  ===========================
           If Not ( value = #Empty$ And #PURGE_EMPTY_KEYS ); <= customizable setting
             AddElement(RawDataL())
             RawDataL()\key = key
@@ -1167,7 +1207,7 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
             ; Skip Empty Key
             ; ~~~~~~~~~~~~~~
             ; TODO: Should debug this differently according to current DBG Level
-;             Debug "~ Purged empty key: " + key, #DBGL3           
+            ;             Debug "~ Purged empty key: " + key, #DBGL3           
           EndIf
           ; Roll-back List Element and line counter...
           PreviousElement(CommentsL())
