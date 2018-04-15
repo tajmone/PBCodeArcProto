@@ -1,3 +1,7 @@
+---
+title: Hyperlink Gadget
+---
+
 # Hyperlink Gadget Category
 
 Some text describing the category.

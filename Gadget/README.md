@@ -1,3 +1,7 @@
+---
+title: Gadget
+---
+
 # Gadget Category
 
 Some text describing the category.

@@ -1,3 +1,7 @@
+---
+title: Scintilla Gadget
+---
+
 # Scintilla Gadget Category
 
 Some text describing the category.

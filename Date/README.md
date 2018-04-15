@@ -1,3 +1,7 @@
+---
+title: Date
+---
+
 # Date Category
 
 Some text describing the category.

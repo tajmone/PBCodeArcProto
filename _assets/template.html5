@@ -1,5 +1,5 @@
 $--+---------------------------------------------------------------------------+
-$--| "template.html5" v0.0.6 (2018/03/31) | by Tristano Ajmone                 |
+$--| "template.html5" v0.0.7 (2018/04/15) | by Tristano Ajmone                 |
 $--|---------------------------------------------------------------------------|
 $--|                                                                           |
 $--|                        PureBasic CodeArchiv Rebirth                       |
@@ -28,7 +28,7 @@ $endif$
 $if(keywords)$
   <meta name="keywords" content="$for(keywords)$$keywords$$sep$, $endfor$" />
 $endif$
-  <title>$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$</title>
+  <title>$if(title)$$title$ | $endif$$if(title-prefix)$$title-prefix$$endif$</title>
 $if(description)$
   <meta name="description" content="$description$">
 $endif$
