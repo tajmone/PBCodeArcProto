@@ -26,7 +26,7 @@ Currently, all source files already contain a commented header block with all th
 ;   Description: Adds support to get the free space size of drives
 ;            OS: Windows, Linux
 ; English-Forum: http://www.purebasic.fr/english/viewtopic.php?p=466070#p466070
-;  French-Forum: 
+;  French-Forum:
 ;  German-Forum: http://www.purebasic.fr/german/viewtopic.php?p=278150#p278150
 ```
 
@@ -47,7 +47,25 @@ The file `_assets/meta.yaml` defines the core variables needed by the html5 pand
 
 Some metadata entries don't have a default value and should/must be defined in each README file:
 
-- `title` (_mandatory_) — will be used for the doc title in the browser tab (`<title>`.
+- `title` (_mandatory_)
+
+## Category Title
+
+The `title` will be used for the doc title in the browser tab (`<title>` tag) by combining it with the `title-sufffix` (defined in `meta.yaml`):
+
+```html
+<title>$title$ | $title-sufffix$</title>
+```
+
+Example:
+
+```html
+<title>Home | PureBasic CodeArchiv Rebirth</title>
+```
+
+If a category's `README.md` doesn't define a `title`, pandoc will raise a warning. We didn't provide a default value for `title` because we want a warning to inform the user about the need to provide a title for the category.
+
+## Category Metadata
 
 Each category should define in the YAML headers of its `README.md` file the following variables:
 
