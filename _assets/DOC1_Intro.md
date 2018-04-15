@@ -35,3 +35,22 @@ The idea is to implement a parsing system that can extract this info with very l
 The details on how the comments parser works are documented in:
 
 - [`DOC2_Comments_Parsing`](./DOC2_Comments_Parsing)
+
+# Sections Metadata
+
+Pandoc will extract metadata for the final HTML doc from:
+
+- [`_assets/meta.yaml`](./meta.yaml) (global)
+- `**/README.md` — YAML headers in each Category README file
+
+The file `_assets/meta.yaml` defines the core variables needed by the html5 pandoc template (eg: Header title, etc.) plus default values for metadata. Any metadata defined in the YAML headers of a `README.md` will override the default values of `meta.yaml`.
+
+Some metadata entries don't have a default value and should/must be defined in each README file:
+
+- `title` (_mandatory_) — will be used for the doc title in the browser tab (`<title>`.
+
+Each category should define in the YAML headers of its `README.md` file the following variables:
+
+- `description` — (for SEO) `<head><meta name="description" ...>`
+- `keywords` — (for SEO) `<head><meta name="keywords" ...>`
+
