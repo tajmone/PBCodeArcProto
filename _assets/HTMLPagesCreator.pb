@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.30 (2018/04/16) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.31 (2018/04/16) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -13,7 +13,6 @@
 ; as introduction text, and a resume card is built for each resource in the
 ; category (via header comments parsing)
 ;{ -- TODOs LIST »»»------------------------------------------------------------
-; TODO: Implement Warnings tracking to allow a resume at the end of execution.
 ; TODO: Polish debug messages in Comments Parser (according to Debug Level)
 ; TODO: Implement Comments Parser errors returning (empty cards handling)
 ; TODO: Terminology: implement more precise and consistent terminolgy in var
@@ -22,22 +21,24 @@
 ;       - Resource: can mean a single-file resource or a multi-file resource.
 ;                   But I need a further term to indicate the latter (resource
 ;                   folder; multi-file resource?)
-; TODO: "curr" vars: The Warnings tracking system need to access at any time of
-;       the Categories/Resources iteration process some vars referring to the
-;       current elements being processed, in order to store the appropriate
-;       references in the warning messages for the final report:
-; 
-;       - currCategory : full path (from root) of curr Category being processed
-;       - currResource : full path (from root) of curr Resource being processed
-;                        (if multi-file, just the folder name?)
-;
-;       Some of these are already in place, just need to rename them.
 ; TODO: DEBUG LEVEL 0 should show only Project stats and final report
+; TODO: Error/Warning Message Requester should only be shown once, and if users
+;       decides to carry on, any further non fatal error should be handled without
+;       message requesters.
+;       Checks should be implements via a boolean var at:
+;        - STEP2 "Project Integrity"
+;        - RaiseWarning() Proc
+;       Furthermore, settings should offer a way to set IGNORE ERRORS.
 ; TODO: 
 ;} -- TODOs LIST «««------------------------------------------------------------
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.31 (2018/04/16)
+;    - Warnings Tracker:
+;      - Now all errors and warnings are handled via RaiseWarning() proc.
+;    All error/warning cases need to be tested again now.
+;    Some errrors might have been slipped and still handled manually.
 ;  v0.0.30 (2018/04/16)
 ;    - Warnings Tracker — Improved system:
 ;      - Warnings are stored in structured List
@@ -654,7 +655,6 @@ ForEach CategoriesL()
   currRes = "README.md"
   README$ = #Empty$
   
-  ; TODO: Change "If" to "Select" statement
   Select FileSize("README.md")
       ; ~~~~~~~~~~~~~~~~~~~~
       ; README File Problems
@@ -663,11 +663,14 @@ ForEach CategoriesL()
       ; (user was already warned about these and chose to continue!)
       ; NOTE: All three error cases tested!
     Case 0 ; File is 0 Kb
-      Debug "WARNING!! README.md has size 0 Kb!" ; FIXME: Track Warning
-    Case -1                                      ; File not found
-      Debug "WARNING!!! Missing README file: '"+ catPath +"README.md'" ; FIXME: Track Warning
-    Case -2                                                            ; File is a directory
-      Debug "WARNING!! README.md is a directory!"                      ; FIXME: Track Warning
+           ; ~~~~~~~~~~~~
+      RaiseWarning("README.md has size 0 Kb.")
+    Case -1 ; File not found
+            ; ~~~~~~~~~~~~~~
+      RaiseWarning("Missing README file.")
+    Case -2 ; File is a directory
+            ; ~~~~~~~~~~~~~~~~~~~~
+      RaiseWarning("README.md is a directory.")
     Default
       ; ========================
       ; Get README File Contents
@@ -683,7 +686,7 @@ ForEach CategoriesL()
         ; ~~~~~~~~~~~~~~~~~~~~~~~~
         ; Can't Access README File
         ; ~~~~~~~~~~~~~~~~~~~~~~~~
-        ; TODO: This should be reported as a FILE ACCESS error
+        ; FIXME: Track as Warning? (this is not a fatal error!)
         Abort("Couldn't read the README file: '"+ catPath +"README.md'", #ABORT_FILE_ACCESS_ERROR) ;- ABORT: Can't open README
       EndIf
   EndSelect
@@ -1067,25 +1070,21 @@ Procedure ParseFileComments(file.s)
   Select FileSize(file.s)
     Case  0 ; File is 0 Kb
             ; ~~~~~~~~~~~~
-            ; FIXME: Handle Error/Warning
-      Debug "Resource file has size 0 Kb: '" + file + "'"
+      RaiseWarning("Resource file has size 0 Kb.")
       ProcedureReturn #Failure
     Case -1 ; File not found
             ; ~~~~~~~~~~~~~~
-            ; FIXME: Handle Error/Warning
-      Debug "Resource file not found: '" + file + "'"
+      RaiseWarning("Resource file not found.")
       ProcedureReturn #Failure
     Case -2 ; File is a directory
             ; ~~~~~~~~~~~~~~~~~~~~
-            ; FIXME: Handle Error/Warning
-      Debug "Resource file is a directory: '" + file + "'"
+      RaiseWarning("Resource is a directory instead of file.")
       ProcedureReturn #Failure
   EndSelect ;}
   
   ;{ open file
   If Not ReadFile(0, file, #PB_UTF8)
-    ; FIXME: Handle Error/Warning
-    Debug "Can't open file: '" + file + "'"
+    RaiseWarning("Unable to open resource file for reading.")
     ProcedureReturn #Failure
     
   EndIf
@@ -1098,8 +1097,7 @@ Procedure ParseFileComments(file.s)
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ; No Comments Header Block Found
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ; FIXME: Handle Error/Warning
-    Debug "WARNING: Missing Header Comments Blocks in '" + file +"'"
+    RaiseWarning("No Header-Comments block found in resource.")
     ProcedureReturn #Failure
   ElseIf #DBG_LEVEL >= 3
     ; ===========================
@@ -1127,8 +1125,7 @@ Procedure ParseFileComments(file.s)
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ; No Keys Found in Comments Parsing
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ; FIXME: Handle Error/Warning
-    Debug "WARNING: No key-value pairs where found in '" + file +"'"
+    RaiseWarning("No key-value pairs where found in resource.")
     ProcedureReturn #Failure
   EndIf
   
