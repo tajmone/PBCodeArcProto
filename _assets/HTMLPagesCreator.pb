@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.29 (2018/04/16) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.30 (2018/04/16) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -38,7 +38,14 @@
 
 ;{ CHANGELOG
 ;  =========
-;  v0.0.29 (2018/04/16)
+;  v0.0.30 (2018/04/16)
+;    - Warnings Tracker — Improved system:
+;      - Warnings are stored in structured List
+;      - STEP4 "Final Report" mentions total warnings encounterd and lists them.
+;
+;      RaiseWarning() is still used only for pandoc warnings reports.
+;      Now I must implement it in all places where Warnings are still manually handled.
+;  v0.0.29 (2018/04/15)*
 ;    - Warnings Tracker — Improved system:
 ;      - `currCat` e `currRes` strings now track what is currently being processed
 ;        and the Warning Tracker shares these to determine where the problem occured.
@@ -338,16 +345,20 @@ Procedure Abort(ErrorMsg.s, ErrorType = #ABORT_GENERIC_ERROR)
 EndProcedure
 ;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-; FIXME: Should use a Structure instead:
-;   \ProblemPath.s
-;   \WarningMessage.s
+Define.s currCat ; Always = crurrent Category path (relative to project root)
+Define.s currRes ; Always = crurrent Resource filename OR empty if none.
+
+
+; Warnings as stored as structured entries by the Tracker:
+Structure WarnEntry
+  ProblemCat.s        ; <= stores copy of currCat
+  ProblemRes.s        ; <= stores copy of currRes
+  Message.s           ; <= stores Message
+EndStructure
 
 ;-***************
 
-NewList WarningsL.s() ; List of str to store Warning messages
-
-Define.s currCat ; Always = crurrent Category path (relative to project root)
-Define.s currRes ; Always = crurrent Resource filename OR empty if none.
+NewList WarningsL.WarnEntry() ; List to store Warning messages and details
 
 Procedure RaiseWarning(WarningMessage.s)
   ; ------------------------------------------------------------------------------
@@ -368,10 +379,12 @@ Procedure RaiseWarning(WarningMessage.s)
         WarningMessage
   Debug #DIV5$ + #EOL + #DIV7$
   ; ======================================
-  ; Store Warning message for final report
+  ; Store Warning details for final report
   ; ======================================
   AddElement( WarningsL() )
-  WarningsL() = currCat + currRes + #EOL + #DIV4$ + #EOL + WarningMessage
+  WarningsL()\ProblemCat = currCat
+  WarningsL()\ProblemRes = currRes
+  WarningsL()\Message    = WarningMessage
   
 EndProcedure
 
@@ -817,13 +830,41 @@ StepHeading("Final Report")
 
 ; TODO: Implement Warning-Tracker Report
 
+totWarn = ListSize( WarningsL() )
+If totWarn = 0
+  ; =======================
+  ; No Problems Encountered
+  ; =======================
+  Debug "Everything went smooth."
+  Goto SaveLog
+EndIf
+
+Debug "Problems encountered: " + Str(totWarn)
+
+; TODO: Add Warnings counter [curr/tot]
+With WarningsL()
+  ForEach WarningsL()
+    Debug #DIV2$
+    Debug \ProblemCat + \ProblemRes
+    Debug #DIV4$
+    Debug \Message
+    Debug #DIV2$
+  Next
+EndWith
+
 ; ShowVariableViewer()
 ; Repeat
 ;   ; Infinte Loop to allow Debugger Inspections
 ; ForEver
 
-;- Log Debug Window to File
+;  =================================
+;- Log Debug Window to File and Quit
+;  =================================
+SaveLog:
 SaveDebugOutput(ASSETS$ + "session.log")
+; TODO: Add Exit Code (Err Level) via some variable.
+;       Even if it's not a console app, it could be invoked from scripts leveraging
+;       the PB Compiler or compiled to binary (no log will be shown in this case).
 End ;}- <<< Main Ends Here <<<
 
 ;}==============================================================================
