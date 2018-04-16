@@ -5,7 +5,7 @@
   <meta name="generator" content="pandoc">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <meta name="keywords" content="PureBasic, resources, modules, libraries, tools" />
-  <title>TEST FOLDER | PureBasic CodeArchiv Rebirth</title>
+  <title>PureBasic CodeArchiv Rebirth</title>
   <meta name="description" content="PureBasic CodeArchiv Rebirth — A collection of useful codes from the purebasic forums">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -36,7 +36,7 @@
     <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
 <li><a href='../index.html'>Home</a></li>
-<li><a href='index.html'>TEST</a></li>
+<li><a href='index.html'>ERRORS</a></li>
     </ul>
     </nav>
   </div>
@@ -69,17 +69,33 @@
   <section class="section">
   <div class="content">
 <h1>TEST FOLDER</h1>
-<p>This folder is for testing dege cases, it shouldn't produce any errors or warnings.</p>
-<p>To exclude it from processing, just rename it with a leading underscore (<code>_TEST</code>).</p>
-<h1>Test Files</h1>
+<p>This is folder is for testing errors and warnings handling. It will produce a variety of errors.</p>
+<h1>Pandoc Errors</h1>
+<p>See source file:</p>
 <ul>
-<li><a href="./comments-only.pb"><code>comments-only.pb</code></a> — contains only comment lines</li>
-<li><a href="./empty-keys.pb"><code>empty-keys.pb</code></a> — contains only keys with empty values</li>
-<li><a href="./no-header-comments.pb"><code>no-header-comments.pb</code></a> — file without Header Comments Block (first line is not a comment)</li>
+<li><a href="https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/Error.hs"><code>Error.hs</code></a></li>
 </ul>
-<h1>Expected Behavior</h1>
-<p>Here is an explanation of the expected results of how the app should handle the test files.</p>
-<p>(<em>work in progress</em>)</p>
+<h2>Pandoc Warning</h2>
+<p>To test warnings, you can redefine twice a reference link:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode markdown"><code class="sourceCode markdown"><a class="sourceLine" id="cb1-1" data-line-number="1">[foo]</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="ot">[foo]: bar</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="ot">[foo]: baz</span></a></code></pre></div>
+<p><a href="baz">foo</a></p>
+<h2>Pandoc Error</h2>
+<p>Need to find a way to raise error from within markdown document.</p>
+<article class='message is-link'>
+<div class='message-header'>
+<p>CursorHovering[Mac].pbi</p>
+</div>
+<div class='message-body is-paddingless'>
+<table class='res-card'><tbody>
+<tr><td>Description:</td><td>Change cursor hovering over HyperLinkGadget</td></tr>
+<tr><td>OS:</td><td>Mac</td></tr>
+<tr><td>English-Forum:</td><td><a href="http://www.purebasic.fr/english/viewtopic.php?p=425502#p425502">http://www.purebasic.fr/english/viewtopic.php?p=425502#p425502</a></td></tr>
+</tbody></table>
+</div></article>
   </div>
   </section>
 

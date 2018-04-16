@@ -1,35 +1,21 @@
 ---
-MISSINGtitle: TEST FOLDER
+title: TEST FOLDER
 ---
 
 # TEST FOLDER
 
-This is just a test folder for testing errors and warnings handling.
+This folder is for testing dege cases, it shouldn't produce any errors or warnings.
 
-# Pandoc Errors
+To exclude it from processing, just rename it with a leading underscore (`_TEST`).
 
-See source file:
+# Test Files
 
-- [`Error.hs`](https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/Error.hs)
+- [`comments-only.pb`](./comments-only.pb) — contains only comment lines
+- [`empty-keys.pb`](./empty-keys.pb) — contains only keys with empty values
+- [`no-header-comments.pb`](./no-header-comments.pb) — file without Header Comments Block (first line is not a comment)
 
-## Pandoc Warning
+# Expected Behavior
 
-To test warnings, you can redefine twice a reference link:
+Here is an explanation of the expected results of how the app should handle the test files.
 
-``` markdown
-[foo]
-
-[foo]: bar
-
-[foo]: baz
-```
-
-[foo]
-
-[foo]: bar
-
-[foo]: baz
-
-## Pandoc Error
-
-Need to find a way to raise error from within markdown document.
+(_work in progress_)
