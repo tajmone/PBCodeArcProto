@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.31 (2018/04/16) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.32 (2018/04/20) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -34,6 +34,9 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.32 (2018/04/20)
+;    - Warnings Tracker:
+;      - Added Problem counter to output (curr/total).
 ;  v0.0.31 (2018/04/16)
 ;    - Warnings Tracker:
 ;      - Now all errors and warnings are handled via RaiseWarning() proc.
@@ -831,8 +834,6 @@ Next ; <= ForEach CategoriesL()
 ;{==============================================================================
 StepHeading("Final Report")
 
-; TODO: Implement Warning-Tracker Report
-
 totWarn = ListSize( WarningsL() )
 If totWarn = 0
   ; =======================
@@ -842,18 +843,22 @@ If totWarn = 0
   Goto SaveLog
 EndIf
 
+;  =====================
+;- Iterate Problems List
+;  =====================
 Debug "Problems encountered: " + Str(totWarn)
-
-; TODO: Add Warnings counter [curr/tot]
+cntWarn = 1
 With WarningsL()
   ForEach WarningsL()
-    Debug #DIV2$
-    Debug \ProblemCat + \ProblemRes
-    Debug #DIV4$
-    Debug \Message
-    Debug #DIV2$
+    Debug #DIV2$ + #EOL +
+          "PROBLEM " + Str(cntWarn) + "/" + Str(totWarn) + " | ./" +
+          \ProblemCat + \ProblemRes + #EOL + #DIV4$
+    Debug \Message    
+    cntWarn +1
   Next
 EndWith
+Debug #DIV2$
+
 
 ; ShowVariableViewer()
 ; Repeat
