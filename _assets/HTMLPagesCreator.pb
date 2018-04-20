@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.34 (2018/04/20) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.35 (2018/04/20) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -44,17 +44,20 @@
 ;  [ ] Resource: can mean a single-file resource or a multi-file resource.
 ;                But I need a further term to indicate the latter (resource
 ;                folder; multi-file resource?)
-;  [ ] Errors: Currently there is a promisquity of terms used to refer to:
-;                - Fatal Errors (abort)
-;                - Errors
-;                - Warnings
-;              The only meaningful distinction should be between:
+;  [x] Errors: The only meaningful distinction is now between:
 ;                - Fatal Errors (always abort)
-;                - Warnings     (ask user if he wants to continue)
+;                - Errors       (ask user if he wants to continue)
 ;} -- TODOs LIST «««------------------------------------------------------------
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.35 (2018/04/20)
+;    - ERRORS HANDLING: now there are two types of errors:
+;        - Fatal Errors => Errors which require Aborting the app
+;        - Errors       => All other errors (and Warnings)
+;      Vars, constants and procedures identifiers have been renamed accordingly:
+;        - `Abort` | `AbortErr` | `Err`   => `FatalErr`
+;        - `Warn`  | `Warning`            => `Err`
 ;  v0.0.34 (2018/04/20)
 ;    - Pandoc Warnings: when pandoc returns multiple warnings, capture each one
 ;      individually.
@@ -232,6 +235,9 @@
                 ;        skipped/ignored items, etc.)
 DebugLevel #DBG_LEVEL
 
+; Comments Parser settings
+; ========================
+
 #PURGE_EMPTY_KEYS = #True ; If #True, extracted keys with empty value are purged
                           ; from HTML Resume Card. If #False, they are kept.
 
@@ -306,41 +312,43 @@ Procedure.s QuoteText(text$)
 EndProcedure
 
 ;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;-> ERRORS & WARNINGS HANDLING
+;-> ERRORS HANDLING
 ;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; Some helpers to handle Warning and Errors, keep track of Warning to create a
-; final report at the end, and handle messages when aborting on fatal errors.
+; Some helpers to handle Errors. There are two types of errors:
+;  (1) Fatal-Errors (always abort)
+;  (2) Errors       (user is asked if he wants to abort or continue)
+;
+; Errors and their details are printed to the debug window at the time of their
+; occurence, and they are also tracked so that they keen be included in the final
+; report at the end.
 ; ------------------------------------------------------------------------------
 
 #Failure = #False
 #Success = #True
 
-; TODO: Add Warnings-Tracking Procedure
-; TODO: Add Warning Résumé Procedure
-
 ; Define Error-Types which lead to aborting execution:
-Enumeration AbortErrorsTypes
-  #ABORT_GENERIC_ERROR
-  #ABORT_INTERNAL_ERROR
-  #ABORT_FILE_ACCESS_ERROR
-  #ABORT_PANDOC_ERROR
+Enumeration FatalErrTypes
+  #FATAL_ERR_GENERIC
+  #FATAL_ERR_INTERNAL
+  #FATAL_ERR_FILE_ACCESS
+  #FATAL_ERR_PANDOC
 EndEnumeration
-totAbortErrorsTypes = #PB_Compiler_EnumerationValue -1
+totFatalErrTypes = #PB_Compiler_EnumerationValue -1
 
-Structure ErrMessage
+Structure FatalErrData
   Title.s     ; Error-Type Title
   Desc.s      ; Error-Type Description
 EndStructure
 
 ; Array to associate Error-Types to their messages:
-Dim AbortTypeMsg.ErrMessage(totAbortErrorsTypes)
+Dim FatalErrTypeInfo.FatalErrData(totFatalErrTypes)
 
-For i=0 To totAbortErrorsTypes
-  Read.s AbortTypeMsg(i)\Title 
-  Read.s AbortTypeMsg(i)\Desc 
+For i=0 To totFatalErrTypes
+  Read.s FatalErrTypeInfo(i)\Title 
+  Read.s FatalErrTypeInfo(i)\Desc 
 Next
 
-AbortErrorMessages:
+FatalErrorMessages:
 DataSection
   Data.s "FATAL ERROR", "The application encountered an fatal error."
   Data.s "INTERNAL ERROR", "The application encountered an internal error; if the problem persists contact the author."
@@ -350,16 +358,16 @@ DataSection
 EndDataSection
 
 
-Procedure Abort(ErrorMsg.s, ErrorType = #ABORT_GENERIC_ERROR)
+Procedure Abort(ErrorMsg.s, ErrorType = #FATAL_ERR_GENERIC)
   ; ------------------------------------------------------------------------------
   ; Abort execution by reporting the Error-Type and its default description,
   ; followed by the specific error description. Abort message is both printed to
   ; debug output window and shown in MessageRequester.
   ; ------------------------------------------------------------------------------
-  Shared AbortTypeMsg()
+  Shared FatalErrTypeInfo()
   
-  ErrTypeTitle.s = AbortTypeMsg(ErrorType)\Title
-  ErrTypeDesc.s  = AbortTypeMsg(ErrorType)\Desc
+  ErrTypeTitle.s = FatalErrTypeInfo(ErrorType)\Title
+  ErrTypeDesc.s  = FatalErrTypeInfo(ErrorType)\Desc
   
   Debug #DIV6$ + #EOL + #DIV5$
   Debug ErrTypeTitle + " — " + ErrTypeDesc + #EOL2 + ErrorMsg + #EOL
@@ -379,38 +387,40 @@ Define.s currCat ; Always = crurrent Category path (relative to project root)
 Define.s currRes ; Always = crurrent Resource filename OR empty if none.
 
 
-; Warnings as stored as structured entries by the Tracker:
-Structure WarnEntry
-  ProblemCat.s        ; <= stores copy of currCat
-  ProblemRes.s        ; <= stores copy of currRes
-  Message.s           ; <= stores Message
+; Errors/Warnings as stored as structured entries by the Tracker:
+Structure ErrData
+  ErrCat.s        ; <= stores copy of currCat
+  ErrRes.s        ; <= stores copy of currRes
+  ErrMsg.s        ; <= stores Message
 EndStructure
 
 ;-***************
 
-NewList WarningsL.WarnEntry() ; List to store Warning messages and details
+NewList ErrTrackL.ErrData() ; List to store Error messages and details
 
-Procedure RaiseWarning(WarningMessage.s)
+Procedure TrackError(ErrMessage.s)
   ; ------------------------------------------------------------------------------
-  ; Capture Warnings and their messages. Show warning at time of occurence (if curr
-  ; DebugLevel or setttings allow it) and store it for the final resume.
+  ; Handle Errors and their messages.
+  ; 1) Print error info to debug windows at time of occurence
+  ;    (if curr DebugLevel or setttings allow it)
+  ; 2) Store error info for the final resume.
   ; ------------------------------------------------------------------------------  
-  Shared WarningsL()
+  Shared ErrTrackL()
   Shared currCat, currRes
-  ; =========================================
-  ; Show Warning message at time of occurence
-  ; =========================================
+  ; =======================================
+  ; Show Error message at time of occurence
+  ; =======================================
   Debug #DIV6$ + #EOL + #DIV5$
   Debug "WARNING!!! While processing: " + currCat + currRes + #EOL + #DIV4$ + #EOL +
-        WarningMessage
+        ErrMessage
   Debug #DIV5$ + #EOL + #DIV7$
-  ; ======================================
-  ; Store Warning details for final report
-  ; ======================================
-  AddElement( WarningsL() )
-  WarningsL()\ProblemCat = currCat
-  WarningsL()\ProblemRes = currRes
-  WarningsL()\Message    = WarningMessage
+  ; ====================================
+  ; Store Error details for final report
+  ; ====================================
+  AddElement( ErrTrackL() )
+  ErrTrackL()\ErrCat = currCat
+  ErrTrackL()\ErrRes = currRes
+  ErrTrackL()\ErrMsg = ErrMessage
   
 EndProcedure
 
@@ -426,7 +436,7 @@ If Not CreateRegularExpression(#RE_URL, #RE_URL$)
   ErrMSG$ = "Error while trying to create the following RegEx:" + #EOL2 + #RE_URL$ + #EOL2 +
             "The Regular Expression library returned the following error:" + #EOL +
             QuoteText( RegularExpressionError() )
-  Abort(ErrMSG$, #ABORT_INTERNAL_ERROR)
+  Abort(ErrMSG$, #FATAL_ERR_INTERNAL)
 EndIf
 
 ;}==============================================================================
@@ -609,7 +619,7 @@ If ReadFile(0, ASSETS$ + "meta.yaml")
   Wend
   CloseFile(0)
 Else
-  Abort("Couldn't read '_assets/meta.yaml' file!", #ABORT_FILE_ACCESS_ERROR) ;- ABORT: missing "meta.yaml"
+  Abort("Couldn't read '_assets/meta.yaml' file!", #FATAL_ERR_FILE_ACCESS) ;- ABORT: missing "meta.yaml"
 EndIf
 
 ; Debug #DIV4$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV4$ ; DELME
@@ -689,13 +699,13 @@ ForEach CategoriesL()
       ; NOTE: All three error cases tested!
     Case 0 ; File is 0 Kb
            ; ~~~~~~~~~~~~
-      RaiseWarning("README.md has size 0 Kb.")
+      TrackError("README.md has size 0 Kb.")
     Case -1 ; File not found
             ; ~~~~~~~~~~~~~~
-      RaiseWarning("Missing README file.")
+      TrackError("Missing README file.")
     Case -2 ; File is a directory
             ; ~~~~~~~~~~~~~~~~~~~~
-      RaiseWarning("README.md is a directory.")
+      TrackError("README.md is a directory.")
     Default
       ; ========================
       ; Get README File Contents
@@ -712,7 +722,7 @@ ForEach CategoriesL()
         ; Can't Access README File
         ; ~~~~~~~~~~~~~~~~~~~~~~~~
         ; FIXME: Track as Warning? (this is not a fatal error!)
-        Abort("Couldn't read the README file: '"+ catPath +"README.md'", #ABORT_FILE_ACCESS_ERROR) ;- ABORT: Can't open README
+        Abort("Couldn't read the README file: '"+ catPath +"README.md'", #FATAL_ERR_FILE_ACCESS) ;- ABORT: Can't open README
       EndIf
   EndSelect
   currRes = #Empty$
@@ -773,7 +783,7 @@ ForEach CategoriesL()
       ; Current Category doesn't have any Resources
       ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       Debug "!!! Current Category has no Resources !!!" ; FIXME: Debug output CATEGORY IS EMPTY
-      ; TODO: issue a warning is Category is not Root?
+                                                        ; TODO: issue a warning is Category is not Root?
     EndIf    
   EndWith
   
@@ -822,14 +832,14 @@ ForEach CategoriesL()
       ; ~~~~~~~~~~~~~~~~~~~~~~~~
       ; NOTE: Tested!
       Abort("Failed to invoke/run pandoc! Please, check that pandoc is correctly setup.",
-            #ABORT_PANDOC_ERROR)
+            #FATAL_ERR_PANDOC)
     ElseIf PandocExCode
       ; ~~~~~~~~~~~~~~~~~~~~~~~~
       ; Pandoc exited with Error
       ; ~~~~~~~~~~~~~~~~~~~~~~~~
       ; NOTE: Tested!
       Abort("Pandoc exited with error (" + Str(PandocExCode) + "):" + #EOL +
-            QuoteText( PandocErr$ ), #ABORT_PANDOC_ERROR)
+            QuoteText( PandocErr$ ), #FATAL_ERR_PANDOC)
     Else
       ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
       ; Pandoc returned Warning(s)
@@ -841,7 +851,7 @@ ForEach CategoriesL()
       For i=1 To totPandocWarnings
         extrWarn.s = #WarnField$ + StringField(PandocErr$, i+1, #WarnField$) 
         Warn$ = ~"Pandoc reported the following warnings:\n" + QuoteText( extrWarn )
-        RaiseWarning(Warn$)
+        TrackError(Warn$)
       Next
     EndIf
   EndIf
@@ -856,7 +866,7 @@ Next ; <= ForEach CategoriesL()
 ;{==============================================================================
 StepHeading("Final Report")
 
-totWarn = ListSize( WarningsL() )
+totWarn = ListSize( ErrTrackL() )
 If totWarn = 0
   ; =======================
   ; No Problems Encountered
@@ -870,12 +880,12 @@ EndIf
 ;  =====================
 Debug "Problems encountered: " + Str(totWarn)
 cntWarn = 1
-With WarningsL()
-  ForEach WarningsL()
+With ErrTrackL()
+  ForEach ErrTrackL()
     Debug #DIV2$ + #EOL +
           "PROBLEM " + Str(cntWarn) + "/" + Str(totWarn) + " | ./" +
-          \ProblemCat + \ProblemRes + #EOL + #DIV4$
-    Debug \Message    
+          \ErrCat + \ErrRes + #EOL + #DIV4$
+    Debug \ErrMsg    
     cntWarn +1
   Next
 EndWith
@@ -1094,21 +1104,21 @@ Procedure ParseFileComments(file.s)
   Select FileSize(file.s)
     Case  0 ; File is 0 Kb
             ; ~~~~~~~~~~~~
-      RaiseWarning("Resource file has size 0 Kb.")
+      TrackError("Resource file has size 0 Kb.")
       ProcedureReturn #Failure
     Case -1 ; File not found
             ; ~~~~~~~~~~~~~~
-      RaiseWarning("Resource file not found.")
+      TrackError("Resource file not found.")
       ProcedureReturn #Failure
     Case -2 ; File is a directory
             ; ~~~~~~~~~~~~~~~~~~~~
-      RaiseWarning("Resource is a directory instead of file.")
+      TrackError("Resource is a directory instead of file.")
       ProcedureReturn #Failure
   EndSelect ;}
   
   ;{ open file
   If Not ReadFile(0, file, #PB_UTF8)
-    RaiseWarning("Unable to open resource file for reading.")
+    TrackError("Unable to open resource file for reading.")
     ProcedureReturn #Failure
     
   EndIf
@@ -1121,7 +1131,7 @@ Procedure ParseFileComments(file.s)
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ; No Comments Header Block Found
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    RaiseWarning("No Header-Comments block found in resource.")
+    TrackError("No Header-Comments block found in resource.")
     ProcedureReturn #Failure
   ElseIf #DBG_LEVEL >= 3
     ; ===========================
@@ -1149,7 +1159,7 @@ Procedure ParseFileComments(file.s)
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ; No Keys Found in Comments Parsing
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    RaiseWarning("No key-value pairs where found in resource.")
+    TrackError("No key-value pairs where found in resource.")
     ProcedureReturn #Failure
   EndIf
   
