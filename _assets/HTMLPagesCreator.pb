@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.32 (2018/04/20) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.33 (2018/04/20) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -13,15 +13,15 @@
 ; as introduction text, and a resume card is built for each resource in the
 ; category (via header comments parsing)
 ;{ -- TODOs LIST »»»------------------------------------------------------------
-; TODO: Polish debug messages in Comments Parser (according to Debug Level)
-; TODO: Implement Comments Parser errors returning (empty cards handling)
-; TODO: Terminology: implement more precise and consistent terminolgy in var
-;       and procs naming, documentation and comments:
-;       - Category » SubCategory
-;       - Resource: can mean a single-file resource or a multi-file resource.
-;                   But I need a further term to indicate the latter (resource
-;                   folder; multi-file resource?)
+; TODO: 
+; =============
+; DEBUG OUTPUT:
+; =============
 ; TODO: DEBUG LEVEL 0 should show only Project stats and final report
+; TODO: Polish debug messages in Comments Parser (according to Debug Level)
+; ===============
+; ERRORS TRACKER:
+; ===============
 ; TODO: Error/Warning Message Requester should only be shown once, and if users
 ;       decides to carry on, any further non fatal error should be handled without
 ;       message requesters.
@@ -29,11 +29,34 @@
 ;        - STEP2 "Project Integrity"
 ;        - RaiseWarning() Proc
 ;       Furthermore, settings should offer a way to set IGNORE ERRORS.
-; TODO: 
+; ===================
+; OPTIONS & SETTINGS:
+; ===================
+; TODO: DRY-RUN option in Settings: runs through all the steps without writing
+;       to disk, just to check if real use would result in any errors.
+; ====================
+; GENERAL SOURCE CODE:
+; ====================
+; TODO: Consistent Terminology:
+; implement more precise and consistent terminolgy in var and procs naming,
+; documentation and comments:
+;  [ ] Category » SubCategory
+;  [ ] Resource: can mean a single-file resource or a multi-file resource.
+;                But I need a further term to indicate the latter (resource
+;                folder; multi-file resource?)
+;  [ ] Errors: Currently there is a promisquity of terms used to refer to:
+;                - Fatal Errors (abort)
+;                - Errors
+;                - Warnings
+;              The only meaningful distinction should be between:
+;                - Fatal Errors (always abort)
+;                - Warnings     (ask user if he wants to continue)
 ;} -- TODOs LIST «««------------------------------------------------------------
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.33 (2018/04/20)
+;    - CLEANUP: remove old TODOs, clean FIMEs and TODOs.
 ;  v0.0.32 (2018/04/20)
 ;    - Warnings Tracker:
 ;      - Added Problem counter to output (curr/total).
@@ -368,11 +391,7 @@ Procedure RaiseWarning(WarningMessage.s)
   ; ------------------------------------------------------------------------------
   ; Capture Warnings and their messages. Show warning at time of occurence (if curr
   ; DebugLevel or setttings allow it) and store it for the final resume.
-  ; ------------------------------------------------------------------------------
-  ; FIXME: Instead of having the ProblemFile paramater, implement a currFile str
-  ;        that always refers to the resource currently being processed (can be
-  ;        category path, README.md, or resource file, etc.).
-  
+  ; ------------------------------------------------------------------------------  
   Shared WarningsL()
   Shared currCat, currRes
   ; =========================================
@@ -636,7 +655,7 @@ ForEach CategoriesL()
     BREADCRUMBS$ + "<li><a href='" + relPath + "index.html'>"+ crumb +"</a></li>" + #EOL
   Next
   
-  Debug "BREADCRUMBS:" + #EOL + #DIV4$ + #EOL + BREADCRUMBS$ + #EOL + #DIV4$ ; FIXME
+  Debug "BREADCRUMBS:" + #EOL + #DIV4$ + #EOL + BREADCRUMBS$ + #EOL + #DIV4$ ; FIXME: Debug ouput BREADCRUMBS
   
   ;  =============
   ;- Build Sidebar
@@ -649,7 +668,7 @@ ForEach CategoriesL()
                RootCategoriesL() + "</a></li>" + #EOL ; single quotes only!
   Next
   
-  Debug "SIDEBAR:" + #EOL + #DIV4$ + #EOL + SIDEBAR$ + #EOL + #DIV4$ ; FIXME
+  Debug "SIDEBAR:" + #EOL + #DIV4$ + #EOL + SIDEBAR$ + #EOL + #DIV4$ ; FIXME: Debug ouput SIDEBAR
   
   
   ;  ===============
@@ -707,11 +726,11 @@ ForEach CategoriesL()
         SubCatLinks + "- [" + cat$ + "](./"+ cat$ +"/index.html)" + #EOL
       Next
     Else
-      Debug "No subcategories." ; FIXME
+      Debug "No subcategories." ; FIXME: Debug output NO SUBCATEGORIES
     EndIf
   EndWith
   
-  Debug "SubCatLinks:" + #EOL + #DIV4$ + #EOL + SubCatLinks + #EOL + #DIV4$ ; FIXME
+  Debug "SubCatLinks:" + #EOL + #DIV4$ + #EOL + SubCatLinks + #EOL + #DIV4$ ; FIXME: Debug output SBUCATEGORIES LINKS
   
   
   ; ===================
@@ -729,23 +748,19 @@ ForEach CategoriesL()
       ForEach \FilesToParseL()
         file.s = \FilesToParseL()
         currRes = file
-        
-        ;         Debug Str(cntRes) + ") '" + file +"'" ; DELME
-        
         Debug #DIV3$ + #EOL + "RESOURCE " + Str(cntRes) + "/" + Str(totResources +1) +
               " | ./" + catPath + file + #EOL + #DIV3$
-        
         currCardHTML.s = #Empty$ ; <= Shared in Parsing procedures!
         If ParseFileComments(file)
           CARDS$ + currCardHTML
           ; Temporary Debug
-          Debug "EXTRACTED CARD:" + #EOL + #DIV4$ + #EOL + currCardHTML + #EOL + #DIV4$ ; FIXME
+          Debug "EXTRACTED CARD:" + #EOL + #DIV4$ + #EOL + currCardHTML + #EOL + #DIV4$ ; FIXME: Debug output EXTRACTED CARD
           cntRes +1
         Else
           ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
           ; Resume Card Creation Failure
           ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          Debug "!!! Card creation for this resource failed !!!"
+          Debug "!!! Card creation for this resource failed !!!" ; FIXME: Debug output RESUME CARD FAILURE
         EndIf
       Next
       currRes = #Empty$
@@ -754,7 +769,7 @@ ForEach CategoriesL()
       ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       ; Current Category doesn't have any Resources
       ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      Debug "!!! Current Category has no Resources !!!"
+      Debug "!!! Current Category has no Resources !!!" ; FIXME: Debug output CATEGORY IS EMPTY
       ; TODO: issue a warning is Category is not Root?
     EndIf    
   EndWith
@@ -766,7 +781,7 @@ ForEach CategoriesL()
   ;    [x] README.md
   ;    [x] Bread Crumbs
   ;    [x] Sidbebar Menu
-  ;        [ ] 3 Levels Depth
+  ;        [ ] 3 Levels Depth                       ; TODO: SIBAR MENU 3 Levels Depth
   ;    [x] SubCategories Links
   ;    [ ] Items Resume-Card
   ;    [ ] METADATA:
@@ -816,7 +831,8 @@ ForEach CategoriesL()
       ; ~~~~~~~~~~~~~~~~~~~~~~~
       ; Pandoc returned Warning
       ; ~~~~~~~~~~~~~~~~~~~~~~~
-      ; FIXME: There could be more than one warnings, should split the err report into
+      ; FIXME: PANDOC multiple Wanring!
+      ;        There could be more than one warnings, should split the err report into
       ;        multiple warning by counting occurences of "[WARNING]"
       ;-***************
       Warn$ = ~"Pandoc reported the following warnings:\n" + QuoteText( PandocErr$ )
@@ -975,12 +991,9 @@ Procedure PandocConvert(options.s)
   
   Shared MD_Page
   
-  ; TODO: Move these to PPP::Reset() proc
   PandocRunErr = #False
   PandocErr$ = ""
   PandocSTDOUT$ = ""
-  
-  
   ; ------------------------------------------------------------------------------
   ;                                 Invoke Pandoc                                 
   ; ------------------------------------------------------------------------------
@@ -988,9 +1001,10 @@ Procedure PandocConvert(options.s)
                        #PB_Program_Error | #PB_Program_UTF8
   currDir.s = GetCurrentDirectory()
   Pandoc = RunProgram("pandoc", options, currDir, #PANDOC_PROC_FLAGS)
-  Debug "> PANDOC CURR DIR: " + currDir
-  Debug "> PANDOC OPTS: " + options
-  ;     PrintN("options: " + options) ; DBG Pandoc Args
+  
+  Debug "> PANDOC CURR DIR: " + currDir ; FIXME: Debug output PANDOC curr dir
+  Debug "> PANDOC OPTS: " + options     ; FIXME: Debug output PANDOC options
+  
   If Not Pandoc
     ; ------------------------------------------------------------------------------
     ;                               Somethig Wrong...                               
@@ -1068,7 +1082,6 @@ Procedure ParseFileComments(file.s)
   ; Returns #Success (=1) on success, or #Failure (=0) in case of errors.
   ; Errors and Warnings details are handled locally.
   ; ------------------------------------------------------------------------------
-  ; TODO: ParseFileComments() return Errors
   Shared currCardHTML
   
   ;{ check if Resource file exists
@@ -1094,7 +1107,7 @@ Procedure ParseFileComments(file.s)
     
   EndIf
   ; Skip BOM
-  ; TODO: Check enconding and if not UTF8 use it in read operations?
+  ; TODO: FILE PARSE: Check enconding and if not UTF8 use it in read operations?
   ReadStringFormat(0) ;}
   
   NewList CommentsL.s()
@@ -1175,7 +1188,6 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
     lineNum.s = RSet(Str(lineCnt), 2, "0") + "| "
     commDelim.s = Left(CommentsL(), 3)
     If commDelim = ";: " Or commDelim = ";{:"  Or commDelim = ";}:"
-      ; TODO: capture also ";{:" and ";}:"
       Debug lineNum + "Parse:", #DBGL4
       ;  ===========
       ;- Extract Key
@@ -1274,8 +1286,8 @@ EndProcedure
 Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
   Debug ">>> BuildCard()", #DBGL4
   
-  ; TODO: Add link to fileName
-  ; TODO: If file is "CodeInfo.txt" just add folder path
+  ; TODO: HTML CARD - Add link to fileName
+  ; TODO: HTML CARD - If file is "CodeInfo.txt" just add folder path
   
   Card.s = "<article class='message is-link'>" + #EOL +
            "<div class='message-header'>" + #EOL +
@@ -1284,7 +1296,7 @@ Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
            "<div class='message-body is-paddingless'>" + #EOL +
            "<table class='res-card'><tbody>" + #EOL  
   
-  ; TODO: Insert <p> tags?
+  ; TODO: HTML CARD - Insert <p> tags?
   ForEach RawDataL()
     key.s   = EscapeString( RawDataL()\key, #PB_String_EscapeXML )
     Card + "<tr><td>" + key + ":</td><td>"
@@ -1302,8 +1314,8 @@ Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
         Debug "! URL Match: " + URL, #DBGL4
         Debug "! URL Link: " + Link, #DBGL4
         value = ReplaceString(value, URL, Link, #PB_String_CaseSensitive, 1, 1)
-        ;         Debug "! URL Position: " + Str(RegularExpressionMatchPosition(#RE_URL))
-        ;         Debug "! URL Length: " + Str(RegularExpressionMatchLength(#RE_URL))
+        ;         Debug "! URL Position: " + Str(RegularExpressionMatchPosition(#RE_URL)) ; DELME
+        ;         Debug "! URL Length: " + Str(RegularExpressionMatchLength(#RE_URL)) ; DELME
       Wend
     EndIf
     ;  ====================
