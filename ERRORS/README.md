@@ -26,9 +26,16 @@ To test warnings, you can redefine twice a reference link:
 
 [foo]
 
-[foo]: bar
+[foo]: foo1
 
-[foo]: baz
+[foo]: foo2
+
+
+[bar]
+
+[bar]: bar1
+
+[bar]: bar2
 
 ## Pandoc Error
 

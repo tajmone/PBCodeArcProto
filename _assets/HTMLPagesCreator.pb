@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.33 (2018/04/20) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.34 (2018/04/20) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -55,6 +55,9 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.34 (2018/04/20)
+;    - Pandoc Warnings: when pandoc returns multiple warnings, capture each one
+;      individually.
 ;  v0.0.33 (2018/04/20)
 ;    - CLEANUP: remove old TODOs, clean FIMEs and TODOs.
 ;  v0.0.32 (2018/04/20)
@@ -828,15 +831,18 @@ ForEach CategoriesL()
       Abort("Pandoc exited with error (" + Str(PandocExCode) + "):" + #EOL +
             QuoteText( PandocErr$ ), #ABORT_PANDOC_ERROR)
     Else
-      ; ~~~~~~~~~~~~~~~~~~~~~~~
-      ; Pandoc returned Warning
-      ; ~~~~~~~~~~~~~~~~~~~~~~~
-      ; FIXME: PANDOC multiple Wanring!
-      ;        There could be more than one warnings, should split the err report into
-      ;        multiple warning by counting occurences of "[WARNING]"
-      ;-***************
-      Warn$ = ~"Pandoc reported the following warnings:\n" + QuoteText( PandocErr$ )
-      RaiseWarning(Warn$)
+      ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ; Pandoc returned Warning(s)
+      ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
+      ; There could be more than just one warning...
+      ; --------------------------------------------
+      #WarnField$ = "[WARNING] " ; <= Precedes every warning
+      totPandocWarnings = CountString(PandocErr$, #WarnField$)
+      For i=1 To totPandocWarnings
+        extrWarn.s = #WarnField$ + StringField(PandocErr$, i+1, #WarnField$) 
+        Warn$ = ~"Pandoc reported the following warnings:\n" + QuoteText( extrWarn )
+        RaiseWarning(Warn$)
+      Next
     EndIf
   EndIf
   currRes = #Empty$
