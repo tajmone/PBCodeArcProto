@@ -16,6 +16,7 @@ Project organization:
 
 - [`/_assets/`](./_assets) — the actual __HTMLPagesCreator__ code + HTML assets
 - [`/_tempwork/`](./_tempwork) — isolated code work
+- [`/_morgue/`](./_morgue) — left-over tem code
 
 the remaining folders are contents taken from the PureBasic CodeArchiv Rebirth project to test the app.
 
