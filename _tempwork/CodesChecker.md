@@ -1,6 +1,6 @@
 # Codes Checker Tool
 
-- [`CodesChecker.pb`][CodesChecker]
+- [`CodesChecker.pb`][Checker.pb]
 - https://github.com/Seven365/PureBasic-CodeArchiv-Rebirth/blob/repo-dev/CodesChecker.pb
 
 
@@ -18,7 +18,6 @@
 
 
 
+[Checker.pb]: ./CodesChecker.pb
+[Cleaner.pb]: ./CodesCleaner.pb
 
-
-[CodesChecker]: ./CodesChecker.pb
-[CodesCleaner]: ./CodesCleaner.pb

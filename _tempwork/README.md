@@ -14,8 +14,8 @@ Currently there aren't any more prototypes for testing here.
 
 ## Old Tools
 
-- [`CodesChecker.pb`][CodesChecker] » [`CodesChecker.md`][Checker.md`] (analysis doc)
-- [`CodesCleaner.pb`][CodesCleaner] » [`CodesCleaner.md`][Cleaner.md`] (analysis doc)
+- [`CodesChecker.pb`][Checker.pb] » [`CodesChecker.md`][Checker.md] (analysis doc)
+- [`CodesCleaner.pb`][Cleaner.pb] » [`CodesCleaner.md`][Cleaner.md] (analysis doc)
 
 These two tools were taken from the [`repo-dev` branch][repo-dev] of the original [PureBasic-CodeArchiv-Rebirth] project:
 
@@ -42,10 +42,10 @@ No test-codes available right now.
 
 
 
-[CodesChecker]: ./CodesChecker.pb
-[CodesCleaner]: ./CodesCleaner.pb
-[Checker.md`]: ./CodesChecker.md "Read the doc for 'CodesChecker.pb'"
-[Cleaner.md`]: ./CodesCleaner.md "Read the doc for 'CodesCleaner.pb'"
+[Checker.pb]: ./CodesChecker.pb
+[Cleaner.pb]: ./CodesCleaner.pb
+[Checker.md]: ./CodesChecker.md "Read the doc for 'CodesChecker.pb'"
+[Cleaner.md]: ./CodesCleaner.md "Read the doc for 'CodesCleaner.pb'"
 
 [repo-dev]: https://github.com/Seven365/PureBasic-CodeArchiv-Rebirth/blob/repo-dev/
 
