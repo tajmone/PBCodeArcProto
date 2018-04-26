@@ -33,7 +33,6 @@ Documentation of __HTMLPagesCreator__ features and workings (drafts and notes):
 
 PB source files:
 
-- [`BuildProjectTree.pb`](./BuildProjectTree.pb) — project-scanner prototype
 - [`HTMLPagesCreator.pb`](./HTMLPagesCreator.pb) — the actual app (prototype code is integrated here when ready)
 
 
