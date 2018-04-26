@@ -14,8 +14,8 @@ Currently there aren't any more prototypes for testing here.
 
 ## Old Tools
 
-- [`CodesChecker.pb`][CodesChecker]
-- [`CodesCleaner.pb`][CodesCleaner]
+- [`CodesChecker.pb`][CodesChecker] » [`CodesChecker.md`][Checker.md`] (analysis doc)
+- [`CodesCleaner.pb`][CodesCleaner] » [`CodesCleaner.md`][Cleaner.md`] (analysis doc)
 
 These two tools were taken from the [`repo-dev` branch][repo-dev] of the original [PureBasic-CodeArchiv-Rebirth] project:
 
@@ -24,10 +24,16 @@ These two tools were taken from the [`repo-dev` branch][repo-dev] of the origina
 
 The idea is to update both tools and try to integrate them into the current one to create a single check and update app for the project.
 
-For more info, see the following Issue comments:
+For more info, see their associated markdown docs and the following Issue:
 
-- https://github.com/tajmone/PBCodeArcProto/issues/9#issuecomment-378416297
-- https://github.com/tajmone/PBCodeArcProto/issues/8#issuecomment-381436841
+- [Issue #10 — Integrating The Old Tools]
+
+... and the side comments at following Issue:
+
+- [Issue #8]
+- [Issue #9]
+
+
 
 
 # Usage and Testing
@@ -38,7 +44,14 @@ No test-codes available right now.
 
 [CodesChecker]: ./CodesChecker.pb
 [CodesCleaner]: ./CodesCleaner.pb
+[Checker.md`]: ./CodesChecker.md "Read the doc for 'CodesChecker.pb'"
+[Cleaner.md`]: ./CodesCleaner.md "Read the doc for 'CodesCleaner.pb'"
 
 [repo-dev]: https://github.com/Seven365/PureBasic-CodeArchiv-Rebirth/blob/repo-dev/
 
 [PureBasic-CodeArchiv-Rebirth]: https://github.com/Seven365/PureBasic-CodeArchiv-Rebirth
+
+[Issue #10 — Integrating The Old Tools]: https://github.com/tajmone/PBCodeArcProto/issues/10
+[Issue #9]: https://github.com/tajmone/PBCodeArcProto/issues/9#issuecomment-378416297
+[Issue #8]: https://github.com/tajmone/PBCodeArcProto/issues/8#issuecomment-381436841
+
