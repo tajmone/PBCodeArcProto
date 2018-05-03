@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.35 (2018/04/20) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.36 (2018/05/03) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -51,6 +51,10 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.36 (2018/05/03)
+;    - Added pandoc option "--eol=native" to make sure HTML files use native EOLs
+;      (this should already be the default value, but just in case). See: #13:
+;       -- https://github.com/tajmone/PBCodeArcProto/issues/13
 ;  v0.0.35 (2018/04/20)
 ;    - ERRORS HANDLING: now there are two types of errors:
 ;        - Fatal Errors => Errors which require Aborting the app
@@ -816,6 +820,7 @@ ForEach CategoriesL()
   
   pandocOpts.s = "-f "+ #PANDOC_FORMAT_IN +
                  " --template=" + ASSETS$ + #PANDOC_TEMPLATE +
+                 " --eol=native" +
                  " -V ROOT=" + path2root$ +
                  ~" -V BREADCRUMBS=\"" + BREADCRUMBS$ + ~"\"" +
                  ~" -V SIDEBAR=\"" + SIDEBAR$ + ~"\"" +
