@@ -56,6 +56,11 @@
 *.css      text
 *.js       text
 
+## ============
+## PANDOC FILES
+## ============
+*.html5    text
+
 ## ===================
 ## DOCUMENTATION FILES
 ## ===================
@@ -163,3 +168,8 @@ LICENSE      text
 *.pbf    linguist-language=PureBasic
 *.pbp    linguist-generated=true
 *.pbp    linguist-language=XML
+
+## ============
+## Pandoc files
+## ------------
+*.html5  linguist-language=HTML
