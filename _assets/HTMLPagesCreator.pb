@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.37 (2018/05/05) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.38 (2018/05/05) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -51,6 +51,9 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.38 (2018/05/05)
+;    - Sidebar Menu:
+;      - SubLevel 1 active category is now styled as "active".
 ;  v0.0.37 (2018/05/05)
 ;    - Sidebar Menu:
 ;      - Added SubeLevel 1 (still needs some polishing)
@@ -681,11 +684,12 @@ ForEach CategoriesL()
   ;- Build Sidebar
   ;  =============
   ; TODO: Implement 3 Levels Sidebar:
-  ;       - [ ] SubLevel 1
-  ;       - [x] SubLevel 2
+  ;       - [x] SubLevel 1
+  ;       - [ ] SubLevel 2 -- really needed? In the upstream repo I can't see any. See Issue #5 on this.
   ; TODO: Set active element:
-  ;       - [ ] Root Level: implement check if this is end of path segements
-  ;       - [ ] Sub Level 1: implement active element
+  ;       - [ ] Root Level: implement check if this is end of path segements? Should intermediate cats
+  ;                         be styled as active or only the innermost one?   
+  ;       - [x] Sub Level 1: implement active element
   SIDEBAR$ = #Empty$
   
   Define.s linkPath, linkText, linkclass, baseLinkPath
@@ -712,6 +716,9 @@ ForEach CategoriesL()
   pathSeg3.s = StringField(catPath, 3, "/")
   Debug "pathSeg3: " + pathSeg3 ; DELME
   
+  ; -----------------------
+  ; Root Categories Entries
+  ; -----------------------
   ForEach RootCategoriesL()
     linkPath = RootCategoriesL()
     linkText = linkPath
@@ -727,7 +734,9 @@ ForEach CategoriesL()
     EndIf
     
     SIDEBAR$ + MenuEntryM
-    
+    ; -----------------------
+    ; SubLevel 1 Categories Entries
+    ; -----------------------
     If pathSegMatch ; Menu Sub Level 1
       Debug "///  Menu Sub Level" ; DELME
       PushListPosition( CategoriesL() )
@@ -741,11 +750,22 @@ ForEach CategoriesL()
           
           linkclass = #Empty$
           baseLinkPath = linkPath + "/"
+          
           ForEach CategoriesL()\SubCategoriesL()
             Debug "+++ " + CategoriesL()\SubCategoriesL() ; DELME
             
             linkPath = baseLinkPath + CategoriesL()\SubCategoriesL()
             linkText = CategoriesL()\SubCategoriesL()
+            
+            ; Check if curr menu entry is part of the category path:
+            If StringField(linkPath, 2, "/") = pathSeg2
+              Debug "--- ACTIVE ENTRY: " + pathSeg1
+              linkclass = "class='is-active' "
+              pathSegMatch = #True
+            Else
+              linkclass = #Empty$
+              pathSegMatch = #False
+            EndIf
             SIDEBAR$ + MenuEntryM
             SIDEBAR$ + "</li>" + #EOL ; Close Menu entry tag (Root Sub-Level 1)
           Next
