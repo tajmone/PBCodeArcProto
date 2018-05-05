@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.36 (2018/05/03) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.37 (2018/05/05) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -51,6 +51,9 @@
 
 ;{ CHANGELOG
 ;  =========
+;  v0.0.37 (2018/05/05)
+;    - Sidebar Menu:
+;      - Added SubeLevel 1 (still needs some polishing)
 ;  v0.0.36 (2018/05/03)
 ;    - Added pandoc option "--eol=native" to make sure HTML files use native EOLs
 ;      (this should already be the default value, but just in case). See: #13:
@@ -491,8 +494,8 @@ ScanFolder(CategoriesL())
 Debug "- Categories found: "+ Str(totCategories) + " (excluding root folder)"
 Debug "- Resources found: "+ Str(totResources) + " ("+ Str(totSubFRes) +" are subfolders)"
 
-; Build Root Categories List (for sidebar navigation)
-; ==========================
+;- Build Root Categories List (for sidebar navigation)
+;  ==========================
 FirstElement( CategoriesL() )
 NewList RootCategoriesL.s()
 CopyList( CategoriesL()\SubCategoriesL(), RootCategoriesL() )
@@ -677,16 +680,92 @@ ForEach CategoriesL()
   ;  =============
   ;- Build Sidebar
   ;  =============
-  ; TODO: Implement 3 Levels Sidebar
-  ; TODO: Set active element
+  ; TODO: Implement 3 Levels Sidebar:
+  ;       - [ ] SubLevel 1
+  ;       - [x] SubLevel 2
+  ; TODO: Set active element:
+  ;       - [ ] Root Level: implement check if this is end of path segements
+  ;       - [ ] Sub Level 1: implement active element
   SIDEBAR$ = #Empty$
+  
+  Define.s linkPath, linkText, linkclass, baseLinkPath
+  
+  Macro MenuEntryM
+    "<li><a " + linkclass + "href='" + path2root$ + linkPath + "/index.html'>" +
+                linkText + "</a>" ; single quotes only!  
+  EndMacro
+  
+  ; Clamp Menu to 3 Levels
+  If pathLevels > 3
+    subPaths = 3
+  Else
+    subPaths = pathLevels
+  EndIf
+    
+  Debug "pathLevels: " + Str(pathLevels) ; DELME
+  Debug "subPaths: " + Str(subPaths) ; DELME
+  
+  pathSeg1.s = StringField(catPath, 1, "/")
+  Debug "pathSeg1: " + pathSeg1 ; DELME
+  pathSeg2.s = StringField(catPath, 2, "/")
+  Debug "pathSeg2: " + pathSeg2 ; DELME
+  pathSeg3.s = StringField(catPath, 3, "/")
+  Debug "pathSeg3: " + pathSeg3 ; DELME
+  
   ForEach RootCategoriesL()
-    SIDEBAR$ + "<li><a href='" + path2root$ + RootCategoriesL() + "/index.html'>" +
-               RootCategoriesL() + "</a></li>" + #EOL ; single quotes only!
+    linkPath = RootCategoriesL()
+    linkText = linkPath
+    
+    ; Check if curr menu entry is part of the category path:
+    If subPaths And StringField(linkPath, 1, "/") = pathSeg1
+      Debug "--- ACTIVE ENTRY: " + pathSeg1
+      linkclass = "class='is-active' "
+      pathSegMatch = #True
+    Else
+      linkclass = #Empty$
+      pathSegMatch = #False
+    EndIf
+    
+    SIDEBAR$ + MenuEntryM
+    
+    If pathSegMatch ; Menu Sub Level 1
+      Debug "///  Menu Sub Level" ; DELME
+      PushListPosition( CategoriesL() )
+      
+      SIDEBAR$ + "<ul>" + #EOL ; Start Sub List (unordered)
+      
+      ; Find Curr Cat in Cats List
+      ForEach CategoriesL()
+        If CategoriesL()\Path = pathSeg1 + "/"
+          Debug "*** CategoriesL() Match: " + CategoriesL()\Path ; DELME
+          
+          linkclass = #Empty$
+          baseLinkPath = linkPath + "/"
+          ForEach CategoriesL()\SubCategoriesL()
+            Debug "+++ " + CategoriesL()\SubCategoriesL() ; DELME
+            
+            linkPath = baseLinkPath + CategoriesL()\SubCategoriesL()
+            linkText = CategoriesL()\SubCategoriesL()
+            SIDEBAR$ + MenuEntryM
+            SIDEBAR$ + "</li>" + #EOL ; Close Menu entry tag (Root Sub-Level 1)
+          Next
+        EndIf
+      Next
+      
+      SIDEBAR$ + "</ul>" ; End Sub List
+
+      PopListPosition( CategoriesL() )     
+    EndIf 
+    
+    SIDEBAR$ + "</li>" + #EOL ; Close Menu entry tag (Root Level)
+    
+    ;     SIDEBAR$ + "<li><a href='" + path2root$ + tmpCatPath + "/index.html'>" +
+    ;                RootCategoriesL() + "</a></li>" + #EOL ; single quotes only!
   Next
   
   Debug "SIDEBAR:" + #EOL + #DIV4$ + #EOL + SIDEBAR$ + #EOL + #DIV4$ ; FIXME: Debug ouput SIDEBAR
   
+;   Continue ; DELME !!!! Skipp actually building pages
   
   ;  ===============
   ;- Get README File
