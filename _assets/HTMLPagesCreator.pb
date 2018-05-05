@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.38 (2018/05/05) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.39 (2018/05/05) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -51,6 +51,11 @@
 
 ;{ CHANGELOG
 ;  =========
+;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
+;
+;  v0.0.39 (2018/05/05)
+;    - Trimmed down the CHANGELOG. Keeping only most recent changes.
+;      The full changelog copied to "HTMLPagesCreator_changelog.txt".
 ;  v0.0.38 (2018/05/05)
 ;    - Sidebar Menu:
 ;      - SubLevel 1 active category is now styled as "active".
@@ -68,169 +73,6 @@
 ;      Vars, constants and procedures identifiers have been renamed accordingly:
 ;        - `Abort` | `AbortErr` | `Err`   => `FatalErr`
 ;        - `Warn`  | `Warning`            => `Err`
-;  v0.0.34 (2018/04/20)
-;    - Pandoc Warnings: when pandoc returns multiple warnings, capture each one
-;      individually.
-;  v0.0.33 (2018/04/20)
-;    - CLEANUP: remove old TODOs, clean FIMEs and TODOs.
-;  v0.0.32 (2018/04/20)
-;    - Warnings Tracker:
-;      - Added Problem counter to output (curr/total).
-;  v0.0.31 (2018/04/16)
-;    - Warnings Tracker:
-;      - Now all errors and warnings are handled via RaiseWarning() proc.
-;    All error/warning cases need to be tested again now.
-;    Some errrors might have been slipped and still handled manually.
-;  v0.0.30 (2018/04/16)
-;    - Warnings Tracker — Improved system:
-;      - Warnings are stored in structured List
-;      - STEP4 "Final Report" mentions total warnings encounterd and lists them.
-;
-;      RaiseWarning() is still used only for pandoc warnings reports.
-;      Now I must implement it in all places where Warnings are still manually handled.
-;  v0.0.29 (2018/04/15)*
-;    - Warnings Tracker — Improved system:
-;      - `currCat` e `currRes` strings now track what is currently being processed
-;        and the Warning Tracker shares these to determine where the problem occured.
-;  v0.0.28 (2018/04/15)
-;    - Added new DIV constants: #DIV5$ (***…)  #DIV6$ (\\\…)  #DIV7$ (//…) and
-;      removed use of LSet() to printout line dividers.
-;    - Warnings Tracker — started fleshing out the basis for the tracker:
-;      - New List WarningsL.s() to store warning messages
-;      - New Procedure RaiseWarning(ProblemFile.s, WarningMessage.s) to print out
-;        warning message at time of occurence and store it for final report.
-; 
-;      Currently, only pandoc warnings are handled with new RaiseWarning(), for
-;      testing, and no report is actually printed out at the end (still need to fix
-;      some stuff before implementing globally).
-;  v0.0.27 (2018/04/09)
-;    - Purge Empty Keys: If user sets #PURGE_EMPTY_KEYS to #True, all parsed keys
-;      with empty values will not be kept in HTML Resume Card; otherwise yes.
-;  v0.0.26 (2018/04/09)
-;    - Implement Error Handling in Comments Parser (draft):
-;      - Now ParseFileComments() returns #Success/#Failure (1/0) and card is only
-;        build on successeful return value.
-;      - All Resource Parsing Errors are catched and handled inside the parsing procs:
-;        - Resouce File errors:
-;          - Res File is 0Kb
-;          - Res File not found
-;          - Res File is directory
-;          - Res File can't be read
-;        - No header comments block found
-;        - No keys found in comments parsing
-;  v0.0.25 (2018/04/09)
-;    - Clenaup DBG messages in Comments Parser (according to DBG Level)
-;    - Add #DBGL1-#DBGL4 constants for use in DebugLevel (to allow quickly locating
-;      Debug lines via Search)
-;  v0.0.24 (2018/04/09)
-;    - Handle pandoc Error/Warnings:
-;      - Pandoc invocation failed (Abort)
-;      - Pandoc exited with error (Abort)
-;      - Pandoc exited with warning (report it)
-;  v0.0.23 (2018/04/09)
-;    - Code Cleanup
-;    - Fix existing Abort() calls to include Error-Type
-;  v0.0.22 (2018/04/09)
-;    - Improved Abort() Procedure: not handles Error Types in messages, with a
-;      default error message for every type of error, followed by the specific
-;      error description.
-;    - New AbortTypeMsg() structured Array with \Title and \Desc
-;    - New FixLineEndings(StrToFix$) Procedure
-;    - New QuoteText(text$) Procedure
-;  v0.0.21 (2018/04/08)
-;    - Proj.Integrity Check:
-;      - Check integrity of "_assets/meta.yaml"
-;  v0.0.20 (2018/04/06)
-;    - Improved README file errors handling reports (via Select block):
-;      - 0 Kb README File
-;      - Missing README File
-;      - "README.md" is directory
-;    None of the above errors causes any longer the app to abort -- because user
-;    was already informed about them at STEP 2 (Integrity Check) and chose to carry
-;    on. Instead, these errors will be tracked by the Warning Tracker so that they
-;    will show up in the final report.
-;  v0.0.19 (2018/04/06)
-;    - Cleanup bits and pieces
-;  v0.0.18 (2018/04/06)
-;    - ExtractHeaderBlock() now returns number of comment lines extracted
-;    - ParseFileComments() now checks wether ExtractHeaderBlock() found a Header
-;      Comments block, and only prints it out (DBG LEVEL 3) if it was found, and
-;      issues a warning otherwise (still needs improvement in the warnings area)
-;  v0.0.17 (2018/04/06)
-;    - Cleanup comments
-;  v0.0.16 (2018/04/04)
-;    - Minor code cleanup
-;  v0.0.15 (2018/04/03)
-;    - #EOL2 (= #EOL + #EOL)
-;    - Delimit Category being process by "DIV Ascii headers"
-;    - Fix Category counter varname: "cnt" -> "cntCat" (was being overriden)
-;    - When finished, save Debug Window to "_/assets/session.log" (unless Aborted)
-;  v0.0.14 (2018/04/03)
-;    - Cards Builder checks if curr Category contains resources or not.
-;  v0.0.13 (2018/04/03)
-;    - Renamed ParseFile() -> ParseFileComments()
-;    - Changed: ParseFileComments() doesn't return string, instead uses
-;      `Shared currCardHTML.s` to avoid passing strings around or using pointers
-;      (I tried to use string pointers but the app hanged, even though tests
-;       on a small scale were working; there seems to be a problem when handling
-;       big strings via pointers, maybe a bug in PureBasic?)
-;  v0.0.12 (2018/04/03)
-;    - Add Abort() procedure -- starting to laying down the foundations for a
-;      proper Warnings/Errors tracking and handling system. Still need to decide
-;      if some issues should be treated as Warnings or Errors (see Issue #8).
-;  v0.0.11 (2018/03/31)
-;    - Add Bulma-styled HTML Tags to Resume Card
-;    - Add filename to card title bar
-;  v0.0.10 (2018/03/31)
-;    - Integrated "comments_parser.pbi" code:
-;      - ParseFile() now returns HTML Card string
-;      - Fixed Bug in ParseComments(): Carry-On parsing didn't check if the
-;        curr List Element was the last one, causing an infinite loop (only
-;        in "CodeInfo.txt" files that didn't contain extra lines beside the
-;        key-val comment lines)
-;    - Now Resume Cards are created
-;    - pandoc input format + extensions now is:
-;        markdown_github + yaml_metadata_block + raw_attribute
-; 
-;    Still very drafty, the original parser code must be adapted to the host app:
-;      - Error handling must be implemented for resources that yeld no key-vals
-;      - Currently, a Card <table> is created even if no key-vals were extracted.
-;      - CSS must be adapted (doen't look good)
-;      - Must add table header with filename or app name
-;
-;  v0.0.9 (2018/03/31)
-;    - Read "_asstes/meta.yaml" and append it to MD source doc
-;      (if README file contains YAML header, its vars definitions will prevail
-;        over those of "meta.yaml" -- first definition is not overridable)
-;    - Pandoc from format now "github_markdown" (because "gfm" doesn't support
-;      "yaml_headers" extension"
-;  v0.0.8 (2018/03/28)
-;    - Add links to SubCategories in Category pages.
-;  v0.0.7 (2018/03/28)
-;    - Build BREADCRUMBS$ pandoc var (raw HTML)
-;  v0.0.6 (2018/03/28)
-;    - Build SIDEBAR$ (pandoc var "SIDEBAR") raw HTML string.
-;      (one level depth only, no "active" class for curr element)
-;  v0.0.5 (2018/03/25)
-;    - Add PandocConvert() procedure (from STDIN gfm to "index.html")
-;    - Now an "index.html" page is created for each Category:
-;      - "README.md" file used in content
-;      - relative paths to assests (CSS) correctly handled
-;    - Implemented first usable darft of "template.html" (breadcrumbs and sidebar
-;      currently show sample contents only)
-;  v0.0.4 (2018/03/21)
-;    - Add project integrity checks
-;  v0.0.3 (2018/03/21)
-;    - Add CategoriesL()\Name.s to structure
-;    - CategoriesL()\Path ends in "/" (unless root)
-;    - Setup Categories iteration code-skeleton
-;  v0.0.2 (2018/03/19)
-;    - ScanFolder() Debug now shown as directory tree:
-;      - DBG Lev 3: Show only found Categories and Resources
-;      - DBG Lev 4: Also show ignored files and folders 
-;  v0.0.1 (2018/03/19)
-;    - Incorporate "BuildProjectTree.pb" and adapt it.
-;    - Introduce DebugLevel filtering of output
 ;}
 ; ==============================================================================
 ;-                                   SETTINGS                                   
