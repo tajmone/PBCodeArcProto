@@ -7,7 +7,7 @@ This folder contains parts of code and template work/test files that are being d
 ## Test Files
 
 - [`/test_files/`](./test_files) — PB source files with header-blocks designed to test comments parsing and edge cases.
-- [`/template/`](./template) — tests for building the final HTML5 template.
+- [`/cachesys/`](./cachesys) — Notes, prototypes and test for a cache system.
 - [`erase-logs.bat`](./erase-logs.bat) — Delets all log files.
 
 Currently there aren't any more prototypes for testing here.
