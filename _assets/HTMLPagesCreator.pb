@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.39 (2018/05/05) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.40 (2018/05/09) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -53,6 +53,18 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+;  v0.0.40 (2018/05/09)
+;    - Breadcrumbs as YAML variables. Now instead of passing breadcrumbs as raw
+;      html via pandoc's "-V" command line option, they are defined as structured
+;      variables in a YAML string which is appended to the MD_Page string fed to
+;      pandoc via STDIN. The template now handle breadcrumbs more elegantly via
+;      `$for(breadcrumbs)$`, allowing consistent indentantion in the final html.
+;      As an added benefit, breadcrumbs are now format agnostic (and could be also
+;      used in output formats other than HTML5).
+;      This approach should fix the problems encountered on Linux, which didn't
+;      handle well long strings and whitespace with "-V" option (see Issue #14).
+;    - Removed pandoc option "--eol=native" (this wasn't the source of the error
+;      of Issue #13).
 ;  v0.0.39 (2018/05/05)
 ;    - Trimmed down the CHANGELOG. Keeping only most recent changes.
 ;      The full changelog copied to "HTMLPagesCreator_changelog.txt".
@@ -462,21 +474,21 @@ StepHeading("Process Categories")
 currCat.s = #Empty$ ; Always = crurrent Category path (relative to project root)
 currRes.s = #Empty$ ; Always = crurrent Resource filename OR empty if none.
 
-; =========================
-; Load Common YAML Metadata
-; =========================
+;  =========================
+;- Load Common YAML Metadata
+;{ =========================
 If ReadFile(0, ASSETS$ + "meta.yaml")
   While Eof(0) = 0
-    YAML$ + ReadString(0) + #EOL
+    YAML_META$ + ReadString(0) + #EOL
   Wend
   CloseFile(0)
 Else
   Abort("Couldn't read '_assets/meta.yaml' file!", #FATAL_ERR_FILE_ACCESS) ;- ABORT: missing "meta.yaml"
 EndIf
 
-; Debug #DIV4$ + #EOL + "YAML$:" + #EOL + YAML$ + #DIV4$ ; DELME
+; Debug #DIV4$ + #EOL + "YAML_META$:" + #EOL + YAML_META$ + #DIV4$ ; DELME
 
-;  ==========================
+;} ==========================
 ;- Iterate Through Categories
 ;  ==========================
 cntCat = 1
@@ -508,26 +520,37 @@ ForEach CategoriesL()
   Debug "path2root$: '" + path2root$ + "'", #DBGL2
   ; ===================
   ;- Build Bread Crumbs
-  ; ===================
-  BREADCRUMBS$ = "<li><a href='" + path2root$ + "index.html'>Home</a></li>" + #EOL
-  
+  ;{===================
+  ; Breadcrumbs are passed to pandoc as structured YAML variables:
+  ; ------------------------------------------------------------------------------
+  ; breadcrumbs:
+  ; - text: Gadget
+  ;   link: ../index.html
+  ; - text: HyperLinkGadget
+  ;   link: index.html                                                                              
+  ; ------------------------------------------------------------------------------
+  ; The "Home" entry is handled by the template; only path segments up to current
+  ; category are handled here. Inside pandoc template, they will be accessible as:
+  ;   $breadcrumbs.text$
+  ;   $breadcrumbs.link$
+  ; ------------------------------------------------------------------------------
+  YAML_BREADCRUMBS$ = "breadcrumbs:" + #EOL
+
   For i = 1 To pathLevels
     crumb.s = StringField(catPath, i, "/")
     relPath.s = #Empty$
     For n = pathLevels To i+1 Step -1
       relPath + "../"
-    Next
-    BREADCRUMBS$ + "<li><a href='" + relPath + "index.html'>"+ crumb +"</a></li>" + #EOL
+    Next    
+    YAML_BREADCRUMBS$ + "- text: " + crumb + #EOL +
+                        "  link: " + relPath + "index.html" + #EOL
   Next
+   
+  Debug "BREADCRUMBS (YAML):" + #EOL + #DIV4$ + #EOL + YAML_BREADCRUMBS$ + #EOL + #DIV4$ ; FIXME: Debug ouput YAML BREADCRUMBS
   
-  Debug "BREADCRUMBS:" + #EOL + #DIV4$ + #EOL + BREADCRUMBS$ + #EOL + #DIV4$ ; FIXME: Debug ouput BREADCRUMBS
-  
-  ;  =============
+  ;} =============
   ;- Build Sidebar
-  ;  =============
-  ; TODO: Implement 3 Levels Sidebar:
-  ;       - [x] SubLevel 1
-  ;       - [ ] SubLevel 2 -- really needed? In the upstream repo I can't see any. See Issue #5 on this.
+  ;{ =============
   ; TODO: Set active element:
   ;       - [ ] Root Level: implement check if this is end of path segements? Should intermediate cats
   ;                         be styled as active or only the innermost one?   
@@ -629,9 +652,9 @@ ForEach CategoriesL()
   
 ;   Continue ; DELME !!!! Skipp actually building pages
   
-  ;  ===============
+  ;} ===============
   ;- Get README File
-  ;  ===============
+  ;{ ===============
   currRes = "README.md"
   README$ = #Empty$
   
@@ -671,9 +694,9 @@ ForEach CategoriesL()
       EndIf
   EndSelect
   currRes = #Empty$
-  ;  =========================
+  ;} =========================
   ;- Build SubCategories links
-  ;  =========================
+  ;{ =========================
   SubCatLinks.s = #Empty$
   With CategoriesL()
     If ListSize( \SubCategoriesL() )
@@ -690,10 +713,22 @@ ForEach CategoriesL()
   
   Debug "SubCatLinks:" + #EOL + #DIV4$ + #EOL + SubCatLinks + #EOL + #DIV4$ ; FIXME: Debug output SBUCATEGORIES LINKS
   
+  ;} =========================
+  ;- Build YAML Vars Block
+  ;  =========================
+  ;  Template Variables are added to MD_Page string which is fed to pandoc via STDIN.
+  ;  TODO: YAML vars:
+  ;  - [x] Breadcrumbs
+  ;  - [ ] Sidbar
+  ;  - [ ] HTML page contents
   
+  YAML_VARS$ = #EOL2 + "---" + #EOL + YAML_BREADCRUMBS$ + #EOL + "..." + #EOL2
+  
+  Debug "YAML_VARS$:" + #EOL + #DIV4$ + #EOL + YAML_VARS$ + #EOL + #DIV4$ ; FIXME: Debug ouput YAML_VARS$
+
   ; ===================
   ;- Build Resume Cards
-  ; ===================
+  ;{===================
   Declare ParseFileComments(resourcefile.s)
   With CategoriesL()
     totResources = ListSize( \FilesToParseL() )
@@ -732,14 +767,13 @@ ForEach CategoriesL()
     EndIf    
   EndWith
   
-  ;  ====================
+  ;} ====================
   ;- Convert Page to HTML
-  ;  ====================
+  ;{ ====================
   ;  Currently only partially implemented:
   ;    [x] README.md
   ;    [x] Bread Crumbs
-  ;    [x] Sidbebar Menu
-  ;        [ ] 3 Levels Depth                       ; TODO: SIBAR MENU 3 Levels Depth
+  ;    [x] Sidbebar Menu (2 levels depth)
   ;    [x] SubCategories Links
   ;    [ ] Items Resume-Card
   ;    [ ] METADATA:
@@ -757,15 +791,14 @@ ForEach CategoriesL()
   Declare PandocConvert(options.s)
   
   MD_Page.s = README$ + #EOL2 + SubCatLinks + #EOL2 + CARDS$ +
-              #EOL2 + YAML$
+              #EOL2 + YAML_META$ + YAML_VARS$
   
   pandocOpts.s = "-f "+ #PANDOC_FORMAT_IN +
                  " --template=" + ASSETS$ + #PANDOC_TEMPLATE +
-                 " --eol=native" +
-                 " -V ROOT=" + path2root$ +
-                 ~" -V BREADCRUMBS=\"" + BREADCRUMBS$ + ~"\"" +
+                 "  -V ROOT=" + path2root$ +
                  ~" -V SIDEBAR=\"" + SIDEBAR$ + ~"\"" +
-                 " -o index.html"
+                 "  -o index.html "
+
   
   Define PandocRunErr ; (bool) success/failure in invoking pandoc
   Define PandocExCode ; copy of pandoc exit code
@@ -806,6 +839,8 @@ ForEach CategoriesL()
   cntCat +1
   Debug #DIV2$
 Next ; <= ForEach CategoriesL()
+     ;}
+
 
 ;}==============================================================================
 ;- 4. Final Report And Quit
