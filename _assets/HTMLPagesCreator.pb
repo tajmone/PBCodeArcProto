@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.40 (2018/05/09) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.41 (2018/05/09) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -53,6 +53,12 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+;  v0.0.41 (2018/05/09)
+;    - No more pandoc variables via CLI option "-V"; now all variables are passed
+;      in a YAML header inject after markdown page contents. This should solve
+;      all previous Linux problems.
+;      - Path2Root$ -> now "ROOT" YAML var
+;      - SIDEBAR$   -> now "navmenu" YAML structured var
 ;  v0.0.40 (2018/05/09)
 ;    - Breadcrumbs as YAML variables. Now instead of passing breadcrumbs as raw
 ;      html via pandoc's "-V" command line option, they are defined as structured
@@ -509,14 +515,17 @@ ForEach CategoriesL()
   SetCurrentDirectory(PROJ_ROOT$ + catPath)
   ; ~~~~~~~~~~~~~
   
-  ; ====================
-  ; Build path2root$ var
-  ; ====================
+  ;  ====================
+  ;- Build path2root$ var
+  ;  ====================
   path2root$ = ""
   pathLevels = CountString(catPath, "/")
   For i = 1 To pathLevels
     path2root$ + "../" ; <= Use "/" as URL path separator
-  Next 
+  Next
+  
+  YAML_PATH2ROOT$ = "ROOT: " + path2root$ + #EOL
+  
   Debug "path2root$: '" + path2root$ + "'", #DBGL2
   ; ===================
   ;- Build Bread Crumbs
@@ -548,38 +557,39 @@ ForEach CategoriesL()
    
   Debug "BREADCRUMBS (YAML):" + #EOL + #DIV4$ + #EOL + YAML_BREADCRUMBS$ + #EOL + #DIV4$ ; FIXME: Debug ouput YAML BREADCRUMBS
   
-  ;} =============
-  ;- Build Sidebar
-  ;{ =============
-  ; TODO: Set active element:
-  ;       - [ ] Root Level: implement check if this is end of path segements? Should intermediate cats
-  ;                         be styled as active or only the innermost one?   
-  ;       - [x] Sub Level 1: implement active element
-  SIDEBAR$ = #Empty$
+  ;} =============================
+  ;- Build Sidebar Navigation Menu
+  ;{ =============================
+  ; Navigation Menu, 2 Levels-Deep. Like with Breadcrumbs, the navigation menu is
+  ; passed to pandoc as YAML stuctured vars:
+  ; ------------------------------------------------------------------------------
+  ; navmenu:
+  ; - text: Gadget
+  ;   link: ../../Gadget/index.html
+  ;   active: true
+  ;   submenu:
+  ;   - text: HyperLinkGadget
+  ;     link: ../../Gadget/HyperLinkGadget/index.html
+  ;     active: true
+  ; ------------------------------------------------------------------------------
+  YAML_NAVMENU$ = "navmenu:" + #EOL
   
-  Define.s linkPath, linkText, linkclass, baseLinkPath
+  Define.s linkPath, linkText, baseLinkPath
   
-  Macro MenuEntryM
-    "<li><a " + linkclass + "href='" + path2root$ + linkPath + "/index.html'>" +
-                linkText + "</a>" ; single quotes only!  
-  EndMacro
-  
-  ; Clamp Menu to 3 Levels
-  If pathLevels > 3
-    subPaths = 3
+  ; Clamp Menu to 2 Levels
+  If pathLevels > 2
+    subPaths = 2
   Else
     subPaths = pathLevels
   EndIf
     
+  ; TODO: Cleanup this part:
   Debug "pathLevels: " + Str(pathLevels) ; DELME
   Debug "subPaths: " + Str(subPaths) ; DELME
-  
   pathSeg1.s = StringField(catPath, 1, "/")
   Debug "pathSeg1: " + pathSeg1 ; DELME
   pathSeg2.s = StringField(catPath, 2, "/")
   Debug "pathSeg2: " + pathSeg2 ; DELME
-  pathSeg3.s = StringField(catPath, 3, "/")
-  Debug "pathSeg3: " + pathSeg3 ; DELME
   
   ; -----------------------
   ; Root Categories Entries
@@ -588,67 +598,52 @@ ForEach CategoriesL()
     linkPath = RootCategoriesL()
     linkText = linkPath
     
+    YAML_NAVMENU$ + "- text: " + linkText + #EOL +
+                    "  link: " + path2root$ + linkPath + "/index.html" + #EOL
+    
     ; Check if curr menu entry is part of the category path:
     If subPaths And StringField(linkPath, 1, "/") = pathSeg1
-      Debug "--- ACTIVE ENTRY: " + pathSeg1
-      linkclass = "class='is-active' "
-      pathSegMatch = #True
-    Else
-      linkclass = #Empty$
-      pathSegMatch = #False
-    EndIf
-    
-    SIDEBAR$ + MenuEntryM
-    ; -----------------------
-    ; SubLevel 1 Categories Entries
-    ; -----------------------
-    If pathSegMatch ; Menu Sub Level 1
-      Debug "///  Menu Sub Level" ; DELME
-      PushListPosition( CategoriesL() )
-      
-      SIDEBAR$ + "<ul>" + #EOL ; Start Sub List (unordered)
-      
-      ; Find Curr Cat in Cats List
+      YAML_NAVMENU$ + "  active: true" + #EOL
+      ; -----------------------
+      ; SubLevel 1 Categories Entries
+      ; -----------------------
+      PushListPosition( CategoriesL() ) ; <= Store curr pos in CategoriesL()
+           
+      ; Find Curr Cat in Cats List:
       ForEach CategoriesL()
         If CategoriesL()\Path = pathSeg1 + "/"
-          Debug "*** CategoriesL() Match: " + CategoriesL()\Path ; DELME
-          
-          linkclass = #Empty$
           baseLinkPath = linkPath + "/"
           
-          ForEach CategoriesL()\SubCategoriesL()
-            Debug "+++ " + CategoriesL()\SubCategoriesL() ; DELME
+          ; Check if Curr Cat has SubCats:
+          If ListSize( CategoriesL()\SubCategoriesL() )
+            YAML_NAVMENU$ + "  submenu:" + #EOL
             
-            linkPath = baseLinkPath + CategoriesL()\SubCategoriesL()
-            linkText = CategoriesL()\SubCategoriesL()
-            
-            ; Check if curr menu entry is part of the category path:
-            If StringField(linkPath, 2, "/") = pathSeg2
-              Debug "--- ACTIVE ENTRY: " + pathSeg1
-              linkclass = "class='is-active' "
-              pathSegMatch = #True
-            Else
-              linkclass = #Empty$
-              pathSegMatch = #False
-            EndIf
-            SIDEBAR$ + MenuEntryM
-            SIDEBAR$ + "</li>" + #EOL ; Close Menu entry tag (Root Sub-Level 1)
-          Next
+            ; Iterate SubCategories of Curr Cat...
+            ForEach CategoriesL()\SubCategoriesL()
+              
+              linkPath = baseLinkPath + CategoriesL()\SubCategoriesL()
+              linkText = CategoriesL()\SubCategoriesL()
+              
+              YAML_NAVMENU$ + "  - text: " + linkText + #EOL +
+                              "    link: " + path2root$ + linkPath + "/index.html" + #EOL            
+              
+              ; Check if curr menu entry is part of the category path:
+              If StringField(linkPath, 2, "/") = pathSeg2
+                YAML_NAVMENU$ + "    active: true" + #EOL
+              EndIf
+              
+            Next ; <= SubCategoriesL() iteration
+          EndIf
         EndIf
       Next
       
-      SIDEBAR$ + "</ul>" ; End Sub List
-
-      PopListPosition( CategoriesL() )     
-    EndIf 
+      PopListPosition( CategoriesL() ) ; <= Restore curr pos in CategoriesL()  
+    EndIf ; <<< END :: SubLevel 1 Categories Entries <<<
     
     SIDEBAR$ + "</li>" + #EOL ; Close Menu entry tag (Root Level)
-    
-    ;     SIDEBAR$ + "<li><a href='" + path2root$ + tmpCatPath + "/index.html'>" +
-    ;                RootCategoriesL() + "</a></li>" + #EOL ; single quotes only!
-  Next
-  
-  Debug "SIDEBAR:" + #EOL + #DIV4$ + #EOL + SIDEBAR$ + #EOL + #DIV4$ ; FIXME: Debug ouput SIDEBAR
+  Next ; <= RootCategoriesL() iteration
+   
+  Debug "YAML_NAVMENU$:" + #EOL + #DIV4$ + #EOL + YAML_NAVMENU$ + #EOL + #DIV4$ ; FIXME: Debug ouput SIDEBAR
   
 ;   Continue ; DELME !!!! Skipp actually building pages
   
@@ -722,7 +717,11 @@ ForEach CategoriesL()
   ;  - [ ] Sidbar
   ;  - [ ] HTML page contents
   
-  YAML_VARS$ = #EOL2 + "---" + #EOL + YAML_BREADCRUMBS$ + #EOL + "..." + #EOL2
+  YAML_VARS$ = #EOL2 + "---" + #EOL + 
+               YAML_PATH2ROOT$ + #EOL +
+               YAML_BREADCRUMBS$ + #EOL +
+               YAML_NAVMENU$ + #EOL + 
+               "..." + #EOL2
   
   Debug "YAML_VARS$:" + #EOL + #DIV4$ + #EOL + YAML_VARS$ + #EOL + #DIV4$ ; FIXME: Debug ouput YAML_VARS$
 
@@ -795,8 +794,6 @@ ForEach CategoriesL()
   
   pandocOpts.s = "-f "+ #PANDOC_FORMAT_IN +
                  " --template=" + ASSETS$ + #PANDOC_TEMPLATE +
-                 "  -V ROOT=" + path2root$ +
-                 ~" -V SIDEBAR=\"" + SIDEBAR$ + ~"\"" +
                  "  -o index.html "
 
   

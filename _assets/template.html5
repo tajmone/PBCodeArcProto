@@ -1,5 +1,5 @@
 $--+---------------------------------------------------------------------------+
-$--| "template.html5" v0.0.10(2018/05/09) | by Tristano Ajmone                 |
+$--| "template.html5" v0.0.11 (2018/05/09) | by Tristano Ajmone                |
 $--|---------------------------------------------------------------------------|
 $--|                                                                           |
 $--|                        PureBasic CodeArchiv Rebirth                       |
@@ -79,7 +79,7 @@ $endfor$
 $------------------------------------------------------------<<< BREADCRUMBS BAR
 <div class="container">
 <div class="tile is-ancestor">
-  
+$----------------------------------------------------------------------> SIDEBAR
   <!-- LEFT SIDEBAR WITH CATEGORIES -->
   <div class="tile is-3 is-vertical is-parent">
     <div class="tile is-child box">
@@ -89,7 +89,15 @@ $------------------------------------------------------------<<< BREADCRUMBS BAR
           Categories
         </p>
         <ul class="menu-list">
-$SIDEBAR$$-------------------------------------------------------------> SIDEBAR
+$for(navmenu)$
+          <li><a $if(navmenu.active)$class="is-active" $endif$HREF="$navmenu.link$">$navmenu.text$</a>$if(navmenu.submenu)$
+
+          <ul>
+$for(navmenu.submenu)$
+            <li><a $if(navmenu.submenu.active)$class="is-active" $endif$HREF="$navmenu.submenu.link$">$navmenu.submenu.text$</a>
+$endfor$
+          </ul>$endif$</li>
+$endfor$
         </ul>
       </aside>
 
