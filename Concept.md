@@ -69,6 +69,33 @@
 				
 				- Files belonging to the code (subdirectories of any depth are allowed)
 				
+- Code is a IDE tool:
+
+	- The guidelines here are the same as above, but the main code should describe in the first lines the tool settings for the IDE that are required for the tool to work properly. If a code header exists in this code, a blank line should be added below the code header, followed by the description of the tool settings.
+	
+		- Without a code header:
+	
+				; Tool Settings:
+				; - Arguments: "%TEMPFILE"
+				; - Event:     Menu Or Shortcut
+			
+		- With a code header:
+		
+				;   Description:
+				;            OS: Windows, Linux, Mac
+				; English-Forum:
+				;  French-Forum:
+				;  German-Forum:
+				;-----------------------------------------------------------------------------
+				
+				; Copyright and license text
+				
+				; Tool Settings:
+				; - Arguments: "%TEMPFILE"
+				; - Event:     Menu Or Shortcut
+				
+				From here follows the Purebasic code.
+				
 ## Repo-Tools
 
 ### [CodeCleaner](https://github.com/Seven365/PureBasic-CodeArchiv-Rebirth/blob/repo-dev/CodesCleaner.pb) (outdated)
