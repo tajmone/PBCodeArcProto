@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.41 (2018/05/09) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.0.42 (2018/05/11) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -53,6 +53,13 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+;  v0.0.42 (2018/05/11)
+;      (BUG FIX: Issue #14)
+;    - Sort Categories and Resource-files lists: due to OS API differences, Win
+;      and Linux filesystem returned files and folders in different order, which
+;      affected the order of elements in the final HTML pages. Now lists are
+;      sorted according to fixed criteria, ensuring that all page elements are
+;      consistently displayed on all OSs.
 ;  v0.0.41 (2018/05/09)
 ;    - No more pandoc variables via CLI option "-V"; now all variables are passed
 ;      in a YAML header inject after markdown page contents. This should solve
@@ -357,6 +364,28 @@ ScanFolder(CategoriesL())
 Debug "- Categories found: "+ Str(totCategories) + " (excluding root folder)"
 Debug "- Resources found: "+ Str(totResources) + " ("+ Str(totSubFRes) +" are subfolders)"
 
+;  ===========================
+;- Sort Lists in CategoriesL()
+;  ===========================
+;  Different OSs will return files and folders in different order due to API
+;  differences; therefore we must enforce a standard sorting criteria for each
+;  category's FilesToParseL() list (affects order of resource cards in page)
+;  and SubCategoriesL() list (affects order of sidebar navmenu entries and
+;  subcategory links in page). CategoriesL() is also sorted, to ensure same
+;  processing order on all OSs, but the first entry must not be moved because
+;  it's the Root Category and the code expects it to be at index 0.
+;  ---------------------------------------------------------------------------
+#ListSortFlags = #PB_Sort_Ascending | #PB_Sort_NoCase
+
+; Sort CategoriesL()
+endIndex = ListSize( CategoriesL() ) -1
+SortStructuredList(CategoriesL(), #ListSortFlags, OffsetOf(Category\Name),
+                   #PB_String, 1, endIndex) ; <= exclude index 0 from sorting!
+ForEach CategoriesL() ; Sort sub-lists...
+  SortList(CategoriesL()\FilesToParseL(), #ListSortFlags)
+  SortList(CategoriesL()\SubCategoriesL(), #ListSortFlags)
+Next
+;  ==========================
 ;- Build Root Categories List (for sidebar navigation)
 ;  ==========================
 FirstElement( CategoriesL() )
