@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.1.0 (2018/05/16) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.1.1 (2018/05/16) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -53,6 +53,9 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+;  v0.1.1 (2018/05/16)
+;    - Move horiz divider str constants to G mod (#DIV1$, etc.).
+;    - Add and Include "mod_Errors.pbi" (Err::). Currently the module does nothing.
 ;  v0.1.0 (2018/05/16)
 ;    - START MODULARAZATION: v0.1.x will mark the transition from a single source
 ;      app to a module-based app, so that parts of the code can be reused by other
@@ -94,9 +97,10 @@ DebugLevel #DBG_LEVEL
 ;{==============================================================================
 
 ; ------------------------------------------------------------------------------
-;                       INCLUDE MODULES AND EXTERNAL FILES                      
+;-                      INCLUDE MODULES AND EXTERNAL FILES                      
 ; ------------------------------------------------------------------------------
-XIncludeFile "mod_G.pbi" ; G::   => Global Module
+XIncludeFile "mod_G.pbi"      ; G::     => Global Module
+XIncludeFile "mod_Errors.pbi" ; Err::   => Errors Tracker
 
 ;- Procedures Declaration
 
@@ -117,18 +121,11 @@ Enumeration DBG_Levels 1
   #DBGL4
 EndEnumeration
 
-#DIV1$ = "================================================================================"
-#DIV2$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-#DIV3$ = "~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~="
-#DIV4$ = "--------------------------------------------------------------------------------"
-#DIV5$ = "********************************************************************************"
-#DIV6$ = "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"
-#DIV7$ = "////////////////////////////////////////////////////////////////////////////////"
 
 #TOT_STEPS = "4"
 Macro StepHeading(Text)
   StepNum +1
-  Debug #DIV1$ + G::#EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ G::#EOL + #DIV1$
+  Debug G::#DIV1$ + G::#EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ G::#EOL + G::#DIV1$
 EndMacro
 
 Procedure.s FixLineEndings(StrToFix$)
@@ -204,10 +201,10 @@ Procedure Abort(ErrorMsg.s, ErrorType = #FATAL_ERR_GENERIC)
   ErrTypeTitle.s = FatalErrTypeInfo(ErrorType)\Title
   ErrTypeDesc.s  = FatalErrTypeInfo(ErrorType)\Desc
   
-  Debug #DIV6$ + G::#EOL + #DIV5$
+  Debug G::#DIV6$ + G::#EOL + G::#DIV5$
   Debug ErrTypeTitle + " — " + ErrTypeDesc + G::#EOL2 + ErrorMsg + G::#EOL
   Debug "Aborting program execution..."
-  Debug #DIV5$ + G::#EOL + #DIV7$
+  Debug G::#DIV5$ + G::#EOL + G::#DIV7$
   
   MessageRequester(ErrTypeTitle, ErrTypeDesc + G::#EOL2 + ErrorMsg + G::#EOL2 +
                                  "Aborting execution...", #PB_MessageRequester_Error)
@@ -245,10 +242,10 @@ Procedure TrackError(ErrMessage.s)
   ; =======================================
   ; Show Error message at time of occurence
   ; =======================================
-  Debug #DIV6$ + G::#EOL + #DIV5$
-  Debug "WARNING!!! While processing: " + currCat + currRes + G::#EOL + #DIV4$ + G::#EOL +
+  Debug G::#DIV6$ + G::#EOL + G::#DIV5$
+  Debug "WARNING!!! While processing: " + currCat + currRes + G::#EOL + G::#DIV4$ + G::#EOL +
         ErrMessage
-  Debug #DIV5$ + G::#EOL + #DIV7$
+  Debug G::#DIV5$ + G::#EOL + G::#DIV7$
   ; ====================================
   ; Store Error details for final report
   ; ====================================
@@ -260,7 +257,7 @@ Procedure TrackError(ErrMessage.s)
 EndProcedure
 
 ;- RegEx
-Enumeration RegExs
+Enumeration G::RegExsIDs ; <= Global Enums
   #RE_URL
 EndEnumeration
 
@@ -277,7 +274,7 @@ EndIf
 ;}==============================================================================
 ;-                                  INITIALIZE                                  
 ;{==============================================================================
-Debug #DIV2$ + G::#EOL + "HTMLPagesCreator" + G::#EOL + #DIV2$
+Debug G::#DIV2$ + G::#EOL + "HTMLPagesCreator" + G::#EOL + G::#DIV2$
 
 ASSETS$ = GetCurrentDirectory() ; Path to assets folder
 
@@ -479,7 +476,7 @@ Else
   Abort("Couldn't read '_assets/meta.yaml' file!", #FATAL_ERR_FILE_ACCESS) ;- ABORT: missing "meta.yaml"
 EndIf
 
-; Debug #DIV4$ + G::#EOL + "YAML_META$:" + G::#EOL + YAML_META$ + #DIV4$ ; DELME
+; Debug G::#DIV4$ + G::#EOL + "YAML_META$:" + G::#EOL + YAML_META$ + G::#DIV4$ ; DELME
 
 ;} ==========================
 ;- Iterate Through Categories
@@ -490,8 +487,8 @@ ForEach CategoriesL()
   catPath.s = CategoriesL()\Path
   currCat = catPath
   ; TODO: Use a macro to print category header? (looks cleaner)
-  Debug #DIV2$ + G::#EOL + "CATEGORY " + Str(cntCat) + "/" + Str(totCategories +1) +
-        " | ./" + catPath + G::#EOL + #DIV2$
+  Debug G::#DIV2$ + G::#EOL + "CATEGORY " + Str(cntCat) + "/" + Str(totCategories +1) +
+        " | ./" + catPath + G::#EOL + G::#DIV2$
   Debug "Category name: '" + CategoriesL()\Name + "'", #DBGL2
   Debug "Category path: '" + catPath + "'", #DBGL2
   
@@ -542,7 +539,7 @@ ForEach CategoriesL()
                         "  link: " + relPath + "index.html" + G::#EOL
   Next
    
-  Debug "BREADCRUMBS (YAML):" + G::#EOL + #DIV4$ + G::#EOL + YAML_BREADCRUMBS$ + G::#EOL + #DIV4$ ; FIXME: Debug ouput YAML BREADCRUMBS
+  Debug "BREADCRUMBS (YAML):" + G::#EOL + G::#DIV4$ + G::#EOL + YAML_BREADCRUMBS$ + G::#EOL + G::#DIV4$ ; FIXME: Debug ouput YAML BREADCRUMBS
   
   ;} =============================
   ;- Build Sidebar Navigation Menu
@@ -630,7 +627,7 @@ ForEach CategoriesL()
     SIDEBAR$ + "</li>" + G::#EOL ; Close Menu entry tag (Root Level)
   Next ; <= RootCategoriesL() iteration
    
-  Debug "YAML_NAVMENU$:" + G::#EOL + #DIV4$ + G::#EOL + YAML_NAVMENU$ + G::#EOL + #DIV4$ ; FIXME: Debug ouput SIDEBAR
+  Debug "YAML_NAVMENU$:" + G::#EOL + G::#DIV4$ + G::#EOL + YAML_NAVMENU$ + G::#EOL + G::#DIV4$ ; FIXME: Debug ouput SIDEBAR
   
 ;   Continue ; DELME !!!! Skipp actually building pages
   
@@ -665,8 +662,8 @@ ForEach CategoriesL()
           README$ + ReadString(0) + G::#EOL
         Wend
         CloseFile(0)
-        ;       Debug "README extracted contents:" + G::#EOL + #DIV4$ ; DELME
-        ;       Debug README$ + #DIV4$
+        ;       Debug "README extracted contents:" + G::#EOL + G::#DIV4$ ; DELME
+        ;       Debug README$ + G::#DIV4$
       Else
         ; ~~~~~~~~~~~~~~~~~~~~~~~~
         ; Can't Access README File
@@ -693,7 +690,7 @@ ForEach CategoriesL()
     EndIf
   EndWith
   
-  Debug "SubCatLinks:" + G::#EOL + #DIV4$ + G::#EOL + SubCatLinks + G::#EOL + #DIV4$ ; FIXME: Debug output SBUCATEGORIES LINKS
+  Debug "SubCatLinks:" + G::#EOL + G::#DIV4$ + G::#EOL + SubCatLinks + G::#EOL + G::#DIV4$ ; FIXME: Debug output SBUCATEGORIES LINKS
   
   ;} =========================
   ;- Build YAML Vars Block
@@ -710,7 +707,7 @@ ForEach CategoriesL()
                YAML_NAVMENU$ + G::#EOL + 
                "..." + G::#EOL2
   
-  Debug "YAML_VARS$:" + G::#EOL + #DIV4$ + G::#EOL + YAML_VARS$ + G::#EOL + #DIV4$ ; FIXME: Debug ouput YAML_VARS$
+  Debug "YAML_VARS$:" + G::#EOL + G::#DIV4$ + G::#EOL + YAML_VARS$ + G::#EOL + G::#DIV4$ ; FIXME: Debug ouput YAML_VARS$
 
   ; ===================
   ;- Build Resume Cards
@@ -727,13 +724,13 @@ ForEach CategoriesL()
       ForEach \FilesToParseL()
         file.s = \FilesToParseL()
         currRes = file
-        Debug #DIV3$ + G::#EOL + "RESOURCE " + Str(cntRes) + "/" + Str(totResources +1) +
-              " | ./" + catPath + file + G::#EOL + #DIV3$
+        Debug G::#DIV3$ + G::#EOL + "RESOURCE " + Str(cntRes) + "/" + Str(totResources +1) +
+              " | ./" + catPath + file + G::#EOL + G::#DIV3$
         currCardHTML.s = #Empty$ ; <= Shared in Parsing procedures!
         If ParseFileComments(file)
           CARDS$ + currCardHTML
           ; Temporary Debug
-          Debug "EXTRACTED CARD:" + G::#EOL + #DIV4$ + G::#EOL + currCardHTML + G::#EOL + #DIV4$ ; FIXME: Debug output EXTRACTED CARD
+          Debug "EXTRACTED CARD:" + G::#EOL + G::#DIV4$ + G::#EOL + currCardHTML + G::#EOL + G::#DIV4$ ; FIXME: Debug output EXTRACTED CARD
           cntRes +1
         Else
           ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -821,7 +818,7 @@ ForEach CategoriesL()
   currRes = #Empty$
   ; ~~~~~~~~~~~~~
   cntCat +1
-  Debug #DIV2$
+  Debug G::#DIV2$
 Next ; <= ForEach CategoriesL()
      ;}
 
@@ -847,14 +844,14 @@ Debug "Problems encountered: " + Str(totWarn)
 cntWarn = 1
 With ErrTrackL()
   ForEach ErrTrackL()
-    Debug #DIV2$ + G::#EOL +
+    Debug G::#DIV2$ + G::#EOL +
           "PROBLEM " + Str(cntWarn) + "/" + Str(totWarn) + " | ./" +
-          \ErrCat + \ErrRes + G::#EOL + #DIV4$
+          \ErrCat + \ErrRes + G::#EOL + G::#DIV4$
     Debug \ErrMsg    
     cntWarn +1
   Next
 EndWith
-Debug #DIV2$
+Debug G::#DIV2$
 
 
 ; ShowVariableViewer()
@@ -1229,7 +1226,7 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
              ;  ~~~~~~~~~~~~~~~~~~~~~~
           If carryOn ; (there were carry-on lines)
                      ; Debug final value string
-            Debug dbgIndent + "- Assembled value:" + G::#EOL + #DIV4$, #DBGL4
+            Debug dbgIndent + "- Assembled value:" + G::#EOL + G::#DIV4$, #DBGL4
             Debug value, #DBGL4
           EndIf
           ;  ===========================
@@ -1257,7 +1254,7 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
       Debug lineNum + "Skip", #DBGL4
     EndIf
     lineCnt +1
-    Debug #DIV4$, #DBGL4
+    Debug G::#DIV4$, #DBGL4
   Next
   
   Debug "<<< ParseComments()", #DBGL4

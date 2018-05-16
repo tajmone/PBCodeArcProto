@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_G.pbi" v0.0.1 (2018/05/16) | PureBASIC 5.62
+; "mod_G.pbi" v0.0.2 (2018/05/16) | PureBASIC 5.62
 
 ; Stores commonly shared project and environment Data.
 
@@ -43,16 +43,28 @@ DeclareModule G
   ;
   ;     Enumeration G::RegExsIDs
   ;
-  ; This Enum block it's empty because here we only need to set the Enum Id.
   ; ------------------------------------------------------------------------------
   ; NOTE: This Enumeration has to be public! The rest of the modules' RegEx Enums
   ;       don't have to, they can be private to their module...
   ; ------------------------------------------------------------------------------
   Enumeration RegExsIDs
+    ; This Enum block it's empty because here we only need to set the Enum ID.
   EndEnumeration
   ; ==============================================================================
   ;                            PUBLIC VARS & CONSTANTS                            
   ; ==============================================================================
+  ; ------------------------------------------------------------------------------
+  ;                         Horizontal Dividers Constants                         
+  ; ------------------------------------------------------------------------------
+  ; These constants have been moved temporarily here, to simplify splitting code.
+  ; They might be moved elsewhere in the future.
+  #DIV1$ = "================================================================================"
+  #DIV2$ = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+  #DIV3$ = "~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~="
+  #DIV4$ = "--------------------------------------------------------------------------------"
+  #DIV5$ = "********************************************************************************"
+  #DIV6$ = "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"
+  #DIV7$ = "////////////////////////////////////////////////////////////////////////////////"
   
 EndDeclareModule
 
