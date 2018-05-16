@@ -230,6 +230,7 @@ Once the work is complete, the branch is uploaded to your own public repository 
 Maybe some corrections will follow until the maintainers are satisfied. For example, only changes described in the commit description should be included in the commits. Maybe there are commits in the branch that should be combined into a single commit. And so on.
 
 At the end, the branch is inserted from the pull request to the top of the `master` banch via `git merge --ff-only changes-branch`.
+If the previous command fails, your local repository is no longer up-to-date and should first be updated using the `git pull --rebase=preserve` command.
 				
 ## Ideas that maybe won't be implemented
 
