@@ -3,6 +3,9 @@
 # https://github.com/tajmone/PBCodeArcProto                                    #
 ################################################################################
 
+# TMP Work Files
+___*.*
+
 # Based on ".gitignore" created by:
 # https://www.gitignore.io/api/windows,linux,macos,purebasic
 

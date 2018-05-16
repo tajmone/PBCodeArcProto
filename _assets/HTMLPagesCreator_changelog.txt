@@ -1,11 +1,63 @@
 ==============================================================================
-CHANGELOG "HTMLPagesCreator.pb" (up to: v0.0.38 | 2018/05/05)
+CHANGELOG "HTMLPagesCreator.pb" (up to: v0.0.42 (2018/05/11)
 ------------------------------------------------------------------------------
 Due to the size of the changelog, I've copied it here the full log and deleted
 all but the most recent changes from the source file. This file is not updated
 with each new version, but only when there is need to remove some entries from
 the original source file.
 ==============================================================================
+v0.0.42 (2018/05/11)
+    (BUG FIX: Issue #14)
+  - Sort Categories and Resource-files lists: due to OS API differences, Win
+    and Linux filesystem returned files and folders in different order, which
+    affected the order of elements in the final HTML pages. Now lists are
+    sorted according to fixed criteria, ensuring that all page elements are
+    consistently displayed on all OSs.
+
+v0.0.41 (2018/05/09)
+  - No more pandoc variables via CLI option "-V"; now all variables are passed
+    in a YAML header inject after markdown page contents. This should solve
+    all previous Linux problems.
+    - Path2Root$ -> now "ROOT" YAML var
+    - SIDEBAR$   -> now "navmenu" YAML structured var
+
+v0.0.40 (2018/05/09)
+  - Breadcrumbs as YAML variables. Now instead of passing breadcrumbs as raw
+    html via pandoc's "-V" command line option, they are defined as structured
+    variables in a YAML string which is appended to the MD_Page string fed to
+    pandoc via STDIN. The template now handle breadcrumbs more elegantly via
+    `$for(breadcrumbs)$`, allowing consistent indentantion in the final html.
+    As an added benefit, breadcrumbs are now format agnostic (and could be also
+    used in output formats other than HTML5).
+    This approach should fix the problems encountered on Linux, which didn't
+    handle well long strings and whitespace with "-V" option (see Issue #14).
+  - Removed pandoc option "--eol=native" (this wasn't the source of the error
+    of Issue #13).
+
+v0.0.39 (2018/05/05)
+  - Trimmed down the CHANGELOG. Keeping only most recent changes.
+    The full changelog copied to "HTMLPagesCreator_changelog.txt".
+
+v0.0.38 (2018/05/05)
+  - Sidebar Menu:
+    - SubLevel 1 active category is now styled as "active".
+
+v0.0.37 (2018/05/05)
+  - Sidebar Menu:
+    - Added SubeLevel 1 (still needs some polishing)
+
+v0.0.36 (2018/05/03)
+  - Added pandoc option "--eol=native" to make sure HTML files use native EOLs
+    (this should already be the default value, but just in case). See: #13:
+     -- https://github.com/tajmone/PBCodeArcProto/issues/13
+
+v0.0.35 (2018/04/20)
+  - ERRORS HANDLING: now there are two types of errors:
+      - Fatal Errors => Errors which require Aborting the app
+      - Errors       => All other errors (and Warnings)
+    Vars, constants and procedures identifiers have been renamed accordingly:
+      - `Abort` | `AbortErr` | `Err`   => `FatalErr`
+      - `Warn`  | `Warning`            => `Err`
 
 v0.0.38 (2018/05/05)
   - Sidebar Menu:

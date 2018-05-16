@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.0.42 (2018/05/11) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.1.0 (2018/05/16) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -53,51 +53,15 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
-;  v0.0.42 (2018/05/11)
-;      (BUG FIX: Issue #14)
-;    - Sort Categories and Resource-files lists: due to OS API differences, Win
-;      and Linux filesystem returned files and folders in different order, which
-;      affected the order of elements in the final HTML pages. Now lists are
-;      sorted according to fixed criteria, ensuring that all page elements are
-;      consistently displayed on all OSs.
-;  v0.0.41 (2018/05/09)
-;    - No more pandoc variables via CLI option "-V"; now all variables are passed
-;      in a YAML header inject after markdown page contents. This should solve
-;      all previous Linux problems.
-;      - Path2Root$ -> now "ROOT" YAML var
-;      - SIDEBAR$   -> now "navmenu" YAML structured var
-;  v0.0.40 (2018/05/09)
-;    - Breadcrumbs as YAML variables. Now instead of passing breadcrumbs as raw
-;      html via pandoc's "-V" command line option, they are defined as structured
-;      variables in a YAML string which is appended to the MD_Page string fed to
-;      pandoc via STDIN. The template now handle breadcrumbs more elegantly via
-;      `$for(breadcrumbs)$`, allowing consistent indentantion in the final html.
-;      As an added benefit, breadcrumbs are now format agnostic (and could be also
-;      used in output formats other than HTML5).
-;      This approach should fix the problems encountered on Linux, which didn't
-;      handle well long strings and whitespace with "-V" option (see Issue #14).
-;    - Removed pandoc option "--eol=native" (this wasn't the source of the error
-;      of Issue #13).
-;  v0.0.39 (2018/05/05)
-;    - Trimmed down the CHANGELOG. Keeping only most recent changes.
-;      The full changelog copied to "HTMLPagesCreator_changelog.txt".
-;  v0.0.38 (2018/05/05)
-;    - Sidebar Menu:
-;      - SubLevel 1 active category is now styled as "active".
-;  v0.0.37 (2018/05/05)
-;    - Sidebar Menu:
-;      - Added SubeLevel 1 (still needs some polishing)
-;  v0.0.36 (2018/05/03)
-;    - Added pandoc option "--eol=native" to make sure HTML files use native EOLs
-;      (this should already be the default value, but just in case). See: #13:
-;       -- https://github.com/tajmone/PBCodeArcProto/issues/13
-;  v0.0.35 (2018/04/20)
-;    - ERRORS HANDLING: now there are two types of errors:
-;        - Fatal Errors => Errors which require Aborting the app
-;        - Errors       => All other errors (and Warnings)
-;      Vars, constants and procedures identifiers have been renamed accordingly:
-;        - `Abort` | `AbortErr` | `Err`   => `FatalErr`
-;        - `Warn`  | `Warning`            => `Err`
+;  v0.1.0 (2018/05/16)
+;    - START MODULARAZATION: v0.1.x will mark the transition from a single source
+;      app to a module-based app, so that parts of the code can be reused by other
+;      tools also. Once modularization of the full sourcecode is achieved will
+;      bump to Alpha version 0.2.x.
+;    - NEW MODULE: "mod_G.pbi" (G::) — this global module will now hold common
+;      data shared by all modules in this app and other tools:
+;      - Cross-platforms constants moved to this module (#EOL, etc.), now to use
+;        them the module's namespace must be added (G::#EOL, G::#DSEP, etc).
 ;}
 ; ==============================================================================
 ;-                                   SETTINGS                                   
@@ -128,17 +92,11 @@ DebugLevel #DBG_LEVEL
 ;}==============================================================================
 ;-                                    SETUP                                     
 ;{==============================================================================
-; Cross Platform Settings
-CompilerIf #PB_Compiler_OS = #PB_OS_Windows
-  #DSEP = "\"       ; Directory Separator Character
-  #EOL = #CRLF$     ; End-Of-Line Sequence
-  #EOL_WRONG = #LF$ ; Wrong End-Of-Line Sequence
-CompilerElse
-  #DSEP = "/"
-  #EOL = #LF$
-  #EOL_WRONG = #CRLF$
-CompilerEndIf
-#EOL2 = #EOL + #EOL ; double EOL sequences
+
+; ------------------------------------------------------------------------------
+;                       INCLUDE MODULES AND EXTERNAL FILES                      
+; ------------------------------------------------------------------------------
+XIncludeFile "mod_G.pbi" ; G::   => Global Module
 
 ;- Procedures Declaration
 
@@ -170,13 +128,13 @@ EndEnumeration
 #TOT_STEPS = "4"
 Macro StepHeading(Text)
   StepNum +1
-  Debug #DIV1$ + #EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ #EOL + #DIV1$
+  Debug #DIV1$ + G::#EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ G::#EOL + #DIV1$
 EndMacro
 
 Procedure.s FixLineEndings(StrToFix$)
   ; Fix newline chars (CRLF/LF) according to OS.
   ; ------------------------------------------------------------------------------
-  FixedStr$ = ReplaceString(StrToFix$, #EOL_WRONG, #EOL)
+  FixedStr$ = ReplaceString(StrToFix$, G::#EOL_WRONG, G::#EOL)
   ProcedureReturn FixedStr$
 EndProcedure
 
@@ -184,7 +142,7 @@ Procedure.s QuoteText(text$)
   ; Convert string to quoted text by adding " | " at the beginning of each line.
   ; ------------------------------------------------------------------------------
   text$ = FixLineEndings(text$)
-  text$ = " | " + ReplaceString(text$, #EOL, #EOL + " | ")
+  text$ = " | " + ReplaceString(text$, G::#EOL, G::#EOL + " | ")
   ProcedureReturn text$
 EndProcedure
 
@@ -246,12 +204,12 @@ Procedure Abort(ErrorMsg.s, ErrorType = #FATAL_ERR_GENERIC)
   ErrTypeTitle.s = FatalErrTypeInfo(ErrorType)\Title
   ErrTypeDesc.s  = FatalErrTypeInfo(ErrorType)\Desc
   
-  Debug #DIV6$ + #EOL + #DIV5$
-  Debug ErrTypeTitle + " — " + ErrTypeDesc + #EOL2 + ErrorMsg + #EOL
+  Debug #DIV6$ + G::#EOL + #DIV5$
+  Debug ErrTypeTitle + " — " + ErrTypeDesc + G::#EOL2 + ErrorMsg + G::#EOL
   Debug "Aborting program execution..."
-  Debug #DIV5$ + #EOL + #DIV7$
+  Debug #DIV5$ + G::#EOL + #DIV7$
   
-  MessageRequester(ErrTypeTitle, ErrTypeDesc + #EOL2 + ErrorMsg + #EOL2 +
+  MessageRequester(ErrTypeTitle, ErrTypeDesc + G::#EOL2 + ErrorMsg + G::#EOL2 +
                                  "Aborting execution...", #PB_MessageRequester_Error)
   
   ; TODO: Show Warnings resume before aborting
@@ -287,10 +245,10 @@ Procedure TrackError(ErrMessage.s)
   ; =======================================
   ; Show Error message at time of occurence
   ; =======================================
-  Debug #DIV6$ + #EOL + #DIV5$
-  Debug "WARNING!!! While processing: " + currCat + currRes + #EOL + #DIV4$ + #EOL +
+  Debug #DIV6$ + G::#EOL + #DIV5$
+  Debug "WARNING!!! While processing: " + currCat + currRes + G::#EOL + #DIV4$ + G::#EOL +
         ErrMessage
-  Debug #DIV5$ + #EOL + #DIV7$
+  Debug #DIV5$ + G::#EOL + #DIV7$
   ; ====================================
   ; Store Error details for final report
   ; ====================================
@@ -310,8 +268,8 @@ EndEnumeration
 
 If Not CreateRegularExpression(#RE_URL, #RE_URL$)
   ; NOTE: Error tested!
-  ErrMSG$ = "Error while trying to create the following RegEx:" + #EOL2 + #RE_URL$ + #EOL2 +
-            "The Regular Expression library returned the following error:" + #EOL +
+  ErrMSG$ = "Error while trying to create the following RegEx:" + G::#EOL2 + #RE_URL$ + G::#EOL2 +
+            "The Regular Expression library returned the following error:" + G::#EOL +
             QuoteText( RegularExpressionError() )
   Abort(ErrMSG$, #FATAL_ERR_INTERNAL)
 EndIf
@@ -319,7 +277,7 @@ EndIf
 ;}==============================================================================
 ;-                                  INITIALIZE                                  
 ;{==============================================================================
-Debug #DIV2$ + #EOL + "HTMLPagesCreator" + #EOL + #DIV2$
+Debug #DIV2$ + G::#EOL + "HTMLPagesCreator" + G::#EOL + #DIV2$
 
 ASSETS$ = GetCurrentDirectory() ; Path to assets folder
 
@@ -514,14 +472,14 @@ currRes.s = #Empty$ ; Always = crurrent Resource filename OR empty if none.
 ;{ =========================
 If ReadFile(0, ASSETS$ + "meta.yaml")
   While Eof(0) = 0
-    YAML_META$ + ReadString(0) + #EOL
+    YAML_META$ + ReadString(0) + G::#EOL
   Wend
   CloseFile(0)
 Else
   Abort("Couldn't read '_assets/meta.yaml' file!", #FATAL_ERR_FILE_ACCESS) ;- ABORT: missing "meta.yaml"
 EndIf
 
-; Debug #DIV4$ + #EOL + "YAML_META$:" + #EOL + YAML_META$ + #DIV4$ ; DELME
+; Debug #DIV4$ + G::#EOL + "YAML_META$:" + G::#EOL + YAML_META$ + #DIV4$ ; DELME
 
 ;} ==========================
 ;- Iterate Through Categories
@@ -532,8 +490,8 @@ ForEach CategoriesL()
   catPath.s = CategoriesL()\Path
   currCat = catPath
   ; TODO: Use a macro to print category header? (looks cleaner)
-  Debug #DIV2$ + #EOL + "CATEGORY " + Str(cntCat) + "/" + Str(totCategories +1) +
-        " | ./" + catPath + #EOL + #DIV2$
+  Debug #DIV2$ + G::#EOL + "CATEGORY " + Str(cntCat) + "/" + Str(totCategories +1) +
+        " | ./" + catPath + G::#EOL + #DIV2$
   Debug "Category name: '" + CategoriesL()\Name + "'", #DBGL2
   Debug "Category path: '" + catPath + "'", #DBGL2
   
@@ -553,7 +511,7 @@ ForEach CategoriesL()
     path2root$ + "../" ; <= Use "/" as URL path separator
   Next
   
-  YAML_PATH2ROOT$ = "ROOT: " + path2root$ + #EOL
+  YAML_PATH2ROOT$ = "ROOT: " + path2root$ + G::#EOL
   
   Debug "path2root$: '" + path2root$ + "'", #DBGL2
   ; ===================
@@ -572,7 +530,7 @@ ForEach CategoriesL()
   ;   $breadcrumbs.text$
   ;   $breadcrumbs.link$
   ; ------------------------------------------------------------------------------
-  YAML_BREADCRUMBS$ = "breadcrumbs:" + #EOL
+  YAML_BREADCRUMBS$ = "breadcrumbs:" + G::#EOL
 
   For i = 1 To pathLevels
     crumb.s = StringField(catPath, i, "/")
@@ -580,11 +538,11 @@ ForEach CategoriesL()
     For n = pathLevels To i+1 Step -1
       relPath + "../"
     Next    
-    YAML_BREADCRUMBS$ + "- text: " + crumb + #EOL +
-                        "  link: " + relPath + "index.html" + #EOL
+    YAML_BREADCRUMBS$ + "- text: " + crumb + G::#EOL +
+                        "  link: " + relPath + "index.html" + G::#EOL
   Next
    
-  Debug "BREADCRUMBS (YAML):" + #EOL + #DIV4$ + #EOL + YAML_BREADCRUMBS$ + #EOL + #DIV4$ ; FIXME: Debug ouput YAML BREADCRUMBS
+  Debug "BREADCRUMBS (YAML):" + G::#EOL + #DIV4$ + G::#EOL + YAML_BREADCRUMBS$ + G::#EOL + #DIV4$ ; FIXME: Debug ouput YAML BREADCRUMBS
   
   ;} =============================
   ;- Build Sidebar Navigation Menu
@@ -601,7 +559,7 @@ ForEach CategoriesL()
   ;     link: ../../Gadget/HyperLinkGadget/index.html
   ;     active: true
   ; ------------------------------------------------------------------------------
-  YAML_NAVMENU$ = "navmenu:" + #EOL
+  YAML_NAVMENU$ = "navmenu:" + G::#EOL
   
   Define.s linkPath, linkText, baseLinkPath
   
@@ -627,12 +585,12 @@ ForEach CategoriesL()
     linkPath = RootCategoriesL()
     linkText = linkPath
     
-    YAML_NAVMENU$ + "- text: " + linkText + #EOL +
-                    "  link: " + path2root$ + linkPath + "/index.html" + #EOL
+    YAML_NAVMENU$ + "- text: " + linkText + G::#EOL +
+                    "  link: " + path2root$ + linkPath + "/index.html" + G::#EOL
     
     ; Check if curr menu entry is part of the category path:
     If subPaths And StringField(linkPath, 1, "/") = pathSeg1
-      YAML_NAVMENU$ + "  active: true" + #EOL
+      YAML_NAVMENU$ + "  active: true" + G::#EOL
       ; -----------------------
       ; SubLevel 1 Categories Entries
       ; -----------------------
@@ -645,7 +603,7 @@ ForEach CategoriesL()
           
           ; Check if Curr Cat has SubCats:
           If ListSize( CategoriesL()\SubCategoriesL() )
-            YAML_NAVMENU$ + "  submenu:" + #EOL
+            YAML_NAVMENU$ + "  submenu:" + G::#EOL
             
             ; Iterate SubCategories of Curr Cat...
             ForEach CategoriesL()\SubCategoriesL()
@@ -653,12 +611,12 @@ ForEach CategoriesL()
               linkPath = baseLinkPath + CategoriesL()\SubCategoriesL()
               linkText = CategoriesL()\SubCategoriesL()
               
-              YAML_NAVMENU$ + "  - text: " + linkText + #EOL +
-                              "    link: " + path2root$ + linkPath + "/index.html" + #EOL            
+              YAML_NAVMENU$ + "  - text: " + linkText + G::#EOL +
+                              "    link: " + path2root$ + linkPath + "/index.html" + G::#EOL            
               
               ; Check if curr menu entry is part of the category path:
               If StringField(linkPath, 2, "/") = pathSeg2
-                YAML_NAVMENU$ + "    active: true" + #EOL
+                YAML_NAVMENU$ + "    active: true" + G::#EOL
               EndIf
               
             Next ; <= SubCategoriesL() iteration
@@ -669,10 +627,10 @@ ForEach CategoriesL()
       PopListPosition( CategoriesL() ) ; <= Restore curr pos in CategoriesL()  
     EndIf ; <<< END :: SubLevel 1 Categories Entries <<<
     
-    SIDEBAR$ + "</li>" + #EOL ; Close Menu entry tag (Root Level)
+    SIDEBAR$ + "</li>" + G::#EOL ; Close Menu entry tag (Root Level)
   Next ; <= RootCategoriesL() iteration
    
-  Debug "YAML_NAVMENU$:" + #EOL + #DIV4$ + #EOL + YAML_NAVMENU$ + #EOL + #DIV4$ ; FIXME: Debug ouput SIDEBAR
+  Debug "YAML_NAVMENU$:" + G::#EOL + #DIV4$ + G::#EOL + YAML_NAVMENU$ + G::#EOL + #DIV4$ ; FIXME: Debug ouput SIDEBAR
   
 ;   Continue ; DELME !!!! Skipp actually building pages
   
@@ -704,10 +662,10 @@ ForEach CategoriesL()
       ; ========================
       If ReadFile(0, "README.md", #PB_UTF8)
         While Eof(0) = 0
-          README$ + ReadString(0) + #EOL
+          README$ + ReadString(0) + G::#EOL
         Wend
         CloseFile(0)
-        ;       Debug "README extracted contents:" + #EOL + #DIV4$ ; DELME
+        ;       Debug "README extracted contents:" + G::#EOL + #DIV4$ ; DELME
         ;       Debug README$ + #DIV4$
       Else
         ; ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -724,18 +682,18 @@ ForEach CategoriesL()
   SubCatLinks.s = #Empty$
   With CategoriesL()
     If ListSize( \SubCategoriesL() )
-      SubCatLinks = #EOL2 + "---" + #EOL2
-      SubCatLinks + "# Subcategories" +  #EOL2
+      SubCatLinks = G::#EOL2 + "---" + G::#EOL2
+      SubCatLinks + "# Subcategories" +  G::#EOL2
       ForEach  \SubCategoriesL()
         cat$ = \SubCategoriesL()
-        SubCatLinks + "- [" + cat$ + "](./"+ cat$ +"/index.html)" + #EOL
+        SubCatLinks + "- [" + cat$ + "](./"+ cat$ +"/index.html)" + G::#EOL
       Next
     Else
       Debug "No subcategories." ; FIXME: Debug output NO SUBCATEGORIES
     EndIf
   EndWith
   
-  Debug "SubCatLinks:" + #EOL + #DIV4$ + #EOL + SubCatLinks + #EOL + #DIV4$ ; FIXME: Debug output SBUCATEGORIES LINKS
+  Debug "SubCatLinks:" + G::#EOL + #DIV4$ + G::#EOL + SubCatLinks + G::#EOL + #DIV4$ ; FIXME: Debug output SBUCATEGORIES LINKS
   
   ;} =========================
   ;- Build YAML Vars Block
@@ -746,13 +704,13 @@ ForEach CategoriesL()
   ;  - [ ] Sidbar
   ;  - [ ] HTML page contents
   
-  YAML_VARS$ = #EOL2 + "---" + #EOL + 
-               YAML_PATH2ROOT$ + #EOL +
-               YAML_BREADCRUMBS$ + #EOL +
-               YAML_NAVMENU$ + #EOL + 
-               "..." + #EOL2
+  YAML_VARS$ = G::#EOL2 + "---" + G::#EOL + 
+               YAML_PATH2ROOT$ + G::#EOL +
+               YAML_BREADCRUMBS$ + G::#EOL +
+               YAML_NAVMENU$ + G::#EOL + 
+               "..." + G::#EOL2
   
-  Debug "YAML_VARS$:" + #EOL + #DIV4$ + #EOL + YAML_VARS$ + #EOL + #DIV4$ ; FIXME: Debug ouput YAML_VARS$
+  Debug "YAML_VARS$:" + G::#EOL + #DIV4$ + G::#EOL + YAML_VARS$ + G::#EOL + #DIV4$ ; FIXME: Debug ouput YAML_VARS$
 
   ; ===================
   ;- Build Resume Cards
@@ -762,20 +720,20 @@ ForEach CategoriesL()
     totResources = ListSize( \FilesToParseL() )
     If totResources ; if Category contains Resources...
       
-      CARDS$ = "~~~{=html5}" + #EOL ; <= Raw content via panodc "raw_attribute" Extension
+      CARDS$ = "~~~{=html5}" + G::#EOL ; <= Raw content via panodc "raw_attribute" Extension
       Debug "Create Items Cards ("+ Str(totResources) +")"
       cntRes = 1
       
       ForEach \FilesToParseL()
         file.s = \FilesToParseL()
         currRes = file
-        Debug #DIV3$ + #EOL + "RESOURCE " + Str(cntRes) + "/" + Str(totResources +1) +
-              " | ./" + catPath + file + #EOL + #DIV3$
+        Debug #DIV3$ + G::#EOL + "RESOURCE " + Str(cntRes) + "/" + Str(totResources +1) +
+              " | ./" + catPath + file + G::#EOL + #DIV3$
         currCardHTML.s = #Empty$ ; <= Shared in Parsing procedures!
         If ParseFileComments(file)
           CARDS$ + currCardHTML
           ; Temporary Debug
-          Debug "EXTRACTED CARD:" + #EOL + #DIV4$ + #EOL + currCardHTML + #EOL + #DIV4$ ; FIXME: Debug output EXTRACTED CARD
+          Debug "EXTRACTED CARD:" + G::#EOL + #DIV4$ + G::#EOL + currCardHTML + G::#EOL + #DIV4$ ; FIXME: Debug output EXTRACTED CARD
           cntRes +1
         Else
           ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -818,8 +776,8 @@ ForEach CategoriesL()
                          ;    that are fed via STDIN, etc.)   
   Declare PandocConvert(options.s)
   
-  MD_Page.s = README$ + #EOL2 + SubCatLinks + #EOL2 + CARDS$ +
-              #EOL2 + YAML_META$ + YAML_VARS$
+  MD_Page.s = README$ + G::#EOL2 + SubCatLinks + G::#EOL2 + CARDS$ +
+              G::#EOL2 + YAML_META$ + YAML_VARS$
   
   pandocOpts.s = "-f "+ #PANDOC_FORMAT_IN +
                  " --template=" + ASSETS$ + #PANDOC_TEMPLATE +
@@ -843,7 +801,7 @@ ForEach CategoriesL()
       ; Pandoc exited with Error
       ; ~~~~~~~~~~~~~~~~~~~~~~~~
       ; NOTE: Tested!
-      Abort("Pandoc exited with error (" + Str(PandocExCode) + "):" + #EOL +
+      Abort("Pandoc exited with error (" + Str(PandocExCode) + "):" + G::#EOL +
             QuoteText( PandocErr$ ), #FATAL_ERR_PANDOC)
     Else
       ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -889,9 +847,9 @@ Debug "Problems encountered: " + Str(totWarn)
 cntWarn = 1
 With ErrTrackL()
   ForEach ErrTrackL()
-    Debug #DIV2$ + #EOL +
+    Debug #DIV2$ + G::#EOL +
           "PROBLEM " + Str(cntWarn) + "/" + Str(totWarn) + " | ./" +
-          \ErrCat + \ErrRes + #EOL + #DIV4$
+          \ErrCat + \ErrRes + G::#EOL + #DIV4$
     Debug \ErrMsg    
     cntWarn +1
   Next
@@ -1047,7 +1005,7 @@ Procedure PandocConvert(options.s)
     ; Capture Pandoc's STDOUT
     ; ------------------------------------------------------------------------------
     If AvailableProgramOutput(Pandoc)
-      PandocSTDOUT$ + ReadProgramString(Pandoc) + #EOL
+      PandocSTDOUT$ + ReadProgramString(Pandoc) + G::#EOL
       ; NOTE: HTML docs must have native End-of-Line sequence/char. Git will handle
       ;       proper conversion at checkout via .gitattributes settings.
     EndIf
@@ -1263,7 +1221,7 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
             EndIf
             newParagraph = #False
           Else
-            value + #EOL2
+            value + G::#EOL2
             newParagraph = #True
           EndIf
           
@@ -1271,7 +1229,7 @@ Procedure ParseComments(List CommentsL.s(), List RawDataL.KeyValPair() )
              ;  ~~~~~~~~~~~~~~~~~~~~~~
           If carryOn ; (there were carry-on lines)
                      ; Debug final value string
-            Debug dbgIndent + "- Assembled value:" + #EOL + #DIV4$, #DBGL4
+            Debug dbgIndent + "- Assembled value:" + G::#EOL + #DIV4$, #DBGL4
             Debug value, #DBGL4
           EndIf
           ;  ===========================
@@ -1312,12 +1270,12 @@ Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
   ; TODO: HTML CARD - Add link to fileName
   ; TODO: HTML CARD - If file is "CodeInfo.txt" just add folder path
   
-  Card.s = "<article class='message is-link'>" + #EOL +
-           "<div class='message-header'>" + #EOL +
-           "<p>" + fileName + "</p>" + #EOL +
-           "</div>" + #EOL +
-           "<div class='message-body is-paddingless'>" + #EOL +
-           "<table class='res-card'><tbody>" + #EOL  
+  Card.s = "<article class='message is-link'>" + G::#EOL +
+           "<div class='message-header'>" + G::#EOL +
+           "<p>" + fileName + "</p>" + G::#EOL +
+           "</div>" + G::#EOL +
+           "<div class='message-body is-paddingless'>" + G::#EOL +
+           "<table class='res-card'><tbody>" + G::#EOL  
   
   ; TODO: HTML CARD - Insert <p> tags?
   ForEach RawDataL()
@@ -1344,13 +1302,13 @@ Procedure.s BuildCard( List RawDataL.KeyValPair(), fileName.s )
     ;  ====================
     ;- Convert EOLs to <br>
     ;  ====================
-    value = ReplaceString(value, #EOL2, "<br /><br />") ; <= The optional " /" is for XML compatibility
-    Card + value + "</td></tr>" + #EOL
+    value = ReplaceString(value, G::#EOL2, "<br /><br />") ; <= The optional " /" is for XML compatibility
+    Card + value + "</td></tr>" + G::#EOL
     
   Next
   
-  Card + "</tbody></table>" + #EOL +
-         "</div></article>" + #EOL2
+  Card + "</tbody></table>" + G::#EOL +
+         "</div></article>" + G::#EOL2
   
   Debug "<<< BuildCard()", #DBGL4
   ProcedureReturn Card
