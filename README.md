@@ -30,6 +30,18 @@ This is a temporary project, there isn't a single license governing it as a whol
 
 This project contains code from various sources, each governed by their own license terms which can be found in the source files commente headers, or in a license files inside the folder hosting the resource(s).
 
+### PureBasic CodeArchiv Resources
+
+For testing purposes, I've copied to this repository some of the resources of the [PureBasic CodeArchiv Rebirth] project — in order to test the HTML pages builder against real case scenarios.
+
+Any root-level folder whose name doesn't start with an underscore is most likely to have been copied over from the [PureBasic CodeArchiv Rebirth] project (notable exceptions are the "`ERRORS`" and "`TEST`" folder which were created for testing imaginary edge cases).
+
+These folders from the PureBasic CodeArchiv contain resources from various authors, each governed by its own license terms, as specified in their source files (or in their `CodeInfo.txt` file).
+
+Such resources are not strictly part of this project, they are just accessory to its development and testing. This prototype project will finally result in an application which will be intergrated into the [PureBasic CodeArchiv Rebirth] project for the scope of indexing the resources therein contained. For more information, see:
+
+- https://github.com/SicroAtGit/PureBasic-CodeArchiv-Rebirth
+
 ### Bulma
 
 - https://bulma.io/
