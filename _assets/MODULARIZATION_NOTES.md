@@ -16,6 +16,7 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
     - [Global Enumerators](#global-enumerators)
 - [Modules Roadmap](#modules-roadmap)
     - [Error Tracker](#error-tracker)
+        - [Required Vars Access](#required-vars-access)
     - [Log Module](#log-module)
 
 <!-- /MarkdownTOC -->
@@ -77,6 +78,23 @@ Error tracking should be handled by an independent module. Currently, the __Chec
 The error tracker is intended to gather statistics of any errors encountered during the actual processing of the project, in order to present a detailed report at the end. The way errors are stored should be independent of their final representation (ie: the app's GUI, the debug window, or a log file).
 
 Also, I must keep in mind that the final app might implement a dry-run feature to actually test building the whole project without writing any changes to disk, only in order to check if any errors are encountered with pandoc or at other places. So the error tracker must be able to accomodate that too.
+
+### Required Vars Access
+
+The Error Tracker needs to access the following vars, which will have to be placed either in its module or in a common module:
+
+|       var name       |  type  | namespace  |
+|----------------------|--------|------------|
+| `FatalErrTypeInfo()` | Array  | `Err::`    |
+| `ErrTrackL()`        | List   | `Err::`    |
+| `currCat`            | string | `Err::`\* |
+| `currRes`            | string | `Err::`\*  |
+
+> __NOTE\*__ — `currCat` and `currRes` might be needed by other modules too, so I might need to move them in some common module later on. Since they refer to processing categories, they don't belong in G mod (which some tools might use for processing single resources only, like Codes Checker, etc.), so I should think of creating a module to store project-wide data (categories, etc.).
+>
+> For now, I just place them in Err mod so I can go ahead with the work, and after all this is the module that deals with tracking processing, so it might even be OK to keep them here.
+
+
 
 ## Log Module
 

@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.1.1 (2018/05/16) | PureBasic 5.62
+; "HTMLPagesCreator.pb" v0.1.2 (2018/05/16) | PureBasic 5.62
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -53,6 +53,8 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+;  v0.1.2 (2018/05/16)
+;    - Error Tracking moved to Errors Mod (Err::) "mod_Errors.pbi"
 ;  v0.1.1 (2018/05/16)
 ;    - Move horiz divider str constants to G mod (#DIV1$, etc.).
 ;    - Add and Include "mod_Errors.pbi" (Err::). Currently the module does nothing.
@@ -143,118 +145,7 @@ Procedure.s QuoteText(text$)
   ProcedureReturn text$
 EndProcedure
 
-;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;-> ERRORS HANDLING
-;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; Some helpers to handle Errors. There are two types of errors:
-;  (1) Fatal-Errors (always abort)
-;  (2) Errors       (user is asked if he wants to abort or continue)
-;
-; Errors and their details are printed to the debug window at the time of their
-; occurence, and they are also tracked so that they keen be included in the final
-; report at the end.
-; ------------------------------------------------------------------------------
-
-#Failure = #False
-#Success = #True
-
-; Define Error-Types which lead to aborting execution:
-Enumeration FatalErrTypes
-  #FATAL_ERR_GENERIC
-  #FATAL_ERR_INTERNAL
-  #FATAL_ERR_FILE_ACCESS
-  #FATAL_ERR_PANDOC
-EndEnumeration
-totFatalErrTypes = #PB_Compiler_EnumerationValue -1
-
-Structure FatalErrData
-  Title.s     ; Error-Type Title
-  Desc.s      ; Error-Type Description
-EndStructure
-
-; Array to associate Error-Types to their messages:
-Dim FatalErrTypeInfo.FatalErrData(totFatalErrTypes)
-
-For i=0 To totFatalErrTypes
-  Read.s FatalErrTypeInfo(i)\Title 
-  Read.s FatalErrTypeInfo(i)\Desc 
-Next
-
-FatalErrorMessages:
-DataSection
-  Data.s "FATAL ERROR", "The application encountered an fatal error."
-  Data.s "INTERNAL ERROR", "The application encountered an internal error; if the problem persists contact the author."
-  Data.s "FILE ACCESS ERROR", "The application encountered an error while trying to access a project file for I/O operations."
-  Data.s "PANDOC ERROR", "An error was encountered while interacting with pandoc."
-  ;   Data.s "", ""
-EndDataSection
-
-
-Procedure Abort(ErrorMsg.s, ErrorType = #FATAL_ERR_GENERIC)
-  ; ------------------------------------------------------------------------------
-  ; Abort execution by reporting the Error-Type and its default description,
-  ; followed by the specific error description. Abort message is both printed to
-  ; debug output window and shown in MessageRequester.
-  ; ------------------------------------------------------------------------------
-  Shared FatalErrTypeInfo()
-  
-  ErrTypeTitle.s = FatalErrTypeInfo(ErrorType)\Title
-  ErrTypeDesc.s  = FatalErrTypeInfo(ErrorType)\Desc
-  
-  Debug G::#DIV6$ + G::#EOL + G::#DIV5$
-  Debug ErrTypeTitle + " — " + ErrTypeDesc + G::#EOL2 + ErrorMsg + G::#EOL
-  Debug "Aborting program execution..."
-  Debug G::#DIV5$ + G::#EOL + G::#DIV7$
-  
-  MessageRequester(ErrTypeTitle, ErrTypeDesc + G::#EOL2 + ErrorMsg + G::#EOL2 +
-                                 "Aborting execution...", #PB_MessageRequester_Error)
-  
-  ; TODO: Show Warnings resume before aborting
-  End 1
-  
-EndProcedure
-;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Define.s currCat ; Always = crurrent Category path (relative to project root)
-Define.s currRes ; Always = crurrent Resource filename OR empty if none.
-
-
-; Errors/Warnings as stored as structured entries by the Tracker:
-Structure ErrData
-  ErrCat.s        ; <= stores copy of currCat
-  ErrRes.s        ; <= stores copy of currRes
-  ErrMsg.s        ; <= stores Message
-EndStructure
-
-;-***************
-
-NewList ErrTrackL.ErrData() ; List to store Error messages and details
-
-Procedure TrackError(ErrMessage.s)
-  ; ------------------------------------------------------------------------------
-  ; Handle Errors and their messages.
-  ; 1) Print error info to debug windows at time of occurence
-  ;    (if curr DebugLevel or setttings allow it)
-  ; 2) Store error info for the final resume.
-  ; ------------------------------------------------------------------------------  
-  Shared ErrTrackL()
-  Shared currCat, currRes
-  ; =======================================
-  ; Show Error message at time of occurence
-  ; =======================================
-  Debug G::#DIV6$ + G::#EOL + G::#DIV5$
-  Debug "WARNING!!! While processing: " + currCat + currRes + G::#EOL + G::#DIV4$ + G::#EOL +
-        ErrMessage
-  Debug G::#DIV5$ + G::#EOL + G::#DIV7$
-  ; ====================================
-  ; Store Error details for final report
-  ; ====================================
-  AddElement( ErrTrackL() )
-  ErrTrackL()\ErrCat = currCat
-  ErrTrackL()\ErrRes = currRes
-  ErrTrackL()\ErrMsg = ErrMessage
-  
-EndProcedure
+;- ««« ERROR HANDLING WAS HERE
 
 ;- RegEx
 Enumeration G::RegExsIDs ; <= Global Enums
@@ -268,7 +159,7 @@ If Not CreateRegularExpression(#RE_URL, #RE_URL$)
   ErrMSG$ = "Error while trying to create the following RegEx:" + G::#EOL2 + #RE_URL$ + G::#EOL2 +
             "The Regular Expression library returned the following error:" + G::#EOL +
             QuoteText( RegularExpressionError() )
-  Abort(ErrMSG$, #FATAL_ERR_INTERNAL)
+  Err::Abort(ErrMSG$, Err::#FATAL_ERR_INTERNAL)
 EndIf
 
 ;}==============================================================================
@@ -336,7 +227,7 @@ Debug "- Resources found: "+ Str(totResources) + " ("+ Str(totSubFRes) +" are su
 endIndex = ListSize( CategoriesL() ) -1
 SortStructuredList(CategoriesL(), #ListSortFlags, OffsetOf(Category\Name),
                    #PB_String, 1, endIndex) ; <= exclude index 0 from sorting!
-ForEach CategoriesL() ; Sort sub-lists...
+ForEach CategoriesL()                       ; Sort sub-lists...
   SortList(CategoriesL()\FilesToParseL(), #ListSortFlags)
   SortList(CategoriesL()\SubCategoriesL(), #ListSortFlags)
 Next
@@ -446,23 +337,24 @@ StepHeading("Process Categories")
 ; ===================================
 ; Warnings/Errors Tracking References
 ; ===================================
-; From here onward, the following vars are used by the Warnings Tracking system
-; to store references to the problems, for the final report:
+; TODO: Clean-Up Comments
+; From here onward, the following `Err::` vars are used by the Errors module
+; to store references to the problems encountered (for the final report):
 ; (1) `currCat` -- holds the path of the category currently being processed
 ;                  (empty if it's Root). Path is relative to the project's root.
 ; (2) `currRes` -- holds the filename of the resource currently being processed
 ;                  (with "CodeInfo.txt" resources, also stores the subfolder).
 ;
-; The warning tracker will interpret an empty `currRes` string as indicating that
+; The Errors tracker will interpret an empty `currRes` string as indicating that
 ; the error refers to the Category itself (eg: an empty category), rather than 
 ; to a specific resource file. For this reason, it's important that:
-; -- When beginning to process a resource, `currRes` must be immeditaely set to
-;    hold its filename;
-; -- After a resource has been processed, `currRes` must be immeditaely set to
-;    an empty string.
+; -- When beginning to process a resource, `Err::currRes` must be immeditaely 
+;    set to hold its filename;
+; -- After a resource has been processed, `Err::currRes` must be immeditaely set
+;    to an empty string.
 ; -----------------------------------
-currCat.s = #Empty$ ; Always = crurrent Category path (relative to project root)
-currRes.s = #Empty$ ; Always = crurrent Resource filename OR empty if none.
+Err::currCat = #Empty$ ; Always = current Category path (relative to proj. root)
+Err::currRes = #Empty$ ; Always = current Resource filename OR empty if none.
 
 ;  =========================
 ;- Load Common YAML Metadata
@@ -473,7 +365,7 @@ If ReadFile(0, ASSETS$ + "meta.yaml")
   Wend
   CloseFile(0)
 Else
-  Abort("Couldn't read '_assets/meta.yaml' file!", #FATAL_ERR_FILE_ACCESS) ;- ABORT: missing "meta.yaml"
+  Err::Abort("Couldn't read '_assets/meta.yaml' file!", Err::#FATAL_ERR_FILE_ACCESS) ;- ABORT: missing "meta.yaml"
 EndIf
 
 ; Debug G::#DIV4$ + G::#EOL + "YAML_META$:" + G::#EOL + YAML_META$ + G::#DIV4$ ; DELME
@@ -485,7 +377,7 @@ cntCat = 1
 ForEach CategoriesL()
   
   catPath.s = CategoriesL()\Path
-  currCat = catPath
+  Err::currCat = catPath
   ; TODO: Use a macro to print category header? (looks cleaner)
   Debug G::#DIV2$ + G::#EOL + "CATEGORY " + Str(cntCat) + "/" + Str(totCategories +1) +
         " | ./" + catPath + G::#EOL + G::#DIV2$
@@ -528,7 +420,7 @@ ForEach CategoriesL()
   ;   $breadcrumbs.link$
   ; ------------------------------------------------------------------------------
   YAML_BREADCRUMBS$ = "breadcrumbs:" + G::#EOL
-
+  
   For i = 1 To pathLevels
     crumb.s = StringField(catPath, i, "/")
     relPath.s = #Empty$
@@ -538,7 +430,7 @@ ForEach CategoriesL()
     YAML_BREADCRUMBS$ + "- text: " + crumb + G::#EOL +
                         "  link: " + relPath + "index.html" + G::#EOL
   Next
-   
+  
   Debug "BREADCRUMBS (YAML):" + G::#EOL + G::#DIV4$ + G::#EOL + YAML_BREADCRUMBS$ + G::#EOL + G::#DIV4$ ; FIXME: Debug ouput YAML BREADCRUMBS
   
   ;} =============================
@@ -566,10 +458,10 @@ ForEach CategoriesL()
   Else
     subPaths = pathLevels
   EndIf
-    
+  
   ; TODO: Cleanup this part:
   Debug "pathLevels: " + Str(pathLevels) ; DELME
-  Debug "subPaths: " + Str(subPaths) ; DELME
+  Debug "subPaths: " + Str(subPaths)     ; DELME
   pathSeg1.s = StringField(catPath, 1, "/")
   Debug "pathSeg1: " + pathSeg1 ; DELME
   pathSeg2.s = StringField(catPath, 2, "/")
@@ -592,7 +484,7 @@ ForEach CategoriesL()
       ; SubLevel 1 Categories Entries
       ; -----------------------
       PushListPosition( CategoriesL() ) ; <= Store curr pos in CategoriesL()
-           
+      
       ; Find Curr Cat in Cats List:
       ForEach CategoriesL()
         If CategoriesL()\Path = pathSeg1 + "/"
@@ -622,19 +514,19 @@ ForEach CategoriesL()
       Next
       
       PopListPosition( CategoriesL() ) ; <= Restore curr pos in CategoriesL()  
-    EndIf ; <<< END :: SubLevel 1 Categories Entries <<<
+    EndIf                              ; <<< END :: SubLevel 1 Categories Entries <<<
     
     SIDEBAR$ + "</li>" + G::#EOL ; Close Menu entry tag (Root Level)
-  Next ; <= RootCategoriesL() iteration
-   
+  Next                           ; <= RootCategoriesL() iteration
+  
   Debug "YAML_NAVMENU$:" + G::#EOL + G::#DIV4$ + G::#EOL + YAML_NAVMENU$ + G::#EOL + G::#DIV4$ ; FIXME: Debug ouput SIDEBAR
   
-;   Continue ; DELME !!!! Skipp actually building pages
+  ;   Continue ; DELME !!!! Skipp actually building pages
   
   ;} ===============
   ;- Get README File
   ;{ ===============
-  currRes = "README.md"
+  Err::currRes = "README.md"
   README$ = #Empty$
   
   Select FileSize("README.md")
@@ -646,13 +538,13 @@ ForEach CategoriesL()
       ; NOTE: All three error cases tested!
     Case 0 ; File is 0 Kb
            ; ~~~~~~~~~~~~
-      TrackError("README.md has size 0 Kb.")
+      Err::TrackError("README.md has size 0 Kb.")
     Case -1 ; File not found
             ; ~~~~~~~~~~~~~~
-      TrackError("Missing README file.")
+      Err::TrackError("Missing README file.")
     Case -2 ; File is a directory
             ; ~~~~~~~~~~~~~~~~~~~~
-      TrackError("README.md is a directory.")
+      Err::TrackError("README.md is a directory.")
     Default
       ; ========================
       ; Get README File Contents
@@ -669,10 +561,10 @@ ForEach CategoriesL()
         ; Can't Access README File
         ; ~~~~~~~~~~~~~~~~~~~~~~~~
         ; FIXME: Track as Warning? (this is not a fatal error!)
-        Abort("Couldn't read the README file: '"+ catPath +"README.md'", #FATAL_ERR_FILE_ACCESS) ;- ABORT: Can't open README
+        Err::Abort("Couldn't read the README file: '"+ catPath +"README.md'", Err::#FATAL_ERR_FILE_ACCESS) ;- ABORT: Can't open README
       EndIf
   EndSelect
-  currRes = #Empty$
+  Err::currRes = #Empty$
   ;} =========================
   ;- Build SubCategories links
   ;{ =========================
@@ -708,7 +600,7 @@ ForEach CategoriesL()
                "..." + G::#EOL2
   
   Debug "YAML_VARS$:" + G::#EOL + G::#DIV4$ + G::#EOL + YAML_VARS$ + G::#EOL + G::#DIV4$ ; FIXME: Debug ouput YAML_VARS$
-
+  
   ; ===================
   ;- Build Resume Cards
   ;{===================
@@ -723,7 +615,7 @@ ForEach CategoriesL()
       
       ForEach \FilesToParseL()
         file.s = \FilesToParseL()
-        currRes = file
+        Err::currRes = file
         Debug G::#DIV3$ + G::#EOL + "RESOURCE " + Str(cntRes) + "/" + Str(totResources +1) +
               " | ./" + catPath + file + G::#EOL + G::#DIV3$
         currCardHTML.s = #Empty$ ; <= Shared in Parsing procedures!
@@ -739,7 +631,7 @@ ForEach CategoriesL()
           Debug "!!! Card creation for this resource failed !!!" ; FIXME: Debug output RESUME CARD FAILURE
         EndIf
       Next
-      currRes = #Empty$
+      Err::currRes = #Empty$
       CARDS$ + "~~~" ; <= end Raw Content fenced block
     Else  
       ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -767,10 +659,10 @@ ForEach CategoriesL()
   ;            [x] $description$
   ;            [x] $keywords$
   
-  currRes = "index.html" ; <= Any errors here will have to be reported as pertaining
-                         ;    the output HTML doc because they could be caused by a
-                         ;    variety of factors in pandoc (options, one of the strings
-                         ;    that are fed via STDIN, etc.)   
+  Err::currRes = "index.html" ; <= Any errors here will have to be reported as pertaining
+                              ;    the output HTML doc because they could be caused by a
+                              ;    variety of factors in pandoc (options, one of the strings
+                              ;    that are fed via STDIN, etc.)   
   Declare PandocConvert(options.s)
   
   MD_Page.s = README$ + G::#EOL2 + SubCatLinks + G::#EOL2 + CARDS$ +
@@ -779,7 +671,7 @@ ForEach CategoriesL()
   pandocOpts.s = "-f "+ #PANDOC_FORMAT_IN +
                  " --template=" + ASSETS$ + #PANDOC_TEMPLATE +
                  "  -o index.html "
-
+  
   
   Define PandocRunErr ; (bool) success/failure in invoking pandoc
   Define PandocExCode ; copy of pandoc exit code
@@ -791,15 +683,15 @@ ForEach CategoriesL()
       ; Pandoc invocation failed
       ; ~~~~~~~~~~~~~~~~~~~~~~~~
       ; NOTE: Tested!
-      Abort("Failed to invoke/run pandoc! Please, check that pandoc is correctly setup.",
-            #FATAL_ERR_PANDOC)
+      Err::Abort("Failed to invoke/run pandoc! Please, check that pandoc is correctly setup.",
+                 Err::#FATAL_ERR_PANDOC)
     ElseIf PandocExCode
       ; ~~~~~~~~~~~~~~~~~~~~~~~~
       ; Pandoc exited with Error
       ; ~~~~~~~~~~~~~~~~~~~~~~~~
       ; NOTE: Tested!
-      Abort("Pandoc exited with error (" + Str(PandocExCode) + "):" + G::#EOL +
-            QuoteText( PandocErr$ ), #FATAL_ERR_PANDOC)
+      Err::Abort("Pandoc exited with error (" + Str(PandocExCode) + "):" + G::#EOL +
+                 QuoteText( PandocErr$ ), Err::#FATAL_ERR_PANDOC)
     Else
       ; ~~~~~~~~~~~~~~~~~~~~~~~~~~
       ; Pandoc returned Warning(s)
@@ -811,11 +703,11 @@ ForEach CategoriesL()
       For i=1 To totPandocWarnings
         extrWarn.s = #WarnField$ + StringField(PandocErr$, i+1, #WarnField$) 
         Warn$ = ~"Pandoc reported the following warnings:\n" + QuoteText( extrWarn )
-        TrackError(Warn$)
+        Err::TrackError(Warn$)
       Next
     EndIf
   EndIf
-  currRes = #Empty$
+  Err::currRes = #Empty$
   ; ~~~~~~~~~~~~~
   cntCat +1
   Debug G::#DIV2$
@@ -828,7 +720,7 @@ Next ; <= ForEach CategoriesL()
 ;{==============================================================================
 StepHeading("Final Report")
 
-totWarn = ListSize( ErrTrackL() )
+totWarn = ListSize( Err::ErrTrackL() )
 If totWarn = 0
   ; =======================
   ; No Problems Encountered
@@ -842,8 +734,8 @@ EndIf
 ;  =====================
 Debug "Problems encountered: " + Str(totWarn)
 cntWarn = 1
-With ErrTrackL()
-  ForEach ErrTrackL()
+With Err::ErrTrackL()
+  ForEach Err::ErrTrackL()
     Debug G::#DIV2$ + G::#EOL +
           "PROBLEM " + Str(cntWarn) + "/" + Str(totWarn) + " | ./" +
           \ErrCat + \ErrRes + G::#EOL + G::#DIV4$
@@ -988,7 +880,7 @@ Procedure PandocConvert(options.s)
     ;                               Somethig Wrong...                               
     ; ------------------------------------------------------------------------------
     PandocRunErr = #True
-    ProcedureReturn #Failure
+    ProcedureReturn Err::#Failure
   EndIf 
   
   ; Feed GFM page to pandoc
@@ -1028,9 +920,9 @@ Procedure PandocConvert(options.s)
   
   If PandocExCode Or          ; <= Errors
      PandocErr$ <> ""         ; <= Warnings
-    ProcedureReturn #Failure
+    ProcedureReturn Err::#Failure
   Else
-    ProcedureReturn #Success
+    ProcedureReturn Err::#Success
   EndIf
   
 EndProcedure
@@ -1066,22 +958,22 @@ Procedure ParseFileComments(file.s)
   Select FileSize(file.s)
     Case  0 ; File is 0 Kb
             ; ~~~~~~~~~~~~
-      TrackError("Resource file has size 0 Kb.")
-      ProcedureReturn #Failure
+      Err::TrackError("Resource file has size 0 Kb.")
+      ProcedureReturn Err::#Failure
     Case -1 ; File not found
             ; ~~~~~~~~~~~~~~
-      TrackError("Resource file not found.")
-      ProcedureReturn #Failure
+      Err::TrackError("Resource file not found.")
+      ProcedureReturn Err::#Failure
     Case -2 ; File is a directory
             ; ~~~~~~~~~~~~~~~~~~~~
-      TrackError("Resource is a directory instead of file.")
-      ProcedureReturn #Failure
+      Err::TrackError("Resource is a directory instead of file.")
+      ProcedureReturn Err::#Failure
   EndSelect ;}
   
   ;{ open file
   If Not ReadFile(0, file, #PB_UTF8)
-    TrackError("Unable to open resource file for reading.")
-    ProcedureReturn #Failure
+    Err::TrackError("Unable to open resource file for reading.")
+    ProcedureReturn Err::#Failure
     
   EndIf
   ; Skip BOM
@@ -1093,8 +985,8 @@ Procedure ParseFileComments(file.s)
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ; No Comments Header Block Found
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    TrackError("No Header-Comments block found in resource.")
-    ProcedureReturn #Failure
+    Err::TrackError("No Header-Comments block found in resource.")
+    ProcedureReturn Err::#Failure
   ElseIf #DBG_LEVEL >= 3
     ; ===========================
     ; Debug Header Comments Block
@@ -1116,13 +1008,13 @@ Procedure ParseFileComments(file.s)
     ; NOTE: instead of returning HTML string, handle it in BuildCard() via Shared currCardHTML
     currCardHTML = BuildCard( RawDataL(), file )    
     ; TODO: Handle Empty Cards Error
-    ProcedureReturn #Success
+    ProcedureReturn Err::#Success
   Else
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ; No Keys Found in Comments Parsing
     ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    TrackError("No key-value pairs where found in resource.")
-    ProcedureReturn #Failure
+    Err::TrackError("No key-value pairs where found in resource.")
+    ProcedureReturn Err::#Failure
   EndIf
   
 EndProcedure

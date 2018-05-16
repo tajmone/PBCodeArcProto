@@ -7,9 +7,13 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_G.pbi" v0.0.2 (2018/05/16) | PureBASIC 5.62
+; "mod_G.pbi" v0.0.3 (2018/05/16) | PureBASIC 5.62
 
-; Stores commonly shared project and environment Data.
+; Stores Data shared by any tool dealing with CodeArchiv and its resources.
+
+; Since it might be also used by tools targetting single resources, it shouldn't
+; store data relating to the CodeArchiv structure (categories, etc.) but only to
+; the strictly necessary common code parts.
 
 ; modules dependencies: none.
 
