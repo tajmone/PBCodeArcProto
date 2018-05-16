@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_Errors.pbi" v0.0.2 (2018/05/16) | PureBASIC 5.62
+; "mod_Errors.pbi" v0.0.2 (2018/05/16) | PureBASIC 5.62 | MIT License
 
 ; Error management module shared by all CodeArchiv tools.
 
