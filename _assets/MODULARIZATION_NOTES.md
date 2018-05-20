@@ -12,10 +12,13 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
 - [Source Files](#source-files)
 - [Modules Description](#modules-description)
     - [Global Module](#global-module)
+    - [Error Tracker](#error-tracker)
 - [Notes on Modules Usage](#notes-on-modules-usage)
     - [Global Enumerators](#global-enumerators)
 - [Modules Roadmap](#modules-roadmap)
-    - [Error Tracker](#error-tracker)
+    - [Errors Management](#errors-management)
+        - [Current Status](#current-status)
+        - [Possible Changes](#possible-changes)
         - [Required Vars Access](#required-vars-access)
     - [Log Module](#log-module)
 - [Problems Ahead](#problems-ahead)
@@ -42,6 +45,32 @@ This module (`G::`) holds data commonly shared by all tools.
 - __Cross platform constants__ (`#EOL`, `#EOL_WRONG`, `#DSEP`, etc.)
 - __[Global enumerators](#global-enumerators)__
 
+
+## Error Tracker
+
+[Error Tracker]: #error-tracker
+
+- [`mod_Errors.pbi`][mod_Errors]
+ 
+This module (`Err::`) tracks and handles all errors encountered during the processing stage of the project (validation, extraction, conversion, etc.). Every module that takes part in the Archiv processing should report errors to this module and let the module handle them.
+
+- `Err::TrackError(ErrMessage.s)` — signal an error and carry on.
+- `Err::Abort(ErrorMsg.s, ErrorType)` — signal a fatal error and request aborting processing the Archiv.
+
+When requesting `Abort()`, the passed `ErrorType` should be one of the following
+
+- `Err::#FATAL_ERR_GENERIC` (default if none specified)
+- `Err::#FATAL_ERR_INTERNAL` — error due to App internals.
+- `Err::#FATAL_ERR_FILE_ACCESS` — App can't get access to file resources.
+- `Err::#FATAL_ERR_PANDOC` — any blocking error related to pandoc.
+
+Before Aborting, the Error Tracker will ensure that any statistics gathered so far are printed in the final report, so that the user can be made aware of all problems encountred (and not just the last one, which halted processing).
+
+_Some considerations..._
+
+The error tracker is intended to gather statistics of any errors encountered during the actual processing of the project, in order to present a detailed report at the end. The way errors are stored should be independent of their final representation (ie: the app's GUI, the debug window, or a log file).
+
+Also, I must keep in mind that the final app might implement a dry-run feature to actually test building the whole project without writing any changes to disk, only in order to check if any errors are encountered with pandoc or at other places. So the error tracker must be able to accomodate that too.
 
 # Notes on Modules Usage
 
@@ -74,29 +103,33 @@ It also means that any third party tools willing to reuse some of the modules of
 
 I still need to work out properly how to move all the current functionality into separate modules. Presently, the main challenges are posed by the Error Tracking system, the Debug logging and the Final Report: in order to move any part of the current code to independent modules, I must first address these three systems so that they don't break down.
 
-## Error Tracker
 
-- [`mod_Errors.pbi`][mod_Errors]
- 
-This module (`Err::`) tracks and handles all errors encountered during the processing stage of the project (validation, extraction, conversion, etc.). Every module that takes part in the Archiv processing should report errors to this module and let the module handle them.
+## Errors Management
 
-- `Err::TrackError(ErrMessage.s)` — signal an error and carry on.
-- `Err::Abort(ErrorMsg.s, ErrorType)` — signal a fatal error and request aborting processing the Archiv.
+### Current Status
 
-When requesting `Abort()`, the passed `ErrorType` should be one of the following
+Currently the HTML Pages Creator has a dual approach to errors:
 
-- `Err::#FATAL_ERR_GENERIC` (default if none specified)
-- `Err::#FATAL_ERR_INTERNAL` — error due to App internals.
-- `Err::#FATAL_ERR_FILE_ACCESS` — App can't get access to file resources.
-- `Err::#FATAL_ERR_PANDOC` — any blocking error related to pandoc.
+1. Check Project Integrity Step
+2. Project processing errors managment
 
-Before Aborting, the Error Tracker will ensure that any statistics gathered so far are printed in the final report, so that the user can be made aware of all problems encountred (and not just the last one, which halted processing).
+The two are independent from each other. The Project Integrity Step does some preliminary checks to verify if there are structural problems in the Archiv, but doesn't go as far as checking the integrity single resources. This is intended as a way to detect common problems before starting the conversion process. For this reason, errors are not tracked by this step, they are just reported to the user who is then asked if he still wants to go ahead.
 
-Error tracking should be handled by an independent module. Currently, the __Check Project Integrity__ step is independent of the error tracker: the former only detects errors before the processing stage, and its found errors are not tracked by the error tracker for the final report as this would created duplicate entries. Nevertheless, if some data structures and/or functionality of the tracker could also be used by the Project Integrity checker it would be better (but it shouldn't affect the report).
+The management of errors during processing is another thing altogether, and it's handled by the [Error Tracker] Module, which is required to build a final report with statistics (which are useful to handle multiple errors).
 
-The error tracker is intended to gather statistics of any errors encountered during the actual processing of the project, in order to present a detailed report at the end. The way errors are stored should be independent of their final representation (ie: the app's GUI, the debug window, or a log file).
+### Possible Changes
 
-Also, I must keep in mind that the final app might implement a dry-run feature to actually test building the whole project without writing any changes to disk, only in order to check if any errors are encountered with pandoc or at other places. So the error tracker must be able to accomodate that too.
+The current approach might not be suitable for the new design that is about to be implemented. This is due to the fact that the user will be able to pick and choose settings of how the project should be processed, possibly requiring a different model for the Check Project Integrity Step (eg: it might require that all resources be tested to).
+
+Furthermore, a __Dry Run__ option will also be available, which would allow to simulate the whole conversion process without actually writing to disk, in order to prevent chaning anything on disk until we're sure that the whole process is error free. It makes sense that a dry-run should redirect to a disk cache all the converted pages, so that after the test run it would be possible to confirm conversion without having to repeat the whole process froms scratch.
+
+While the Error Track is not going to be affected by this, the Check Project Integrity Step is definitely going to be.
+
+Also, I think that some data structures and/or functionality of the tracker could be reused by the new Project Integrity checker (but in a way that shouldn't affect the report).
+
+Another thing to keep in mind is that some resource file checks will automatically correct some problems with the resource (eg: if in-file settings are found, they are removed on the spot).
+
+
 
 ### Required Vars Access
 
