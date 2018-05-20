@@ -10,19 +10,25 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
 <!-- MarkdownTOC autolink="true" bracket="round" autoanchor="false" lowercase="only_ascii" uri_encoding="true" levels="1,2,3" -->
 
 - [Source Files](#source-files)
+- [Modules and Tools](#modules-and-tools)
 - [Modules Description](#modules-description)
     - [Global Module](#global-module)
     - [Error Tracker](#error-tracker)
+        - [Required Vars Access](#required-vars-access)
+        - [Some Considerations...](#some-considerations)
 - [Notes on Modules Usage](#notes-on-modules-usage)
     - [Global Enumerators](#global-enumerators)
 - [Modules Roadmap](#modules-roadmap)
     - [Errors Management](#errors-management)
         - [Current Status](#current-status)
         - [Possible Changes](#possible-changes)
-        - [Required Vars Access](#required-vars-access)
     - [Log Module](#log-module)
+    - [GUI Introduction](#gui-introduction)
+        - [GUI Prototype](#gui-prototype)
+        - [Brainstorming](#brainstorming)
 - [Problems Ahead](#problems-ahead)
     - [Issues With Resource Files](#issues-with-resource-files)
+        - [Memoization: A Possible Solution](#memoization-a-possible-solution)
 
 <!-- /MarkdownTOC -->
 
@@ -33,6 +39,19 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
 - [`HTMLPagesCreator.pb`][HTMLPagesCreator]
 - [`mod_G.pbi`][mod_G] — (`G::`) Global module for commonly shared data.
 - [`mod_Errors.pbi`][mod_Errors] — (`Err::`) Error Tracking module.
+
+# Modules and Tools
+
+Here is an outline of which modules will be reused by which tools.
+
+|      module      | HTML Generator | Codes Checker | Codes Cleaner |
+|------------------|----------------|---------------|---------------|
+| `mod_G.pbi`      | yes            | yes           | yes           |
+| `mod_Errors.pbi` | yes            | ???           | ???           |
+
+The presence of "???" in the above table indicates uncertainty on wether some tools should make use of a module or not.
+
+For example, both the Codes Checker and Cleaner could use the Errors Tracker, even though they deal with single resources. The pros and cons have to be weighed. Using the Error Tracker would simplify managing errors, but might also introduce the burden of updating the tool if the module is updated in backward compatibility breaking manner.
 
 # Modules Description
 
@@ -66,7 +85,23 @@ When requesting `Abort()`, the passed `ErrorType` should be one of the following
 
 Before Aborting, the Error Tracker will ensure that any statistics gathered so far are printed in the final report, so that the user can be made aware of all problems encountred (and not just the last one, which halted processing).
 
-_Some considerations..._
+### Required Vars Access
+
+The Error Tracker needs to access the following vars, which will have to be placed either in its module or in a common module:
+
+|       var name       |  type  | namespace  |
+|----------------------|--------|------------|
+| `FatalErrTypeInfo()` | Array  | `Err::`    |
+| `ErrTrackL()`        | List   | `Err::`    |
+| `currCat`            | string | `Err::`\* |
+| `currRes`            | string | `Err::`\*  |
+
+> __NOTE\*__ — `currCat` and `currRes` might be needed by other modules too, so I might need to move them in some common module later on. Since they refer to processing categories, they don't belong in G mod (which some tools might use for processing single resources only, like Codes Checker, etc.), so I should think of creating a module to store project-wide data (categories, etc.).
+>
+> For now, I just place them in Err mod so I can go ahead with the work, and after all this is the module that deals with tracking processing, so it might even be OK to keep them here.
+
+
+### Some Considerations...
 
 The error tracker is intended to gather statistics of any errors encountered during the actual processing of the project, in order to present a detailed report at the end. The way errors are stored should be independent of their final representation (ie: the app's GUI, the debug window, or a log file).
 
@@ -103,6 +138,11 @@ It also means that any third party tools willing to reuse some of the modules of
 
 I still need to work out properly how to move all the current functionality into separate modules. Presently, the main challenges are posed by the Error Tracking system, the Debug logging and the Final Report: in order to move any part of the current code to independent modules, I must first address these three systems so that they don't break down.
 
+Then, I must decide which of the current HTML Creator functionality needs to be split in a module and which might be kept in main code — basically, it boils down to what might be needed by other tools.
+
+Because in PureBasic modules can't access main code, moving any functionality to a module is likely to force me to move commonly shared data to an independent module too. For example, implementing the GUI as a separate module will have an avalanche effect in this regard (which is why I'm taking so long to decide how to go about splitting up the current code).
+
+These are tricky issues, so I should plan it well.
 
 ## Errors Management
 
@@ -130,24 +170,6 @@ Also, I think that some data structures and/or functionality of the tracker coul
 Another thing to keep in mind is that some resource file checks will automatically correct some problems with the resource (eg: if in-file settings are found, they are removed on the spot).
 
 
-
-### Required Vars Access
-
-The Error Tracker needs to access the following vars, which will have to be placed either in its module or in a common module:
-
-|       var name       |  type  | namespace  |
-|----------------------|--------|------------|
-| `FatalErrTypeInfo()` | Array  | `Err::`    |
-| `ErrTrackL()`        | List   | `Err::`    |
-| `currCat`            | string | `Err::`\* |
-| `currRes`            | string | `Err::`\*  |
-
-> __NOTE\*__ — `currCat` and `currRes` might be needed by other modules too, so I might need to move them in some common module later on. Since they refer to processing categories, they don't belong in G mod (which some tools might use for processing single resources only, like Codes Checker, etc.), so I should think of creating a module to store project-wide data (categories, etc.).
->
-> For now, I just place them in Err mod so I can go ahead with the work, and after all this is the module that deals with tracking processing, so it might even be OK to keep them here.
-
-
-
 ## Log Module
 
 Currently all logging is directly printed to the debug window via `Debug`. Since the app is about to become a GUI app, chances are that it might also be used as a compiled binary instead of simply being Run from the IDE; so I should consider that the debug window won't necessary be available. After all, using a compiled binary might improve performance, so the original motives to keep the app IDE-runnable no longer apply (it was mainly to keep it simple, but this is no longer the case).
@@ -167,6 +189,97 @@ Maybe I could also add a third parameter, to indicate if the message should be c
 The whole point here seems to revolve around the fact that the Log module is probably going to be an intermediary between the various functionality modules and the main tool code; ie, the module is not going to actually handle the received text to produce some output, but instead make it available to the tool's main code, which will then decide how to display or store it.
 
 So I might have to find a way to initialize the log module at startup, in order to register the procedures which the logger needs to interact with. Else, I could just store the data in the module namespace and expect the tool's maincode to retrive it on demand, by either accessing the raw data directly or by probing some exposed procedure of the log module. I must weigh the pros and cons of these diffrente approaches.
+
+## GUI Introduction
+
+The introduction of a GUI is going to be a bing change, affecting both data access and storage as well as user options to control details of the various checks, the conversion process, and how errors should be handled (eg, allowing to ignore errors for maintainance/dev purposes).
+
+If on the one hand a GUI simplifies controlling settings, on the other it introduces new problems too because the possible combinations of user choices must be kept under control to prevent unwise mixtures and redundant behaviours.
+
+It seems worth of building the GUI as a module (`GUI::`) so to make it accessible from other modules too. I haven't decided yet if user settings for the project should be stored in the GUI's module or in a separate module — probably it's better to have a dedicated module for the Archiv data and info, settings included, just in case in future we might need a separate console tool for other purposes.
+
+### GUI Prototype
+
+Currently, GUI testing and prototyping is being done in:
+
+- [`../_tempwork/GUI_prototype/`][GUI folder]
+    + [`protoGUI.pb`][protoGUI] — codebase of GUI
+    + [`dummyGUI.pb`][dummyGUI] — proof of concept via Form Designer
+    + [`dummyGUI_screenshot.png`][dummyGUI img] — proof of concept screenshot
+
+[GUI folder]: ../_tempwork/GUI_prototype/
+[protoGUI]: ../_tempwork/GUI_prototype/protoGUI.pb
+[dummyGUI]: ../_tempwork/GUI_prototype/dummyGUI.pbf
+[dummyGUI img]: ../_tempwork/GUI_prototype/dummyGUI_screenshot.png
+
+Different approaches are being considered. Once a satisfying result is achieved (visually speaking), it will be moved to this folder to start integration.
+
+### Brainstorming
+
+I need to brainstorm what the GUI should display to the user, and which options should be changeable and how.
+
+As a general rule, the GUI should be divided in panel, each covering a given aspect of the project (info, error, conversion, etc.). Each panel should display elements resuming the overall status in a simple manner, and offer a button which can be clicked to get a pop-up window with detailed information. 
+
+![Proto GUI imgs][dummyGUI img]
+
+Also, each panel should have a timestamp displaying when it was last refreshed, since some panel will be connected to different level of functionality — refreshing one panel might render inactive other panels, depending on the cascading level of dependency amongst them, but the timestamp will always provide a visual clue to the last time it was updated (manually or automatically alike).
+
+Some panels will also need to offer some button(s) to carry out actions, and maybe others to select options and settings.
+
+The whole idea is to keep the GUI clean, avoiding too many entries (all that is not strictly necesary should be delegate to the pop-up window for details).
+
+The tricky part is going to be keeping track of what changes, options and rereshes need to affect other panels and their settings — one more reason to keep it simple in design.
+
+Conceivably, there should be a progess status panel to indicate when the app is doing something. It should have both a counter (of the type `n/n`, indicating current step out of total steps) and a progress bar.
+
+A log gadget of sorts should also be available, to display log info on the latest operation(s) carried out in the background — the full log should be accessible in a pop-up window by clicking a button. Possibly, a WebGadget should be used, to allow basic text coloring to distinguish error and success messages (red, green) from neutral logs (grey). In the past I've already used the WebGadget for similar purposes, and it has always served me well (and comes with less problems than using other types of gadgets for the purpose).
+
+The log gadget will have to communicate with the Log Module, most probably. A few intermediate procedures can easily handle this, and decide how to color the text, and when to reset the log gadget's text to make space for more recent log info — as for the pop-up with the full log, it will depend on how the log module works: the full log might be either stored by the GUI or the log module.
+
+#### Project Info Panel
+
+The GUI should have a panel displaying info on the Archiv structure:
+
+- Total Number of Categories
+    + Number of Root Categories
+    + Number of Sub-Categories
+- Total Number of Resources
+    + number of `.pb` resources
+    + number of `.pbi` resources
+    + number of `CodeInfo.txt` resources
+- Last Updated (timestamp)
+
+The above information should be gathered automatically at startup, but at any time the user can use a `refresh` button to update it (eg, if he has changed the files/folders in the meantime) — refreshment of this dialog might imply resetting other dialogs too, because some changes in the Archiv might require running again some functions.
+
+The __Last Updated__ (timestamp) seems useful because different panels might be refreshed at different points in time, and if each panel has a timestamp it can be useful to keep track of their differences, and to work out why a panel is greyed out (ie, needs refreshing).
+
+#### Project Errors Panel
+
+Another panel should show statistic on problems found in the Archiv, either __structural problems__ (missing READMEs, etc.) or __resource problems__ (resources not passing the check tests). 
+
+Some error information might not be available at all times, so there must be a way to visually represent uncertainity — eg, an entry might be `README.md`, intended to show if every Category has a `README.md` file, showing a green check if the test passed, a red cross if problems where found (and maybe also the number of errors), and a question mark if the matter is yet unknown.
+
+So, the possible entries in such a panel could be:
+
+- Project Structure:
+    + __READMEs__ — all Categories must have a `README.md`
+    + __YAML Settings__ — the Arhiv project needs a `meta.yaml` file.
+- Resources:
+    + __syntax__ — reporting on how compilable resources passed the `--check --thread` compiler test. This one is tricky because I haven't yet understood how accurately the PBCompiler can check a sourcefile destined for another OS!
+    + __header comments__ — reporting if a resource passed all tests on its commented headers (obligatory keys, etc.)
+    + __include files__ — reporting if `.pbi` files contain the required `CompilerIf #PB_Compiler_IsMainFile` block.
+
+Although incomplete, the above list makes it clear that a similar panel would be too cluttered to be practical. I should summarize the different problems in a few useful categories:
+
+-  __Proj Structure__
+-  __Resources__
+-  __Dependencies__ (pandoc, ecc)
+
+... and just assign to them a color based on status (green = ok, red = error, grey = unknown) and add next to them a number in braces showing the total count — eg: __Resources (80)__ in green = 80 resources, all passed the test; while __Resources (5/80)__ in red = 80 resources, 5 of which didn't pass the test; and __Resources (80)__ in grey = 80 resources, unknown status; while __Resources (?)__ would indicate unknown number of resources and status.
+
+And so on.
+
+The panel should then have an `Info` button which can be clicked to produce a pop-up window with a full status report — structure, resources and dependencies, listing all the known problems and statistics. This would be a much cleaner approach (instead of a cluttered panel) and still allow access to full status details from within the GUI.
 
 ----------------------
 
@@ -201,6 +314,19 @@ Alternatively, the module could allow the user to register the intended actions 
 This is worth considering, especially in view of the implementation of a cache system. In both cases, it's important that the module has some independent way of controlling file access, imposing a separation between the required actions on the resource and how and when the resource is accessed on disk. The tool should only worry about requesting to the module's API that the various checks are carried out, and leave it entirely to the module to decide when and how the resource should be retrived from disk, allowing therefore the module the freedom to prefetch data and store it to memory when this would prevent redundant disk accesses.
 
 What emerges from these considerations is that all functionality dealing with resources is likely to be better handled by a single module — even if some tools will not use all of them.
+
+### Memoization: A Possible Solution
+
+The above mentioned issues could be resolved by employing momization in the module's procedures: if the resource has already been parsed, the stored data is returned instead of carrying out the full process of accessing the resource and extracting the data.
+
+This does not solve the general problem of wehter or not any attempt to check a resource for a specific problem should make the module prefetch all potentially needed data. This second aspect could be handled by some settings passed to the module, to inform it of what checks the tools will carry out in the context — eg., a tool might inform the res module that it's not interested in dealing with PB settings that might be stored in the source file, but only with parsing header comments; in this case the module will not attempt to handle the in-file settings and memoize them. And so on. 
+
+These two solutions together could optimize both the issue of redundant file access, as well as provide a single reusable module for all tools that will not carry out unnecessary actions.
+
+The details of how these are going to be implemented are yet to be established, but they should not affect they module's API nor create problems when a cache system is introduced in the main code of the HTML Generator (file caching should filter invocations of the res module, and therefore not affect the res module's public interface).
+
+With this in mind, I should start to move all resource related functionality to an independent module, even if it doesn't take care of optimizations at the onset — as long as it won't break its usage when these are introduced.
+
 
 <!-- REEFERENCE LINKS -->
 
