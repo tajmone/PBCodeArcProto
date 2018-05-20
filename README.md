@@ -140,6 +140,12 @@ My final goal is to release under a permissive license any code and/resources I'
 
 You're free to clone this project, edit it, test and experiment with it, but if you wish to reuse or distribute any parts of it, please check the license of every single resource and contact their authors if in doubt.
 
+## Sicro's Contributions
+
+[@SicroAtGit]'s contributions to the project are copyright by Sicro and licensed according to terms indicated by the author.
+
+- [`/_Sicro_CodeSharing/`](./_Sicro_CodeSharing) — MIT License
+
 
 
 [PureBasic CodeArchiv Rebirth]: https://github.com/SicroAtGit/PureBasic-CodeArchive-Rebirth "Visit the 'PureBasic CodeArchiv Rebirth' repository"

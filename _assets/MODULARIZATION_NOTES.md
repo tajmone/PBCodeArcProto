@@ -18,6 +18,8 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
     - [Error Tracker](#error-tracker)
         - [Required Vars Access](#required-vars-access)
     - [Log Module](#log-module)
+- [Problems Ahead](#problems-ahead)
+    - [Issues With Resource Files](#issues-with-resource-files)
 
 <!-- /MarkdownTOC -->
 
@@ -27,6 +29,7 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
 
 - [`HTMLPagesCreator.pb`][HTMLPagesCreator]
 - [`mod_G.pbi`][mod_G] — (`G::`) Global module for commonly shared data.
+- [`mod_Errors.pbi`][mod_Errors] — (`Err::`) Error Tracking module.
 
 # Modules Description
 
@@ -73,6 +76,22 @@ I still need to work out properly how to move all the current functionality into
 
 ## Error Tracker
 
+- [`mod_Errors.pbi`][mod_Errors]
+ 
+This module (`Err::`) tracks and handles all errors encountered during the processing stage of the project (validation, extraction, conversion, etc.). Every module that takes part in the Archiv processing should report errors to this module and let the module handle them.
+
+- `Err::TrackError(ErrMessage.s)` — signal an error and carry on.
+- `Err::Abort(ErrorMsg.s, ErrorType)` — signal a fatal error and request aborting processing the Archiv.
+
+When requesting `Abort()`, the passed `ErrorType` should be one of the following
+
+- `Err::#FATAL_ERR_GENERIC` (default if none specified)
+- `Err::#FATAL_ERR_INTERNAL` — error due to App internals.
+- `Err::#FATAL_ERR_FILE_ACCESS` — App can't get access to file resources.
+- `Err::#FATAL_ERR_PANDOC` — any blocking error related to pandoc.
+
+Before Aborting, the Error Tracker will ensure that any statistics gathered so far are printed in the final report, so that the user can be made aware of all problems encountred (and not just the last one, which halted processing).
+
 Error tracking should be handled by an independent module. Currently, the __Check Project Integrity__ step is independent of the error tracker: the former only detects errors before the processing stage, and its found errors are not tracked by the error tracker for the final report as this would created duplicate entries. Nevertheless, if some data structures and/or functionality of the tracker could also be used by the Project Integrity checker it would be better (but it shouldn't affect the report).
 
 The error tracker is intended to gather statistics of any errors encountered during the actual processing of the project, in order to present a detailed report at the end. The way errors are stored should be independent of their final representation (ie: the app's GUI, the debug window, or a log file).
@@ -116,9 +135,42 @@ The whole point here seems to revolve around the fact that the Log module is pro
 
 So I might have to find a way to initialize the log module at startup, in order to register the procedures which the logger needs to interact with. Else, I could just store the data in the module namespace and expect the tool's maincode to retrive it on demand, by either accessing the raw data directly or by probing some exposed procedure of the log module. I must weigh the pros and cons of these diffrente approaches.
 
+----------------------
 
+# Problems Ahead
+
+## Issues With Resource Files
+
+There are some issues in dealing with resource files which require some thoughts in order to be implemented smartly, especially since they deal with functionality that will be shared by different apps.
+
+Depending on the type of resource file, the number of operations that could be carried out on the resource may vary.
+
+|     res type    | parse/validate header comments | check settings at end of file | `--check --thread` | ` CompilerIf #PB_Compiler_IsMainFile` block |
+|-----------------|--------------------------------|-------------------------------|--------------------|---------------------------------------------|
+| `<file>.pb`     | always                         | always                        | always             | _never_                                     |
+| `<incfile>.pbi` | always                         | always                        | always             | always                                      |
+| `CodeInfo.txt`  | always                         | _never_                       | _never_            | _never_                                     |
+
+This brings to attention the fact that with include files (`.pbi`) there is a potential redundancy of file access if we were to keep separate functions for header comments parsing, checks for the presence of PB settings in the file and checks for a  `#PB_Compiler_IsMainFile` block.
+
+Ideally, we could access the resource file just once:
+
+1. Extract the raw header comments block (and store it to memory)
+2. Check if PB settings are stored inside the file
+3. Check that a `*.pbi` resource has a `#PB_Compiler_IsMainFile` block
+
+This could be carried out indepedently of the desired actions — ie, the module dealing with resource files should carry out the above steps whenever it receives a request to do something with a given resource.
+
+The downside of this approach is that any tools that don't wish to carry out all the checks might end up having some overhead due to this (potentially, steps 2 and 3 are the more time consuming ones).
+
+Alternatively, the module could allow the user to register the intended actions he will need for any resource — ie, before actually carrying any of them out — so the module can smartly prefetch/preprocess the resource file accordingly.
+
+This is worth considering, especially in view of the implementation of a cache system. In both cases, it's important that the module has some independent way of controlling file access, imposing a separation between the required actions on the resource and how and when the resource is accessed on disk. The tool should only worry about requesting to the module's API that the various checks are carried out, and leave it entirely to the module to decide when and how the resource should be retrived from disk, allowing therefore the module the freedom to prefetch data and store it to memory when this would prevent redundant disk accesses.
+
+What emerges from these considerations is that all functionality dealing with resources is likely to be better handled by a single module — even if some tools will not use all of them.
 
 <!-- REEFERENCE LINKS -->
 
 [HTMLPagesCreator]: ./HTMLPagesCreator.pb
-[mod_G]: ./mod_G.pbi
+[mod_G]:      ./mod_G.pbi "View sourcefile of Global module"
+[mod_Errors]: ./mod_Errors.pbi "View sourcefile of Errors module"
