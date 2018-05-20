@@ -9,7 +9,7 @@
 
 Global Window_0
 
-Global fr_Archiv, tot_cats, tot_scats, tot_res, Button_1, tot_res_Copy1, fr_ProjStatus
+Global fr_Archiv, tot_cats, tot_cats_num, tot_scats, tot_scats_num, tot_res, tot_res_num, btn_Refresh, btn_Details, timest_Archiv, fr_ProjStatus, stat_cats, stat_cats_info, stat_res, stat_res_info, stat_struct, stat_deps, stat_struct_info, stat_deps_info, btn_Refresh_stat, btn_Details_stat, timest_Status
 
 Enumeration FormFont
   #Font_Window_0_0
@@ -20,14 +20,34 @@ LoadFont(#Font_Window_0_0,"Consolas", 8)
 
 Procedure OpenWindow_0(x = 0, y = 0, width = 600, height = 400)
   Window_0 = OpenWindow(#PB_Any, x, y, width, height, "", #PB_Window_SystemMenu)
-  fr_Archiv = FrameGadget(#PB_Any, 10, 10, 150, 130, "CodeArchiv")
-  tot_cats = TextGadget(#PB_Any, 20, 30, 120, 15, "Categories: 21")
-  tot_scats = TextGadget(#PB_Any, 20, 50, 120, 15, "SubCategories: 15/21")
-  tot_res = TextGadget(#PB_Any, 20, 70, 120, 15, "Resources: 85")
-  Button_1 = ButtonGadget(#PB_Any, 20, 90, 60, 20, "refresh")
-  tot_res_Copy1 = TextGadget(#PB_Any, 20, 120, 120, 15, "2018/05/20-15:06:48")
-  SetGadgetFont(tot_res_Copy1, FontID(#Font_Window_0_0))
-  fr_ProjStatus = FrameGadget(#PB_Any, 170, 10, 150, 130, "Project Status")
+  fr_Archiv = FrameGadget(#PB_Any, 10, 10, 150, 150, "CodeArchiv")
+  tot_cats = TextGadget(#PB_Any, 20, 30, 90, 15, "Categories:")
+  tot_cats_num = TextGadget(#PB_Any, 120, 30, 30, 15, "21", #PB_Text_Right)
+  tot_scats = TextGadget(#PB_Any, 20, 50, 90, 15, "SubCategories:")
+  tot_scats_num = TextGadget(#PB_Any, 120, 50, 30, 15, "12/21", #PB_Text_Right)
+  tot_res = TextGadget(#PB_Any, 20, 70, 90, 15, "Resources:")
+  tot_res_num = TextGadget(#PB_Any, 120, 70, 30, 15, "85", #PB_Text_Right)
+  btn_Refresh = ButtonGadget(#PB_Any, 20, 115, 60, 20, "refresh")
+  btn_Details = ButtonGadget(#PB_Any, 90, 115, 60, 20, "details")
+  timest_Archiv = TextGadget(#PB_Any, 20, 140, 120, 15, "2018/05/20-15:06:48")
+  SetGadgetFont(timest_Archiv, FontID(#Font_Window_0_0))
+  fr_ProjStatus = FrameGadget(#PB_Any, 170, 10, 150, 150, "Project Status")
+  stat_cats = TextGadget(#PB_Any, 180, 30, 80, 15, "Categories:")
+  stat_cats_info = TextGadget(#PB_Any, 280, 30, 30, 15, "3/21", #PB_Text_Right)
+  SetGadgetColor(stat_cats_info, #PB_Gadget_FrontColor,RGB(255,0,0))
+  stat_res = TextGadget(#PB_Any, 180, 50, 80, 15, "Resources:")
+  stat_res_info = TextGadget(#PB_Any, 280, 50, 30, 15, "10/85", #PB_Text_Right)
+  SetGadgetColor(stat_res_info, #PB_Gadget_FrontColor,RGB(255,0,0))
+  stat_struct = TextGadget(#PB_Any, 180, 70, 80, 15, "Structure:")
+  stat_deps = TextGadget(#PB_Any, 180, 90, 80, 15, "Dependencies:")
+  stat_struct_info = TextGadget(#PB_Any, 280, 70, 30, 15, "0", #PB_Text_Right)
+  SetGadgetColor(stat_struct_info, #PB_Gadget_FrontColor,RGB(0,128,0))
+  stat_deps_info = TextGadget(#PB_Any, 280, 90, 30, 15, "1/1", #PB_Text_Right)
+  SetGadgetColor(stat_deps_info, #PB_Gadget_FrontColor,RGB(0,128,0))
+  btn_Refresh_stat = ButtonGadget(#PB_Any, 180, 115, 60, 20, "refresh")
+  btn_Details_stat = ButtonGadget(#PB_Any, 250, 115, 60, 20, "details")
+  timest_Status = TextGadget(#PB_Any, 180, 140, 120, 15, "2018/05/20-16:30:55")
+  SetGadgetFont(timest_Status, FontID(#Font_Window_0_0))
 EndProcedure
 
 Procedure Window_0_Events(event)

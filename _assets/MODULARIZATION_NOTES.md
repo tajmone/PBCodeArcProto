@@ -240,10 +240,10 @@ The log gadget will have to communicate with the Log Module, most probably. A fe
 
 The GUI should have a panel displaying info on the Archiv structure:
 
-- Total Number of Categories
+- Total Number of Categories (n)
     + Number of Root Categories
-    + Number of Sub-Categories
-- Total Number of Resources
+    + Number of Sub-Categories (s/n)
+- Total Number of Resources (n)
     + number of `.pb` resources
     + number of `.pbi` resources
     + number of `CodeInfo.txt` resources
@@ -251,7 +251,7 @@ The GUI should have a panel displaying info on the Archiv structure:
 
 The above information should be gathered automatically at startup, but at any time the user can use a `refresh` button to update it (eg, if he has changed the files/folders in the meantime) — refreshment of this dialog might imply resetting other dialogs too, because some changes in the Archiv might require running again some functions.
 
-The __Last Updated__ (timestamp) seems useful because different panels might be refreshed at different points in time, and if each panel has a timestamp it can be useful to keep track of their differences, and to work out why a panel is greyed out (ie, needs refreshing).
+The __Last Updated__ (timestamp: `YY/MM/DD-hh-mm-ss`) seems useful because different panels might be refreshed at different points in time, and if each panel has a timestamp it can be useful to keep track of their differences, and to work out why a panel is greyed out (ie, needs refreshing).
 
 #### Project Errors Panel
 
@@ -271,13 +271,28 @@ So, the possible entries in such a panel could be:
 
 Although incomplete, the above list makes it clear that a similar panel would be too cluttered to be practical. I should summarize the different problems in a few useful categories:
 
--  __Proj Structure__
--  __Resources__
--  __Dependencies__ (pandoc, ecc)
+-  __Proj Structure__ (n) — where `n` is the number of structural errors (if any)
+-  __Resources__ (e/n) — where `e` is the number of faulty resource over `n` (total num of resources)
+-  __Dependencies__ (n) — where `n` is the number of problems encountered with dependencies (pandoc, etc).
 
 ... and just assign to them a color based on status (green = ok, red = error, grey = unknown) and add next to them a number in braces showing the total count — eg: __Resources (80)__ in green = 80 resources, all passed the test; while __Resources (5/80)__ in red = 80 resources, 5 of which didn't pass the test; and __Resources (80)__ in grey = 80 resources, unknown status; while __Resources (?)__ would indicate unknown number of resources and status.
 
 And so on.
+
+Looking at the proof of concept screenshot:
+
+![Proto GUI imgs][dummyGUI img]
+
+... the GUI's "__Project Status__" panel is telling us that:
+
+- __Categories__: 3 out of 21 categories have problems which must be addressed. It could be that each category has more than one error, and that the error is tied specifically to the category structure (READMEs, etc) or even to a resource therein — it ultimately depends on how we wish statistics to be shown.
+- __Resources__: 10 out of 85 resources have problems that need to be addressed. It could be that a resource has more than one problem (invalid header, settings saved in file, and include file has no main block). In this case we can pinpoint the number of faulty resources OR the total number of resources related problems (it's a matter of choice).
+- __Structure__: 0 structural problems found.
+- __Dependencies__: 1/1 dependencies are OK.
+
+This first prototype has brought to light that simplicity in the GUI could also introduce ambiguity of interpretation. We must decide how errors are counted — WHAT COUNTS AS A CATEGORY ERROR? ANY ERROR, INCLUDING RESOURCES?.
+
+Of course, the `details` button will pop-up a detailed resume of all these problems, leaving no ambiguity of interpretations; nevertheless, __this has brought to attention the issue of how to classify and count problems in GUI panels__ — we can't create an entry for each separate problem, but grouping multiple problems under a same entry creates ambiguity.
 
 The panel should then have an `Info` button which can be clicked to produce a pop-up window with a full status report — structure, resources and dependencies, listing all the known problems and statistics. This would be a much cleaner approach (instead of a cluttered panel) and still allow access to full status details from within the GUI.
 
