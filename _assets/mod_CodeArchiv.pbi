@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.2 (2018/05/21) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.3 (2018/05/21) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -108,6 +108,12 @@ Module Arc
     Shared CategoriesL()
     Shared totCategories, totResources, totSubFRes
     
+    ; Preserve Current Directory
+    ; --------------------------
+    ; (make no assumption on what the tool invoking this module might be doing):
+    PrevCurrDir.s = GetCurrentDirectory()
+    SetCurrentDirectory(G::CodeArchivPath)
+    Debug ":: CurrDir: " + PrevCurrDir ; DELME DBG Preserve Current Directory
     
     Debug "Scanning project to build list of categories and resources:"
     
@@ -156,6 +162,12 @@ Module Arc
         cnt +1
       Next
     CompilerEndIf
+    
+    
+    ; Restore Previous Current Directory
+    ; ----------------------------------
+    SetCurrentDirectory(PrevCurrDir)
+    
     
     Debug "<<< ScanProject()"
   EndProcedure
@@ -273,19 +285,23 @@ EndModule
 ; by itself (as opposed to being included into another sourcefile).
 ; ------------------------------------------------------------------------------
 CompilerIf #PB_Compiler_IsMainFile
-  Debug "Test run started..."
+  Debug "Testing CodeAcrhiv Module..."
   
-  SetCurrentDirectory("../") ; TODO: I must handle Proj Root reference somewhere!
+  ; Let's set as Curr Dir the TEMP directory, to show that the module is still
+  ; able to properly scan the CodeArchiv, regardless of what the Curr Dir is:
+  SetCurrentDirectory( GetTemporaryDirectory() )
+  
+  ; Let's also store a copy of the new Curr Dir, to check later on that the
+  ; module has restored it:
+  TestCurrDir.s = GetCurrentDirectory()
   
   Arc::ScanProject()
+  
+  ; Now let's verify that the module has restored our Curr Dir after scanning:
+  If GetCurrentDirectory() <> TestCurrDir
+    Debug "ERROR: The module didn't restore our initial Curr Directory!!!"
+  Else
+    Debug "The module has correctly preserved our initial Curr Directory."
+  EndIf
+  
 CompilerEndIf
-
-; ==============================================================================
-;- 1. Build Categories List
-;{==============================================================================
-; Build a list of all the project's categories and their associated resources.
-; ------------------------------------------------------------------------------
-; StepHeading("Build Categories List") ; DELME DBG
-
-
-;}==============================================================================
