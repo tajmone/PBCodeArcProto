@@ -13,11 +13,17 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
 - [Modules and Tools](#modules-and-tools)
 - [Modules Description](#modules-description)
     - [Global Module](#global-module)
-    - [Error Tracker](#error-tracker)
+    - [CodeArchiv Module](#codearchiv-module)
+        - [Brainstorming: Module ID](#brainstorming-module-id)
+    - [Errors Tracker](#errors-tracker)
         - [Required Vars Access](#required-vars-access)
         - [Some Considerations...](#some-considerations)
 - [Notes on Modules Usage](#notes-on-modules-usage)
     - [Global Enumerators](#global-enumerators)
+- [New Converter Goal](#new-converter-goal)
+    - [Gathering Statistic](#gathering-statistic)
+    - [Integrity Check](#integrity-check)
+    - [HTML Page Creation](#html-page-creation)
 - [Modules Roadmap](#modules-roadmap)
     - [Errors Management](#errors-management)
         - [Current Status](#current-status)
@@ -37,25 +43,31 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
 # Source Files
 
 - [`HTMLPagesCreator.pb`][HTMLPagesCreator]
-- [`mod_G.pbi`][mod_G] — (`G::`) Global module for commonly shared data.
-- [`mod_Errors.pbi`][mod_Errors] — (`Err::`) Error Tracking module.
+- [`mod_G.pbi`][mod_G] — (`G::`) __[Global module]__ for commonly shared data.
+- [`mod_Errors.pbi`][mod_Errors] — (`Err::`) __[Errors Tracker]__ module.
+- [`mod_CodeArchiv.pbi`][mod_CodeArchiv]  — (`Arc::`) __[CodeArchiv module]__.
 
 # Modules and Tools
 
 Here is an outline of which modules will be reused by which tools.
 
-|      module      | HTML Generator | Codes Checker | Codes Cleaner |
-|------------------|----------------|---------------|---------------|
-| `mod_G.pbi`      | yes            | yes           | yes           |
-| `mod_Errors.pbi` | yes            | ???           | ???           |
+|        module        | HTML Generator | Codes Checker | Codes Cleaner |
+|----------------------|----------------|---------------|---------------|
+| `mod_G.pbi`          | yes            | yes           | yes           |
+| `mod_Errors.pbi`     | yes            | ???           | ???           |
+| `mod_CodeArchiv.pbi` | yes            | no            | no            |
 
 The presence of "???" in the above table indicates uncertainty on wether some tools should make use of a module or not.
 
-For example, both the Codes Checker and Cleaner could use the Errors Tracker, even though they deal with single resources. The pros and cons have to be weighed. Using the Error Tracker would simplify managing errors, but might also introduce the burden of updating the tool if the module is updated in backward compatibility breaking manner.
+For example, both the Codes Checker and Cleaner could use the Errors Tracker, even though they deal with single resources. The pros and cons have to be weighed. Using the Errors Tracker would simplify managing errors, but might also introduce the burden of updating the tool if the module is updated in backward compatibility breaking manner.
 
 # Modules Description
 
+
 ## Global Module
+
+[Global Module]: #global-module "Jump to this module's section"
+[mod Global]:    #global-module "Jump to this module's section"
 
 - [`mod_G.pbi`][mod_G]
 
@@ -65,9 +77,44 @@ This module (`G::`) holds data commonly shared by all tools.
 - __[Global enumerators](#global-enumerators)__
 
 
-## Error Tracker
+## CodeArchiv Module
 
-[Error Tracker]: #error-tracker
+[CodeArchiv Module]: #codearchiv-module "Jump to this module's section"
+[mod CodeArchiv]:    #codearchiv-module "Jump to this module's section"
+
+- [`mod_CodeArchiv.pbi`][mod_CodeArchiv]
+
+This module (`Arc::`) handles the Archiv categories and resources lists, and some other info too.
+
+The module should contains lists of all the categories, just like the current App, but I'd like also to add some new lists, data and funcs. 
+
+For example, currently resource files lists are stored only in their host categories, which means that if the tool wants to process all resources it has to iterate through all the categories (which is what the HTML converter needs).
+
+But some tools or functionality might require processing all resources regardless of the category they belong to, so it's worth implementing a separate list with all the Archiv resources, and possibly add also some means to identify the resource type.
+
+### Brainstorming: Module ID
+
+The problem is finding a short name for the module ID, to avoid verbosity like `CodeArchiv::`. So, here are some brainstorming for possible short module IDs (checked boxes indicate good candidates:
+
+- [x] `PBCA::` for "PureBasic CodeArchiv"
+- [ ] `CArc::` for "CodeArchiv"
+- [ ] `CA::` for "CodeArchiv"
+- [x] `Arc::` for "Archiv"
+- [ ] `PS::` for "Project Structure"
+- [ ] `PD::` for "Proejct Data"
+
+<!-- 
+- [ ] `::` for ""
+ -->
+
+... I'd like an ID which is short to use but at the same time intuitively represents what it stands for.
+
+Right now, `Arc::` seems a reasonalbe comprise, so I'll start with that — and if a better ID comes to mind I'll change it later on.
+
+## Errors Tracker
+
+[Errors Tracker]: #error-tracker "Jump to this module's section"
+[mod Errors]:     #error-tracker "Jump to this module's section"
 
 - [`mod_Errors.pbi`][mod_Errors]
  
@@ -83,11 +130,11 @@ When requesting `Abort()`, the passed `ErrorType` should be one of the following
 - `Err::#FATAL_ERR_FILE_ACCESS` — App can't get access to file resources.
 - `Err::#FATAL_ERR_PANDOC` — any blocking error related to pandoc.
 
-Before Aborting, the Error Tracker will ensure that any statistics gathered so far are printed in the final report, so that the user can be made aware of all problems encountred (and not just the last one, which halted processing).
+Before Aborting, the Errors Tracker will ensure that any statistics gathered so far are printed in the final report, so that the user can be made aware of all problems encountred (and not just the last one, which halted processing).
 
 ### Required Vars Access
 
-The Error Tracker needs to access the following vars, which will have to be placed either in its module or in a common module:
+The Errors Tracker needs to access the following vars, which will have to be placed either in its module or in a common module:
 
 |       var name       |  type  | namespace  |
 |----------------------|--------|------------|
@@ -134,6 +181,38 @@ It also means that any third party tools willing to reuse some of the modules of
 
 ------------------------------
 
+# New Converter Goal
+
+Currently, the HTMLPageConvert has always been intended as a tool to merely create the HTML pages for the project; this was strongly determined by the fact that it was a "runnable" and guiless app. The upcoming introduction of the GUI lifts these limits, and the new app could be considered as a general purpose project maintainment tools providing this functionality:
+
+1. Collect Statistics on the Archiv
+2. Check Archiv Integrity
+3. Create HTML Pages
+
+... whereas these three are currently blended into a single operation, we can imagine project maintainers needing the tool to use them separately. Here are some practical examples
+
+## Gathering Statistic
+
+At any point in time a maintainer might wish to use the tool for the sole purpose of collecting some statistic on the CodeArchiv — how many Categories there are, how many resources, the full list of code authors, statistics on code licenses, etc.
+
+Therefore, the Statistics functionality of the new App could be furthered developed in time, in order to allow finer statistics, even though these might not be used by the actual page creation process.
+
+## Integrity Check
+
+Maintainers should be able to check the CodeArchiv integrity even without creating the HTML pages. For example, when introducing changes in the project's prerequisites multiple resources and categories might require adaptation to the new standard, and the maintainer might wish to run Integrity Checks at multiple times, targeting specific aspects of the Project.
+
+Likewise, when importing into the Archiv multiple new resources there would be a need to frequently run the integrity checks, until all resources and categories pass the tests.
+
+Therefore, Integrity Checks should be a functionality that can be accessed from the GUI independently from page conversions — but obviously, any integrity check findings will also be available to the converter and other functionality so they can use the data to organize their tasks.
+
+## HTML Page Creation
+
+Creation of the HTML pages should have a panel of its own. Running this task will implicity also run tasks that are common to both Statistics and Integrity, because behing the scenes all functionality share some procedures and data. But as far as the end user should be concerned, HTML Creation is presented in a panel of its own, allowing the user to open the App and request stratight away to create/update all the HTML pages.
+
+...
+
+These three functionalities/panels are to be considered as representing three successive steps of the process — Integrity Checks implicitly require gathering Statistics, and HTML Conversion implicitly requires Integrity Checks to be run. Their separation into independent panel is simply a way to presen them to the end user and independently manageable features.
+
 # Modules Roadmap
 
 I still need to work out properly how to move all the current functionality into separate modules. Presently, the main challenges are posed by the Error Tracking system, the Debug logging and the Final Report: in order to move any part of the current code to independent modules, I must first address these three systems so that they don't break down.
@@ -143,6 +222,7 @@ Then, I must decide which of the current HTML Creator functionality needs to be 
 Because in PureBasic modules can't access main code, moving any functionality to a module is likely to force me to move commonly shared data to an independent module too. For example, implementing the GUI as a separate module will have an avalanche effect in this regard (which is why I'm taking so long to decide how to go about splitting up the current code).
 
 These are tricky issues, so I should plan it well.
+
 
 ## Errors Management
 
@@ -155,7 +235,7 @@ Currently the HTML Pages Creator has a dual approach to errors:
 
 The two are independent from each other. The Project Integrity Step does some preliminary checks to verify if there are structural problems in the Archiv, but doesn't go as far as checking the integrity single resources. This is intended as a way to detect common problems before starting the conversion process. For this reason, errors are not tracked by this step, they are just reported to the user who is then asked if he still wants to go ahead.
 
-The management of errors during processing is another thing altogether, and it's handled by the [Error Tracker] Module, which is required to build a final report with statistics (which are useful to handle multiple errors).
+The management of errors during processing is another thing altogether, and it's handled by the [Errors Tracker] Module, which is required to build a final report with statistics (which are useful to handle multiple errors).
 
 ### Possible Changes
 
@@ -346,5 +426,6 @@ With this in mind, I should start to move all resource related functionality to 
 <!-- REEFERENCE LINKS -->
 
 [HTMLPagesCreator]: ./HTMLPagesCreator.pb
-[mod_G]:      ./mod_G.pbi "View sourcefile of Global module"
-[mod_Errors]: ./mod_Errors.pbi "View sourcefile of Errors module"
+[mod_CodeArchiv]: ./mod_CodeArchiv.pbi "View sourcefile of CodeArchiv module"
+[mod_Errors]:     ./mod_Errors.pbi "View sourcefile of Errors module"
+[mod_G]:          ./mod_G.pbi "View sourcefile of Global module"

@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.1.2 (2018/05/16) | PureBasic 5.62 | MIT License
+; "HTMLPagesCreator.pb" v0.1.3 (2018/05/21) | PureBasic 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -53,6 +53,9 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+;  v0.1.3 (2018/05/21)
+;    - #CodeInfoFile -> G::#CodeInfoFile
+;      This constant is needed by any module dealing with the CodeArchiv!
 ;  v0.1.2 (2018/05/16)
 ;    - Error Tracking moved to Errors Mod (Err::) "mod_Errors.pbi"
 ;  v0.1.1 (2018/05/16)
@@ -86,8 +89,6 @@ DebugLevel #DBG_LEVEL
 
 #PURGE_EMPTY_KEYS = #True ; If #True, extracted keys with empty value are purged
                           ; from HTML Resume Card. If #False, they are kept.
-
-#CodeInfoFile = "CodeInfo.txt" ; found in multi-file subfoldered resources
 
 ; Pandoc settings
 ; ===============
@@ -811,12 +812,12 @@ Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
           Continue 
         EndIf
         
-        If FileSize(PathSuffix + entryName + "/" + #CodeInfoFile) >= 0
+        If FileSize(PathSuffix + entryName + "/" + G::#CodeInfoFile) >= 0
           ;  ================================          
           ;- SubFolder is Multi-File Sub-Item
           ;  ================================
           AddElement( CategoriesL()\FilesToParseL() )
-          fName.s = entryName + "/" + #CodeInfoFile ; relative path
+          fName.s = entryName + "/" + G::#CodeInfoFile ; relative path
           CategoriesL()\FilesToParseL() = fName
           totResources +1
           totSubFRes +1

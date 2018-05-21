@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_G.pbi" v0.0.3 (2018/05/16) | PureBASIC 5.62 | MIT License
+; "mod_G.pbi" v0.0.4 (2018/05/21) | PureBASIC 5.62 | MIT License
 
 ; Stores Data shared by any tool dealing with CodeArchiv and its resources.
 
@@ -57,6 +57,8 @@ DeclareModule G
   ; ==============================================================================
   ;                            PUBLIC VARS & CONSTANTS                            
   ; ==============================================================================
+  #CodeInfoFile = "CodeInfo.txt" ; found in multi-file subfoldered resources
+
   ; ------------------------------------------------------------------------------
   ;                         Horizontal Dividers Constants                         
   ; ------------------------------------------------------------------------------
