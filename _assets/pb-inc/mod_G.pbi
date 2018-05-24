@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_G.pbi" v0.0.8 (2018/05/24) | PureBASIC 5.62 | MIT License
+; "mod_G.pbi" v0.0.9 (2018/05/24) | PureBASIC 5.62 | MIT License
 
 ; Stores Data shared by any tool dealing with CodeArchiv and its resources.
 
@@ -98,7 +98,7 @@ Module G
   ; The following initialization will occur at the time and place of the module's
   ; inclusion by main code.
   ; ============================================================================
-  ;                           Define CodeArchiv Paths                           
+  ;- 1.   Define CodeArchiv Paths                           
   ; ============================================================================
   ; mod_G makes the following assumptions:
   ;
@@ -109,31 +109,33 @@ Module G
   ;
   ; Based on the above assumption, it will determine the CodeArchiv's root path
   ; relatively to the Current Directory path; and then define all the public
-  ; path vars accordingly.
-  ;
-  ; But if the importing app is not located in "_assets/" or "_assets/pb-inc/",
+  ; path vars accordingly. Checks are carried out to ascertain that the root
+  ; path is correctly defined, failing which the modules aborts execution.
+  ;   But if the importing app is not located in "_assets/" or "_assets/pb-inc/",
   ; then it must help mod_G to get the Archiv path right by manually setting the
-  ; current directory to the "_assets/" folder BEFORE importing "mod_G.pbi".
-  ;   Alternatively, it could manually redefine ALL path vars AFTER importing
-  ; mod_G, but the former solution is preferable because it will ensure that all
-  ; vars based on the root path will be set correctly -- in the future, new path
-  ; variables might be added to mod_G, and manual fixes might not cover them all,
-  ; exposing other modules to potential errors!
+  ; current directory to the Archiv root folder BEFORE importing "mod_G.pbi".
+  ;   Manually redefining ALL path vars AFTER importing mod_G wouldn't be a viable
+  ; solution because future versions of the G module might introduce new path-vars,
+  ; and manual fixes would not cover them all, exposing other modules to potential
+  ; errors and erratic behavior.
   ; ============================================================================
-  ; Define CodeArchiv Path (root)
+  ;- 1.1 Define CodeArchiv Path (root)
   ; ============================================================================
-  ; Some modules in this folder can also be run on their own (for testing), in
+  ; Usually, the main code importing the module will be a tool in the "_assets/"
+  ; folder, and the Archiv root will be one level up.
+  ;   Some modules in this folder can also be run on their own (for testing), in
   ; which case they would be the main code including this module. Thus we also
   ; check for the presence of "pb-inc" at the end of CurrentDirectory, in which
   ; case the CodeArchiv root will be two levels up:
-  
   CurrDir.s = GetCurrentDirectory() ; <- always ends with directory separator!
   If Right(CurrDir, Len(#ModulesFolder)+1) = #ModulesFolder + #DSEP
+    ; If CurrDir ends with "pb-inc/"...
     ; ---------------------------------------------------------------
     ; mod_G is being imported by another module in "_assets/pb-inc/":
     ; ---------------------------------------------------------------
     SetCurrentDirectory("../../")
   ElseIf Right(CurrDir, Len(#AssetsFolder)+1) = #AssetsFolder + #DSEP
+    ; If CurrDir ends with "_assets/"...
     ; ------------------------------------------------
     ; mod_G is being imported by a tool in "_assets/":
     ; ------------------------------------------------
@@ -147,21 +149,26 @@ Module G
   ; To be 100% sure that Curr Dir now points to the Archiv's root, we'll check
   ; for the presence of the "_assets" folder.
   If FileSize(#AssetsFolder) <> -2
-    ; ~~~~~~~~~~~~
-    ; WARN & ABORT
-    ; ~~~~~~~~~~~~
+    ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ; WARN & ABORT: Unable to determine CodeArchiv Path
+    ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     MessageRequester("mod_G Error",
                      ~"mod_G.pbi wasn't able to determine the path of CodeArchiv!\n"+
-                     ~"Please, use SetCurrentDirectory() to manually point to the Archiv's "+
-                     "root before importing mod_G!",
+                     ~"Please, use SetCurrentDirectory() to manually point to "+
+                     "the Archiv's root before importing mod_G!",
                      #PB_MessageRequester_Error)
     End 1
   EndIf
   
-
   CodeArchivPath = GetCurrentDirectory()
+  
+  ; Restore Previous Current Directory
+  ; ----------------------------------
+  ; (make no assumption on what the tool invoking this module might be doing)
+  SetCurrentDirectory(CurrDir)
+  
   ; ============================================================================
-  ; Define Assets Path
+  ;- 1.2 Define Assets Path
   ; ============================================================================
   AssetsPath = CodeArchivPath + #AssetsFolder + #DSEP
   
