@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_G.pbi" v0.0.9 (2018/05/24) | PureBASIC 5.62 | MIT License
+; "mod_G.pbi" v0.0.10 (2018/05/24) | PureBASIC 5.62 | MIT License
 
 ; Stores Data shared by any tool dealing with CodeArchiv and its resources.
 
@@ -18,7 +18,7 @@
 ; modules dependencies: none.
 
 ;{ -- TODOs LIST »»»------------------------------------------------------------
-; TODO: 
+; TODO:
 ;} -- TODOs LIST «««------------------------------------------------------------
 
 ; ******************************************************************************
@@ -27,10 +27,14 @@
 ; *                                                                            *
 ; ******************************************************************************
 DeclareModule G
-  
   ; ============================================================================
-  ;                           CROSS PLATFORM SETTINGS                           
-  ; ============================================================================
+  ;                           PUBLIC VARS & CONSTANTS
+  ;{============================================================================
+  ; The following variables and constants are exposed publicly to be usable by
+  ; all modules dealing with the CodeArchiv.
+  ; ----------------------------------------------------------------------------
+  ; Cross Platform Helpers
+  ;{----------------------------------------------------------------------------
   CompilerIf #PB_Compiler_OS = #PB_OS_Windows
     #DSEP = "\"       ; Directory Separator Character
     #EOL = #CRLF$     ; End-Of-Line Sequence
@@ -41,9 +45,25 @@ DeclareModule G
     #EOL_WRONG = #CRLF$
   CompilerEndIf
   #EOL2 = #EOL + #EOL ; double EOL sequences
-  
-  ; ============================================================================
-  ;                       CROSS-MODULE REGEX ENUMERATIONS                       
+  ;}----------------------------------------------------------------------------
+  ; CodeArchiv Special Files, Folders and Paths
+  ; ----------------------------------------------------------------------------
+  ; CodeArchiv's special files and folders names are stored here, globally, so
+  ; that if the need to change them ever arises it can be handled in a single
+  ; place, affecting all tools without any breaks. Some conventions used:
+  ; - Paths will always end with a directory separator (#DSEP).
+  ; - Folders and files names are case senstivie for cross-platformness' sake.
+  ; ----------------------------------------------------------------------------
+  #CodeInfoFile  = "CodeInfo.txt" ; <- found in multi-file subfoldered resources
+  #AssetsFolder  = "_assets"
+  #ModulesFolder = "pb-inc"
+
+  ; The following absolute paths will be initialized by the module at inclusion:
+  Define.s CodeArchivPath ; Abs path to CodeArchiv's Root.
+  Define.s AssetsPath     ; Abs path to Assets folder.
+
+  ;}============================================================================
+  ;                       CROSS-MODULE REGEX ENUMERATIONS
   ; ============================================================================
   ; (RegExs IDs are "global" and module independent)
   ; Declare a common RegEx Enumeration Identifier to keep track of the RegExs ID
@@ -59,23 +79,9 @@ DeclareModule G
   Enumeration RegExsIDs
     ; This Enum block it's empty because here we only need to set the Enum ID.
   EndEnumeration
-  ; ============================================================================
-  ;                           PUBLIC VARS & CONSTANTS                           
-  ; ============================================================================
-  ; CodeArchiv's special files and folders names are stored here, globally, so
-  ; that if the need to change them ever arises it can be handled in a single
-  ; place, affecting all tools without any breaks.
+
   ; ----------------------------------------------------------------------------
-  #CodeInfoFile  = "CodeInfo.txt" ; found in multi-file subfoldered resources
-  #AssetsFolder  = "_assets"
-  #ModulesFolder = "pb-inc"
-  
-  ; The following absolute paths will be set by this module at inclusion time:
-  Define.s CodeArchivPath ; Abs path to CodeArchiv's Root.
-  Define.s AssetsPath     ; Abs path to Assets folder.
-  
-  ; ----------------------------------------------------------------------------
-  ;                        Horizontal Dividers Constants                        
+  ;                        Horizontal Dividers Constants
   ; ----------------------------------------------------------------------------
   ; These constants have been moved temporarily here, to simplify splitting code.
   ; They might be moved elsewhere in the future.
@@ -86,7 +92,7 @@ DeclareModule G
   #DIV5$ = "********************************************************************************"
   #DIV6$ = "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"
   #DIV7$ = "////////////////////////////////////////////////////////////////////////////////"
-  
+
 EndDeclareModule
 
 Module G
@@ -98,8 +104,8 @@ Module G
   ; The following initialization will occur at the time and place of the module's
   ; inclusion by main code.
   ; ============================================================================
-  ;- 1.   Define CodeArchiv Paths                           
-  ; ============================================================================
+  ;- 1.   Define Special CodeArchiv Paths
+  ;{============================================================================
   ; mod_G makes the following assumptions:
   ;
   ;  - all CodeArchi apps and tools are in the "_assets/" folder.
@@ -118,9 +124,9 @@ Module G
   ; solution because future versions of the G module might introduce new path-vars,
   ; and manual fixes would not cover them all, exposing other modules to potential
   ; errors and erratic behavior.
-  ; ============================================================================
-  ;- 1.1 Define CodeArchiv Path (root)
-  ; ============================================================================
+  ;}============================================================================
+  ;- 1.1  G::CodeArchivPath (root)
+  ;{============================================================================
   ; Usually, the main code importing the module will be a tool in the "_assets/"
   ; folder, and the Archiv root will be one level up.
   ;   Some modules in this folder can also be run on their own (for testing), in
@@ -159,23 +165,18 @@ Module G
                      #PB_MessageRequester_Error)
     End 1
   EndIf
-  
+
   CodeArchivPath = GetCurrentDirectory()
-  
+
   ; Restore Previous Current Directory
   ; ----------------------------------
   ; (make no assumption on what the tool invoking this module might be doing)
   SetCurrentDirectory(CurrDir)
-  
-  ; ============================================================================
-  ;- 1.2 Define Assets Path
+  ;}============================================================================
+  ;- 1.2  G::AssetsPath
   ; ============================================================================
   AssetsPath = CodeArchivPath + #AssetsFolder + #DSEP
-  
-  ;   MessageRequester("CodeArchivPath", CodeArchivPath)
-  ;   MessageRequester("AssetsPath", AssetsPath)
-  ;   End
-  
+
 EndModule
 
 ; ******************************************************************************
