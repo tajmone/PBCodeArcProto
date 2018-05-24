@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_G.pbi" v0.0.7 (2018/05/24) | PureBASIC 5.62 | MIT License
+; "mod_G.pbi" v0.0.8 (2018/05/24) | PureBASIC 5.62 | MIT License
 
 ; Stores Data shared by any tool dealing with CodeArchiv and its resources.
 
@@ -18,12 +18,6 @@
 ; modules dependencies: none.
 
 ;{ -- TODOs LIST »»»------------------------------------------------------------
-; TODO: Add G::AssetsPath (remember to include ending dir separator).
-; TODO: I should make the module abort code execution if it doesn't initialize
-;       properly -- Eg, if it doesn't manage to determine Archiv Root path.
-; TODO: Add some check if Archiv Root path was calculated correctly -- some files
-;       are expected to be in root folder (.gitattributes, settings, etc), I could
-;       rely on these to confirm the path was correct.
 ; TODO: 
 ;} -- TODOs LIST «««------------------------------------------------------------
 
@@ -106,8 +100,6 @@ Module G
   ; ============================================================================
   ;                           Define CodeArchiv Paths                           
   ; ============================================================================
-  ; TODO: Should verify that GetCurrentDirectory() returns path ending with dir
-  ;       separator on all OS -- or either do the check myself, here.
   ; mod_G makes the following assumptions:
   ;
   ;  - all CodeArchi apps and tools are in the "_assets/" folder.
@@ -127,32 +119,67 @@ Module G
   ; vars based on the root path will be set correctly -- in the future, new path
   ; variables might be added to mod_G, and manual fixes might not cover them all,
   ; exposing other modules to potential errors!
-  ; ----------------------------------------------------------------------------
+  ; ============================================================================
   ; Define CodeArchiv Path (root)
-  ; ----------------------------------------------------------------------------
+  ; ============================================================================
   ; Some modules in this folder can also be run on their own (for testing), in
   ; which case they would be the main code including this module. Thus we also
   ; check for the presence of "pb-inc" at the end of CurrentDirectory, in which
   ; case the CodeArchiv root will be two levels up:
-  If FindString( ReverseString( GetCurrentDirectory() ),
-                 ReverseString(#ModulesFolder) )
-    ; mod_G is being imported by another module:
+  
+  CurrDir.s = GetCurrentDirectory() ; <- always ends with directory separator!
+  If Right(CurrDir, Len(#ModulesFolder)+1) = #ModulesFolder + #DSEP
+    ; ---------------------------------------------------------------
+    ; mod_G is being imported by another module in "_assets/pb-inc/":
+    ; ---------------------------------------------------------------
     SetCurrentDirectory("../../")
-  Else
-    ; we assume mod_G is being imported by a tool in "_assets/":
+  ElseIf Right(CurrDir, Len(#AssetsFolder)+1) = #AssetsFolder + #DSEP
+    ; ------------------------------------------------
+    ; mod_G is being imported by a tool in "_assets/":
+    ; ------------------------------------------------
     SetCurrentDirectory("../")
   EndIf
-  ; TODO: Add in ELSE further check that path ends with #AssetsFolder, else the
-  ;       module should fail initialization, raise compiler error and abort!
+  ; If none of the above was true, we assume that Curr Dir was manually set to
+  ; the CodeArchiv's root by the importing code.
+  ; ----------------------------------------------------------------------------
+  ; Check that we're really in project's root
+  ; ----------------------------------------------------------------------------
+  ; To be 100% sure that Curr Dir now points to the Archiv's root, we'll check
+  ; for the presence of the "_assets" folder.
+  If FileSize(#AssetsFolder) <> -2
+    ; ~~~~~~~~~~~~
+    ; WARN & ABORT
+    ; ~~~~~~~~~~~~
+    MessageRequester("mod_G Error",
+                     ~"mod_G.pbi wasn't able to determine the path of CodeArchiv!\n"+
+                     ~"Please, use SetCurrentDirectory() to manually point to the Archiv's "+
+                     "root before importing mod_G!",
+                     #PB_MessageRequester_Error)
+    End 1
+  EndIf
+  
 
   CodeArchivPath = GetCurrentDirectory()
-  ; ----------------------------------------------------------------------------
+  ; ============================================================================
   ; Define Assets Path
-  ; ----------------------------------------------------------------------------
+  ; ============================================================================
   AssetsPath = CodeArchivPath + #AssetsFolder + #DSEP
   
-;   MessageRequester("CodeArchivPath", CodeArchivPath)
-;   MessageRequester("AssetsPath", AssetsPath)
-;   End
+  ;   MessageRequester("CodeArchivPath", CodeArchivPath)
+  ;   MessageRequester("AssetsPath", AssetsPath)
+  ;   End
   
 EndModule
+
+; ******************************************************************************
+; *                                                                            *
+; *                         STANDALONE EXECUTION CODE                          *
+; *                                                                            *
+; ******************************************************************************
+; The following CompilerIf code block will be executed only if this file is run
+; by itself (as opposed to being included into another sourcefile).
+; ------------------------------------------------------------------------------
+CompilerIf #PB_Compiler_IsMainFile
+  MessageRequester("CodeArchivPath", G::CodeArchivPath)
+  MessageRequester("AssetsPath", G::AssetsPath)
+CompilerEndIf
