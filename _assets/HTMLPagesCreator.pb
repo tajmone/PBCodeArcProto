@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.1.4 (2018/05/24) | PureBasic 5.62 | MIT License
+; "HTMLPagesCreator.pb" v0.1.5 (2018/05/24) | PureBasic 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -13,8 +13,6 @@
 ; as introduction text, and a resume card is built for each resource in the
 ; category (via header comments parsing)
 ;{ -- TODOs LIST »»»------------------------------------------------------------
-; TODO: Replace all occurences of PROJ_ROOT$ with G::CodeArchivPath
-; TODO: Replace all occurences of ASSETS$ with G::AssetsvPath (to be created)
 ; TODO: 
 ; =============
 ; DEBUG OUTPUT:
@@ -55,6 +53,10 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+; v0.1.5 (2018/05/24)
+;    - Replaced all occurences of
+;      - PROJ_ROOT$ -> G::CodeArchivPath
+;      - ASSETS$    -> G::AssetsPath
 ; v0.1.4 (2018/05/24)
 ;    - Included modules are now in "pb-inc" subfolder.
 ;    - Refer to G::CodeArchivPath for determining project root.
@@ -173,18 +175,10 @@ EndIf
 ;{==============================================================================
 Debug G::#DIV2$ + G::#EOL + "HTMLPagesCreator" + G::#EOL + G::#DIV2$
 
-ASSETS$ = G::CodeArchivPath + G::#AssetsFolder ; Path to assets folder
-
-PROJ_ROOT$ = G::CodeArchivPath ; FIXME: PROJ_ROOT$ no longer needed!
 SetCurrentDirectory( G::CodeArchivPath )
 
-MessageRequester("ASSETS$", ASSETS$)
-MessageRequester("PROJ_ROOT$", PROJ_ROOT$)
-; End
-
-
 Debug "Debug Level: " + Str(#DBG_LEVEL)
-Debug "Project's Root Path: '" +PROJ_ROOT$ + "'", #DBGL2
+Debug "Project's Root Path: '" + G::CodeArchivPath + "'", #DBGL2
 ; TODO: Check that pandoc >=2.0 is available
 ;}==============================================================================
 ;                                      MAIN                                     
@@ -267,7 +261,7 @@ StepHeading("Checking Project Integrity")
 ; Check status of YAML Metadata file
 ; ==================================
 ; TODO: test all errors with real scenarios
-Select FileSize(ASSETS$ + "meta.yaml")
+Select FileSize(G::AssetsPath + "meta.yaml")
   Case 0 ; File is 0 Kb
          ; ~~~~~~~~~~~~
     Debug "ERROR!! meta.yaml has size 0 Kb!"
@@ -370,7 +364,7 @@ Err::currRes = #Empty$ ; Always = current Resource filename OR empty if none.
 ;  =========================
 ;- Load Common YAML Metadata
 ;{ =========================
-If ReadFile(0, ASSETS$ + "meta.yaml")
+If ReadFile(0, G::AssetsPath + "meta.yaml")
   While Eof(0) = 0
     YAML_META$ + ReadString(0) + G::#EOL
   Wend
@@ -398,8 +392,8 @@ ForEach CategoriesL()
   ; TODO: Add Proc to fix dir sep "/" into "\" for Win Path
   ;      (Not stritcly required, but might be useful if path splitting operations
   ;       or other similar path manipulation need to be done).
-  Debug "Current working dir: " + PROJ_ROOT$ + catPath, #DBGL2
-  SetCurrentDirectory(PROJ_ROOT$ + catPath)
+  Debug "Current working dir: " + G::CodeArchivPath + catPath, #DBGL2
+  SetCurrentDirectory(G::CodeArchivPath + catPath)
   ; ~~~~~~~~~~~~~
   
   ;  ====================
@@ -680,7 +674,7 @@ ForEach CategoriesL()
               G::#EOL2 + YAML_META$ + YAML_VARS$
   
   pandocOpts.s = "-f "+ #PANDOC_FORMAT_IN +
-                 " --template=" + ASSETS$ + #PANDOC_TEMPLATE +
+                 " --template=" + G::AssetsPath + #PANDOC_TEMPLATE +
                  "  -o index.html "
   
   
@@ -766,7 +760,7 @@ Debug G::#DIV2$
 ;- Log Debug Window to File and Quit
 ;  =================================
 SaveLog:
-SaveDebugOutput(ASSETS$ + "session.log")
+SaveDebugOutput(G::AssetsPath + "session.log")
 ; TODO: Add Exit Code (Err Level) via some variable.
 ;       Even if it's not a console app, it could be invoked from scripts leveraging
 ;       the PB Compiler or compiled to binary (no log will be shown in this case).
