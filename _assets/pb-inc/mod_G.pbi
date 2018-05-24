@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_G.pbi" v0.0.5 (2018/05/21) | PureBASIC 5.62 | MIT License
+; "mod_G.pbi" v0.0.6 (2018/05/24) | PureBASIC 5.62 | MIT License
 
 ; Stores Data shared by any tool dealing with CodeArchiv and its resources.
 
@@ -23,7 +23,6 @@
 ; *                                                                            *
 ; ******************************************************************************
 DeclareModule G
-  Define.s CodeArchivPath ; Abs path to CodeArchiv's Root. (str set by this mod)
   
   ; ============================================================================
   ;                           CROSS PLATFORM SETTINGS                           
@@ -61,6 +60,9 @@ DeclareModule G
   ; ============================================================================
   #CodeInfoFile = "CodeInfo.txt" ; found in multi-file subfoldered resources
   
+  Define.s CodeArchivPath ; Abs path to CodeArchiv's Root. (str set by this mod)
+  #AssetsFolder = "_assets" + #DSEP
+
   ; ----------------------------------------------------------------------------
   ;                        Horizontal Dividers Constants                        
   ; ----------------------------------------------------------------------------
@@ -80,9 +82,30 @@ Module G
   ; ----------------------------------------------------------------------------
   ;                            Define CodeArchiv Path                           
   ; ----------------------------------------------------------------------------
-  ; We assume that all modules as well as the main source files requiring them
-  ; are in the "_assets" folder, thus the Archiv's root is always one level up:
-  SetCurrentDirectory("../")
+  ; We assume that all modules are are in the "_assets/pb-inc/" folder, and that
+  ; the main apps including the modules are in "_assets/". Therefore the Archiv's
+  ; root should always be one level up relatively to the main app importing this
+  ; module.
+  ;   Some modules in this folder can also be run on their own (for testing), in
+  ; which case they would be the main code including this module. Thus we also
+  ; check for the presence of "pb-inc" at the end of CurrentDirectory, in which
+  ; case the CodeArchiv root will be two levels up:
+  If FindString( ReverseString( GetCurrentDirectory() ), "cni-bp")
+    ; mod_G is being imported by another module:
+    SetCurrentDirectory("../../")
+  Else
+    ; we assume mod_G is being imported by a tool in "_assets/":
+    SetCurrentDirectory("../")
+  EndIf
+  ; But if the importing app is located in another position, then G::CodeArchivPath
+  ; will not be corretct and the app will have to either:
+  ;   1. SetCurrentDirectory to "_assets/" BEFORE importing mod_G
+  ;   2. Manually override G::CodeArchivPath AFTER importing mod_G
+  ;    
   CodeArchivPath = GetCurrentDirectory()
+  
+  MessageRequester("CodeArchivPath", CodeArchivPath)
+;   End
+  
   
 EndModule

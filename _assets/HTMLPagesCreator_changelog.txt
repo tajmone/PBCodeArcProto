@@ -1,11 +1,36 @@
-==============================================================================
-CHANGELOG "HTMLPagesCreator.pb" (up to: v0.0.42 (2018/05/11)
-------------------------------------------------------------------------------
+================================================================================
+CHANGELOG "HTMLPagesCreator.pb" | up to: v0.1.3 (2018/05/21)
+--------------------------------------------------------------------------------
 Due to the size of the changelog, I've copied it here the full log and deleted
 all but the most recent changes from the source file. This file is not updated
 with each new version, but only when there is need to remove some entries from
 the original source file.
-==============================================================================
+================================================================================
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+MODULARAZATION: v0.1.x will mark the transition from a single source app to a
+module-based app, so that parts of the code can be reused by other tools also.
+Once modularization of the full sourcecode is achieved will bump to Alpha
+version 0.2.x.
+--------------------------------------------------------------------------------
+v0.1.3 (2018/05/21)
+  - #CodeInfoFile -> G::#CodeInfoFile
+    This constant is needed by any module dealing with the CodeArchiv!
+
+v0.1.2 (2018/05/16)
+  - Error Tracking moved to Errors Mod (Err::) "mod_Errors.pbi"
+
+v0.1.1 (2018/05/16)
+  - Move horiz divider str constants to G mod (#DIV1$, etc.).
+  - Add and Include "mod_Errors.pbi" (Err::). Currently the module does nothing.
+
+v0.1.0 (2018/05/16)
+  - BEGIN MODULARAZATION OF CODE.
+  - NEW MODULE: "mod_G.pbi" (G::) — this global module will now hold common
+    data shared by all modules in this app and other tools:
+    - Cross-platforms constants moved to this module (#EOL, etc.), now to use
+      them the module's namespace must be added (G::#EOL, G::#DSEP, etc).
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 v0.0.42 (2018/05/11)
     (BUG FIX: Issue #14)
   - Sort Categories and Resource-files lists: due to OS API differences, Win

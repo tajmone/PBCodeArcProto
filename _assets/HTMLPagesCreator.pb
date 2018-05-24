@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.1.3 (2018/05/21) | PureBasic 5.62 | MIT License
+; "HTMLPagesCreator.pb" v0.1.4 (2018/05/24) | PureBasic 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -13,6 +13,8 @@
 ; as introduction text, and a resume card is built for each resource in the
 ; category (via header comments parsing)
 ;{ -- TODOs LIST »»»------------------------------------------------------------
+; TODO: Replace all occurences of PROJ_ROOT$ with G::CodeArchivPath
+; TODO: Replace all occurences of ASSETS$ with G::AssetsvPath (to be created)
 ; TODO: 
 ; =============
 ; DEBUG OUTPUT:
@@ -53,6 +55,9 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+; v0.1.4 (2018/05/24)
+;    - Included modules are now in "pb-inc" subfolder.
+;    - Refer to G::CodeArchivPath for determining project root.
 ;  v0.1.3 (2018/05/21)
 ;    - #CodeInfoFile -> G::#CodeInfoFile
 ;      This constant is needed by any module dealing with the CodeArchiv!
@@ -102,8 +107,8 @@ DebugLevel #DBG_LEVEL
 ; ------------------------------------------------------------------------------
 ;-                      INCLUDE MODULES AND EXTERNAL FILES                      
 ; ------------------------------------------------------------------------------
-XIncludeFile "mod_G.pbi"      ; G::     => Global Module
-XIncludeFile "mod_Errors.pbi" ; Err::   => Errors Tracker
+XIncludeFile "pb-inc/mod_G.pbi"      ; G::     => Global Module
+XIncludeFile "pb-inc/mod_Errors.pbi" ; Err::   => Errors Tracker
 
 ;- Procedures Declaration
 
@@ -168,10 +173,15 @@ EndIf
 ;{==============================================================================
 Debug G::#DIV2$ + G::#EOL + "HTMLPagesCreator" + G::#EOL + G::#DIV2$
 
-ASSETS$ = GetCurrentDirectory() ; Path to assets folder
+ASSETS$ = G::CodeArchivPath + G::#AssetsFolder ; Path to assets folder
 
-SetCurrentDirectory("../")
-PROJ_ROOT$ = GetCurrentDirectory()
+PROJ_ROOT$ = G::CodeArchivPath ; FIXME: PROJ_ROOT$ no longer needed!
+SetCurrentDirectory( G::CodeArchivPath )
+
+MessageRequester("ASSETS$", ASSETS$)
+MessageRequester("PROJ_ROOT$", PROJ_ROOT$)
+; End
+
 
 Debug "Debug Level: " + Str(#DBG_LEVEL)
 Debug "Project's Root Path: '" +PROJ_ROOT$ + "'", #DBGL2
