@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.3 (2018/05/21) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.4 (2018/05/29) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -27,11 +27,13 @@ XIncludeFile "mod_G.pbi"
 ;  - Original code adapated to work as standalone Module.
 ;  - Currently an unclean draft.
 ; TODOs:
-;  - [ ] Expose interal data statistics via a structured var.
+;  - [x] Expose interal data statistics via a structured var.
 ;        (this will also make Shared usage simpler in the module).
-;  - [ ] Debug output must be captured in a string and stored somewhere, and only
-;        shown on request -- but this should be handled by logger module.
-;  - [ ] Add iteration procedures that take a procedure pointer as parameter and
+;  - [ ] ScanFolder()'s Debug output must be either:
+;        - [ ] removed from code (probably not needed anyhow), or
+;        - [ ] captured in a string and stored somewhere, and only shown on 
+;              demand -- but this should be handled by logger module.
+;  - [ ] Add ITERATION procedures that take a procedure pointer as parameter and
 ;        allow to:
 ;        - [ ] Call that procedure during each Category iteration
 ;        - [ ] Call the procedure on iterations of curr Category's resources
@@ -64,12 +66,19 @@ DeclareModule Arc
   ; ============================================================================
   ;                                 PUBLIC DATA                                 
   ; ============================================================================
-  ; Boolean vars for interal use and for querying the module's status:
-  IsReady = #False  ; Becomes #True on succesful scan of CodeArchiv.
   
-  totCategories = 0 ; Total Categories count (Root excluded)
-  totResources = 0  ; Total Resources count
-  totSubFRes = 0    ; Total subfolder Resources count
+  ; Arc::info -- Structured var gathering/exposing statistics about the project.
+  Structure info
+    IsReady.i             ; Boolean for querying the module's status
+    totCategories.i       ; Total Categories count (Root excluded)
+    totResources.i        ; Total Resources count
+    totResTypePBSource.i  ; Total Resources of PureBasic Source type
+    totResTypePBInclude.i ; Total Resources of PureBasic Include-file type
+    totResTypeFolder.i    ; Total Resources of Subfolder type
+  EndStructure
+  
+  info.info
+  ; ----------------------------------------------------------------------------
   
   ;- Create Categories List
   ;  ======================
@@ -106,7 +115,7 @@ Module Arc
     ; ==========================================================================
     Shared IsInit
     Shared CategoriesL()
-    Shared totCategories, totResources, totSubFRes
+    Shared info
     
     ; Preserve Current Directory
     ; --------------------------
@@ -123,8 +132,11 @@ Module Arc
     
     ScanFolder(CategoriesL())
     
-    Debug "- Categories found: "+ Str(totCategories) + " (excluding root folder)"
-    Debug "- Resources found: "+ Str(totResources) + " ("+ Str(totSubFRes) +" are subfolders)"
+    Debug "- Categories found: "+ Str(info\totCategories) + " (excluding root folder)"
+    Debug "- Resources found: "+ Str(info\totResources) 
+    Debug "  - PB Source resources: "+ Str(info\totResTypePBSource)
+    Debug "  - PB Include-file resources: "+ Str(info\totResTypePBInclude)
+    Debug "  - Folder resources: "+ Str(info\totResTypeFolder)
     
     ;  ===========================
     ;- Sort Lists in CategoriesL()
@@ -187,12 +199,12 @@ Module Arc
   ; *                                                                          *
   ; ****************************************************************************
   Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
-;     Debug ">>> ScanFolder()" ; DELME
+    ;     Debug ">>> ScanFolder()" ; DELME
     ; ==========================================================================
     ; Recursively scan project folders and build the List of Categories.
     ; ==========================================================================
     Shared CategoriesL()
-    
+    Shared info
     
     Static recCnt ; recursion level counter 
     For i=1 To recCnt
@@ -200,7 +212,6 @@ Module Arc
     Next
     recCnt +1
     
-    Shared totCategories, totResources, totSubFRes
     
     If ExamineDirectory(recCnt, PathSuffix, "")
       While NextDirectoryEntry(recCnt)
@@ -215,7 +226,12 @@ Module Arc
           If fExt = "pb" Or fExt = "pbi"
             AddElement( CategoriesL()\FilesToParseL() )
             CategoriesL()\FilesToParseL() = entryName ; relative path
-            totResources +1
+            info\totResources +1
+            If fExt = "pb"
+              info\totResTypePBSource +1
+            Else
+              info\totResTypePBInclude +1
+            EndIf
             Debug entryDBG$, #DBGL3
           Else
             ; Ignore other PB extensions (*.pbp|*.pbf)
@@ -240,8 +256,8 @@ Module Arc
             AddElement( CategoriesL()\FilesToParseL() )
             fName.s = entryName + "/" + G::#CodeInfoFile ; relative path
             CategoriesL()\FilesToParseL() = fName
-            totResources +1
-            totSubFRes +1
+            info\totResources +1
+            info\totResTypeFolder +1
             Debug entryDBG$ + "- " + fName, #DBGL3
           Else
             ;  =========================
@@ -249,7 +265,7 @@ Module Arc
             ;  =========================
             AddElement( CategoriesL()\SubCategoriesL() )
             CategoriesL()\SubCategoriesL() = entryName ; just the folder name
-            totCategories +1
+            info\totCategories +1
             Debug entryDBG$ + "+ /" + entryName + "/", #DBGL3          
             ; -------------------------
             ; Recurse into Sub-Category
@@ -271,7 +287,7 @@ Module Arc
     recCnt -1
     Debug Ind$, #DBGL3 ; adds separation after sub-folders ends
     
-;     Debug "<<< ScanFolder()" ; DELME
+    ;     Debug "<<< ScanFolder()" ; DELME
   EndProcedure
   
 EndModule
@@ -305,3 +321,15 @@ CompilerIf #PB_Compiler_IsMainFile
   EndIf
   
 CompilerEndIf
+
+;{ CHANGELOG
+;  =========
+; v0.0.4 (2018/05/29)
+;    - New structered var info (of .info type) to gather all info about the proj
+;      (totCategories, etc.). This replaces the previous `totXXX` vars.
+;    - New vars to store total count of resources by type:
+;        - Arc::info\totResTypePBSource   (PureBasic Source)
+;        - Arc::info\totResTypePBInclude  (PureBasic Include-file)
+;        - Arc::info\totResTypeFolder     (Subfolder)
+;      These should be handy for both internal use and to other modules/tools.
+;}
