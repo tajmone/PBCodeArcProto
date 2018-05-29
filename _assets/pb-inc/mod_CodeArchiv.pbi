@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.6 (2018/05/29) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.7 (2018/05/29) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -43,6 +43,7 @@ XIncludeFile "mod_G.pbi"
 ;        - [ ] Call the procedure on iteration of every resource (regardless of
 ;              categogires). Also allow opt param to restric res types.
 ;  - [ ] ScanFolder():
+;        - [x] While building Categories list, also build a Resources List.
 ;        - [ ] Implement handling of ExamineDirectory() error.
 ;        - [ ] Add a static Error status var that be used to track if any errors
 ;              were encountered during recursive scanning of folders. Possibly,
@@ -52,10 +53,13 @@ XIncludeFile "mod_G.pbi"
 ;        and other Procedures could use them as flags to filter resource types to
 ;        include in iterations).
 ;  - [ ] Add public procedures:
-;        - [ ] ShowTree() -- return a str with Proj tree.
+;        - [ ] ShowTree() -- return a str with Proj tree (Categories and Resources).
 ;        - [ ] ShowStats() -- return a resume str of Categories and Resources.
-;        - [ ] 
-;  - [ ] 
+;        - [ ] ShowCategoriesL() -- returns a str with list of all Categories.
+;        - [ ] ShowResourcesL() -- returns a str with list of all Resources.
+;  - [x] Add Resources list: structured data containing resource name, path and
+;        type. This will allow to build resources iterators which are independent
+;        of categories, and therefore quicker in accessing the res files.
 ; ******************************************************************************
 ; *                                                                            *
 ; *                         MODULE'S PUBLIC INTERFACE                          *
@@ -99,12 +103,21 @@ DeclareModule Arc
   ;- Create Categories List
   ;  ======================
   Structure Category
-    Name.s
-    Path.s
+    Name.s                  ; Folder name
+    Path.s                  ; Path relative to CodeArchiv root (includes folder name)
     List SubCategoriesL.s() ; Name/Link List to SubCategories
     List FilesToParseL.s()  ; List of files to parse (including "<subf>/CodeInfo.txt")
   EndStructure
   NewList CategoriesL.Category()
+  
+  ;- Create Resources List
+  ;  ======================
+  Structure Resource
+    File.s    ; Filename ( <filename>.pb | <filename>.pbi | "CodeInfo.txt" )
+    Path.s    ; Path relative to CodeArchiv root (includes filename)
+    Type.i    ; ( G::#ResT_PBSrc | G::#ResT_PBInc | G::#ResT_Folder )
+  EndStructure
+  NewList ResourcesL.Resource()
   
   ; ============================================================================
   ;                        PUBLIC PROCEDURES DECLARATION                        
@@ -132,7 +145,7 @@ Module Arc
     
     Reset()
     Shared IsInit ; <~ UNUSED!!!
-    Shared CategoriesL()
+    Shared CategoriesL(), ResourcesL()
     Shared info
     
     ; Preserve Current Directory
@@ -214,6 +227,9 @@ Module Arc
     Shared CategoriesL()
     ClearList( CategoriesL() )
     
+    Shared ResourcesL()
+    ClearList( ResourcesL() )
+    
     Shared info
     With info
       \IsReady = #False
@@ -234,13 +250,14 @@ Module Arc
   ; ****************************************************************************
   Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
     ;     Debug ">>> ScanFolder()" ; DELME
+    Debug "*** PathSuffix: " + PathSuffix
     ; ==========================================================================
     ; Recursively scan project folders and build the List of Categories.
     ; ==========================================================================
     ; TODO: Debug info of this procedure should be either removed or stored in
     ;       a string for optional use; else I could use a constant to check if
     ;       it should be shown or not.
-    Shared CategoriesL()
+    Shared CategoriesL(), ResourcesL()
     Shared info
     
     Static recCnt ; recursion level counter (at the end of each Archiv scan will
@@ -265,11 +282,18 @@ Module Arc
           If fExt = "pb" Or fExt = "pbi"
             AddElement( CategoriesL()\FilesToParseL() )
             CategoriesL()\FilesToParseL() = entryName ; relative path
+            ; Update Resources List:
+            AddElement( ResourcesL() )
+            ResourcesL()\File = entryName
+            ResourcesL()\Path = PathSuffix + entryName
+            ; Update Proj Stats:
             info\totResources +1
             If fExt = "pb"
               info\totResT_PBSrc +1
+              ResourcesL()\Type = G::#ResT_PBSrc
             Else
               info\totResT_PBInc +1
+              ResourcesL()\Type = G::#ResT_PBInc
             EndIf
             Debug entryDBG$, #DBGL3
           Else
@@ -295,6 +319,12 @@ Module Arc
             AddElement( CategoriesL()\FilesToParseL() )
             fName.s = entryName + "/" + G::#CodeInfoFile ; relative path
             CategoriesL()\FilesToParseL() = fName
+            ; Update Resources List:
+            AddElement( ResourcesL() )
+            ResourcesL()\File = G::#CodeInfoFile
+            ResourcesL()\Path = PathSuffix + fName
+            ResourcesL()\Type = G::#ResT_Folder
+            ; Update Proj Stats:
             info\totResources +1
             info\totResT_Folder +1
             Debug entryDBG$ + "- " + fName, #DBGL3
@@ -373,10 +403,28 @@ CompilerIf #PB_Compiler_IsMainFile
     Debug "The module has correctly preserved our initial Curr Directory."
   EndIf
   
+  ; TEST RESOURCES LIST
+  ; ===================
+  Debug LSet("", 80, "=")
+  Debug "All resources:"
+  ForEach Arc::ResourcesL()
+    Debug " - " + Arc::ResourcesL()\Path
+  Next
+  
+  ; TEMP DEBUGGING
+  ; ==============
+  ShowVariableViewer()
+  Repeat
+    ; loop forever to keep Variable Viwer open...
+  ForEver
+  
 CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.7 (2018/05/29)
+;    - New Arc::ResourcesL() list to store structured data about all resources in Archiv.
+;    - ScanFolder() now also populates the ResourcesL() when scanning the Archiv.
 ; v0.0.6 (2018/05/29)
 ;    - Rename some info struct vars using shorter names, like those used in mod_G:
 ;        totResTypePBSource   ->  totResT_PBSrc
