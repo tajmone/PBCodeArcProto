@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.4 (2018/05/29) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.5 (2018/05/29) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -71,6 +71,7 @@ DeclareModule Arc
   Structure info
     IsReady.i             ; Boolean for querying the module's status
     totCategories.i       ; Total Categories count (Root excluded)
+    totRootCategories.i   ; Total Top-Level Categories count
     totResources.i        ; Total Resources count
     totResTypePBSource.i  ; Total Resources of PureBasic Source type
     totResTypePBInclude.i ; Total Resources of PureBasic Include-file type
@@ -113,6 +114,8 @@ Module Arc
     ; ==========================================================================
     ; Scan the CodeArchiv project and build List of Categories and Resources.
     ; ==========================================================================
+    
+    Reset()
     Shared IsInit
     Shared CategoriesL()
     Shared info
@@ -133,6 +136,7 @@ Module Arc
     ScanFolder(CategoriesL())
     
     Debug "- Categories found: "+ Str(info\totCategories) + " (excluding root folder)"
+    Debug "  - Root Categories: "+ Str(info\totRootCategories)
     Debug "- Resources found: "+ Str(info\totResources) 
     Debug "  - PB Source resources: "+ Str(info\totResTypePBSource)
     Debug "  - PB Include-file resources: "+ Str(info\totResTypePBInclude)
@@ -186,11 +190,23 @@ Module Arc
   
   Procedure Reset()
     ; ==========================================================================
-    ; Reset the Module and dispose of all gatehred data.
+    ; Reset the Module and dispose of all gathered data.
     ; ==========================================================================
     Shared IsInit
     Shared CategoriesL()
     ClearList( CategoriesL() )
+    
+    Shared info
+    With info
+      \IsReady = #False
+      \totCategories = 0
+      \totRootCategories = 0
+      \totResources = 0
+      \totResTypePBSource = 0
+      \totResTypePBInclude = 0
+      \totResTypeFolder = 0
+    EndWith
+    
   EndProcedure
   
   ; ****************************************************************************
@@ -203,12 +219,17 @@ Module Arc
     ; ==========================================================================
     ; Recursively scan project folders and build the List of Categories.
     ; ==========================================================================
+    ; TODO: Debug info of this procedure should be either removed or stored in
+    ;       a string for optional use; else I could use a constant to check if
+    ;       it should be shown or not.
     Shared CategoriesL()
     Shared info
     
-    Static recCnt ; recursion level counter 
+    Static recCnt ; recursion level counter (at the end of each Archiv scan will
+                  ; always be back to the original value of '0'; no need to reset)
+    
     For i=1 To recCnt
-      Ind$ + " |" 
+      Ind$ + " |" ; <- for DBG purposes (proj tree)
     Next
     recCnt +1
     
@@ -266,6 +287,9 @@ Module Arc
             AddElement( CategoriesL()\SubCategoriesL() )
             CategoriesL()\SubCategoriesL() = entryName ; just the folder name
             info\totCategories +1
+            If recCnt = 1
+              info\totRootCategories +1
+            EndIf
             Debug entryDBG$ + "+ /" + entryName + "/", #DBGL3          
             ; -------------------------
             ; Recurse into Sub-Category
@@ -313,6 +337,12 @@ CompilerIf #PB_Compiler_IsMainFile
   
   Arc::ScanProject()
   
+  ; Scan again the Archiv, to ensure that all vars are properly reset...
+  ; ====================================================================
+  Debug LSet("", 80, "=")
+  Debug "Scan project again..."
+  Arc::ScanProject()
+  
   ; Now let's verify that the module has restored our Curr Dir after scanning:
   If GetCurrentDirectory() <> TestCurrDir
     Debug "ERROR: The module didn't restore our initial Curr Directory!!!"
@@ -324,6 +354,9 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.5 (2018/05/29)
+;    - Reset info vars at every ScanProject() call.
+;    - Add Arc::info\totRootCategories var to store total count of top-level categories.
 ; v0.0.4 (2018/05/29)
 ;    - New structered var info (of .info type) to gather all info about the proj
 ;      (totCategories, etc.). This replaces the previous `totXXX` vars.
