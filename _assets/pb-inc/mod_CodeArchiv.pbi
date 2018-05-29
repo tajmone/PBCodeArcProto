@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.5 (2018/05/29) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.6 (2018/05/29) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -25,7 +25,9 @@ XIncludeFile "mod_G.pbi"
 ; //////////////////////////////////////////////////////////////////////////////
 ; STATUS:
 ;  - Original code adapated to work as standalone Module.
-;  - Currently an unclean draft.
+;  - Current status: working draft; temporary code left over from previous main
+;    hosting code still needs to be removed.
+;
 ; TODOs:
 ;  - [x] Expose interal data statistics via a structured var.
 ;        (this will also make Shared usage simpler in the module).
@@ -40,6 +42,19 @@ XIncludeFile "mod_G.pbi"
 ;              (extra param to optionally restrict call to some res types)
 ;        - [ ] Call the procedure on iteration of every resource (regardless of
 ;              categogires). Also allow opt param to restric res types.
+;  - [ ] ScanFolder():
+;        - [ ] Implement handling of ExamineDirectory() error.
+;        - [ ] Add a static Error status var that be used to track if any errors
+;              were encountered during recursive scanning of folders. Possibly,
+;              this should also be returned as a Bool value when exiting from the
+;              top level Procedure call (so it can be used as an exit code).
+;  - [x] mod_G -- Add Resource Types Enum (maybe also Binary Enum, so that iterators
+;        and other Procedures could use them as flags to filter resource types to
+;        include in iterations).
+;  - [ ] Add public procedures:
+;        - [ ] ShowTree() -- return a str with Proj tree.
+;        - [ ] ShowStats() -- return a resume str of Categories and Resources.
+;        - [ ] 
 ;  - [ ] 
 ; ******************************************************************************
 ; *                                                                            *
@@ -66,16 +81,16 @@ DeclareModule Arc
   ; ============================================================================
   ;                                 PUBLIC DATA                                 
   ; ============================================================================
-  
+ 
   ; Arc::info -- Structured var gathering/exposing statistics about the project.
   Structure info
     IsReady.i             ; Boolean for querying the module's status
     totCategories.i       ; Total Categories count (Root excluded)
     totRootCategories.i   ; Total Top-Level Categories count
     totResources.i        ; Total Resources count
-    totResTypePBSource.i  ; Total Resources of PureBasic Source type
-    totResTypePBInclude.i ; Total Resources of PureBasic Include-file type
-    totResTypeFolder.i    ; Total Resources of Subfolder type
+    totResT_PBSrc.i       ; Total Resources of PureBasic Source type
+    totResT_PBInc.i       ; Total Resources of PureBasic Include-file type
+    totResT_Folder.i      ; Total Resources of Subfolder type
   EndStructure
   
   info.info
@@ -110,13 +125,13 @@ Module Arc
   ; *                                                                          *
   ; ****************************************************************************
   Procedure ScanProject()
-    Debug ">>> ScanProject()"
+    Debug ">>> ScanProject()" ; DELME >>> ScanProject()
     ; ==========================================================================
     ; Scan the CodeArchiv project and build List of Categories and Resources.
     ; ==========================================================================
     
     Reset()
-    Shared IsInit
+    Shared IsInit ; <~ UNUSED!!!
     Shared CategoriesL()
     Shared info
     
@@ -133,14 +148,17 @@ Module Arc
     AddElement( CategoriesL() )
     CategoriesL()\Path = "" ; Root folder
     
+    ; TODO: ScanFolder() should return 1 if errors were encountered!
     ScanFolder(CategoriesL())
     
+    ; TODO: The following debug info should become the str output of a dedicated
+    ;       public Procedure --- eg: Arc::stats()
     Debug "- Categories found: "+ Str(info\totCategories) + " (excluding root folder)"
     Debug "  - Root Categories: "+ Str(info\totRootCategories)
     Debug "- Resources found: "+ Str(info\totResources) 
-    Debug "  - PB Source resources: "+ Str(info\totResTypePBSource)
-    Debug "  - PB Include-file resources: "+ Str(info\totResTypePBInclude)
-    Debug "  - Folder resources: "+ Str(info\totResTypeFolder)
+    Debug "  - PB Source resources: "+ Str(info\totResT_PBSrc)
+    Debug "  - PB Include-file resources: "+ Str(info\totResT_PBInc)
+    Debug "  - Folder resources: "+ Str(info\totResT_Folder)
     
     ;  ===========================
     ;- Sort Lists in CategoriesL()
@@ -185,14 +203,14 @@ Module Arc
     SetCurrentDirectory(PrevCurrDir)
     
     
-    Debug "<<< ScanProject()"
+    Debug "<<< ScanProject()" ; DELME <<< ScanProject()
   EndProcedure
   
   Procedure Reset()
     ; ==========================================================================
     ; Reset the Module and dispose of all gathered data.
     ; ==========================================================================
-    Shared IsInit
+    Shared IsInit ; <~ UNUSED!!!
     Shared CategoriesL()
     ClearList( CategoriesL() )
     
@@ -202,9 +220,9 @@ Module Arc
       \totCategories = 0
       \totRootCategories = 0
       \totResources = 0
-      \totResTypePBSource = 0
-      \totResTypePBInclude = 0
-      \totResTypeFolder = 0
+      \totResT_PBSrc = 0
+      \totResT_PBInc = 0
+      \totResT_Folder = 0
     EndWith
     
   EndProcedure
@@ -249,9 +267,9 @@ Module Arc
             CategoriesL()\FilesToParseL() = entryName ; relative path
             info\totResources +1
             If fExt = "pb"
-              info\totResTypePBSource +1
+              info\totResT_PBSrc +1
             Else
-              info\totResTypePBInclude +1
+              info\totResT_PBInc +1
             EndIf
             Debug entryDBG$, #DBGL3
           Else
@@ -278,7 +296,7 @@ Module Arc
             fName.s = entryName + "/" + G::#CodeInfoFile ; relative path
             CategoriesL()\FilesToParseL() = fName
             info\totResources +1
-            info\totResTypeFolder +1
+            info\totResT_Folder +1
             Debug entryDBG$ + "- " + fName, #DBGL3
           Else
             ;  =========================
@@ -306,7 +324,12 @@ Module Arc
         
       Wend
       FinishDirectory(recCnt)
-    EndIf
+    EndIf ; <= ExamineDirectory(recCnt, PathSuffix, "")
+          ; TODO: handle failure of ExamineDirectory() -- ie: returns "0"
+          ;       Currently the code doesn't contemplate possibility of
+          ;       failure, but it must; moreover, I must work out how to
+          ;       handle it in a way that suits all possible uses of this
+          ;       module. Should it interface this failure with mod_Error?
     
     recCnt -1
     Debug Ind$, #DBGL3 ; adds separation after sub-folders ends
@@ -354,6 +377,11 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.6 (2018/05/29)
+;    - Rename some info struct vars using shorter names, like those used in mod_G:
+;        totResTypePBSource   ->  totResT_PBSrc
+;        totResTypePBInclude  ->  totResT_PBInc
+;        totResTypeFolder     ->  totResT_Folder
 ; v0.0.5 (2018/05/29)
 ;    - Reset info vars at every ScanProject() call.
 ;    - Add Arc::info\totRootCategories var to store total count of top-level categories.

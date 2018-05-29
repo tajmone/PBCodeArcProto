@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_G.pbi" v0.0.10 (2018/05/24) | PureBASIC 5.62 | MIT License
+; "mod_G.pbi" v0.0.11 (2018/05/29) | PureBASIC 5.62 | MIT License
 
 ; Stores Data shared by any tool dealing with CodeArchiv and its resources.
 
@@ -45,6 +45,27 @@ DeclareModule G
     #EOL_WRONG = #CRLF$
   CompilerEndIf
   #EOL2 = #EOL + #EOL ; double EOL sequences
+  ;}----------------------------------------------------------------------------
+  ; CodeArchiv Constants
+  ; ----------------------------------------------------------------------------
+  ; RESOURCE TYPES
+  ; ==============
+  Enumeration 
+    #ResT_PBSrc     ; PB Source        -> *.pb
+    #ResT_PBInc     ; PB Include File  -> *.pbi
+    #ResT_Folder    ; Folder Resource  -> "CodeInfo.txt"
+  EndEnumeration
+  
+  ; RESOURCE TYPES FLAGS
+  ; ====================
+  ; Useful as parameter for filtering resource types.
+  EnumerationBinary
+    #ResTF_PBSrc    ; PB Source        -> *.pb
+    #ResTF_PBInc    ; PB Include File  -> *.pbi
+    #ResTF_Folder   ; Folder Resource  -> "CodeInfo.txt"    
+  EndEnumeration
+  #ResTF_Any = #ResTF_PBSrc | #ResTF_PBInc | #ResTF_Folder
+  
   ;}----------------------------------------------------------------------------
   ; CodeArchiv Special Files, Folders and Paths
   ; ----------------------------------------------------------------------------
