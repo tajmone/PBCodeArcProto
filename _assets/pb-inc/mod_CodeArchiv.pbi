@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.8 (2018/05/30) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.9 (2018/05/30) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -40,8 +40,9 @@ XIncludeFile "mod_G.pbi"
 ;        - [ ] Call that procedure during each Category iteration
 ;        - [ ] Call the procedure on iterations of curr Category's resources
 ;              (extra param to optionally restrict call to some res types)
-;        - [ ] Call the procedure on iteration of every resource (regardless of
-;              categogires). Also allow opt param to restric res types.
+;        - [x] Call the procedure on iteration of every resource (regardless of
+;              categogires). 
+;              - [ ] Also allow opt param To restric res types.
 ;  - [ ] ScanFolder():
 ;        - [x] While building Categories list, also build a Resources List.
 ;        - [ ] Implement handling of ExamineDirectory() error.
@@ -87,7 +88,7 @@ DeclareModule Arc
   ; ============================================================================
   ;                                 PUBLIC DATA                                 
   ; ============================================================================
- 
+  
   ; Arc::info -- Structured var gathering/exposing statistics about the project.
   Structure info
     IsReady.i             ; Boolean for querying the module's status
@@ -157,6 +158,7 @@ Module Arc
   ; ****************************************************************************
   Procedure ScanProject()
     Debug ">>> ScanProject()" ; DELME >>> ScanProject()
+    
     ; ==========================================================================
     ; Scan the CodeArchiv project and build List of Categories and Resources.
     ; ==========================================================================
@@ -262,7 +264,8 @@ Module Arc
   EndProcedure
   
   Procedure ResourcesIteratorCallback( *CallbackProc )
-    ; TODO: If CallCFunctionFast() returns 1 abort iteration...
+    ; TODO: If CallCFunctionFast() returns non-zero abort iteration...
+    ; TODO: Implement optional filter for Res Types
     Shared ResourcesL(), CategoriesL()
     Shared Current
     
@@ -278,7 +281,9 @@ Module Arc
       ChangeCurrentElement( CategoriesL(), Current\Resource\Category ) ; <- pointer!
       Current\Category =  CategoriesL()
       
-      CallCFunctionFast( *CallbackProc )
+      If CallCFunctionFast( *CallbackProc )
+        Break
+      EndIf
     Next
     
     ; Restore Res/Cat Lists Positions
@@ -295,7 +300,6 @@ Module Arc
   ; ****************************************************************************
   Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
     ;     Debug ">>> ScanFolder()" ; DELME
-    Debug "*** PathSuffix: " + PathSuffix
     ; ==========================================================================
     ; Recursively scan project folders and build the List of Categories.
     ; ==========================================================================
@@ -316,7 +320,7 @@ Module Arc
       Ind$ + " |" ; <- for DBG purposes (proj tree)
     Next
     recCnt +1
-        
+    
     If ExamineDirectory(recCnt, PathSuffix, "")
       While NextDirectoryEntry(recCnt)
         
@@ -330,7 +334,7 @@ Module Arc
           If fExt = "pb" Or fExt = "pbi"
             AddElement( CategoriesL()\FilesToParseL() )
             CategoriesL()\FilesToParseL() = entryName ; relative path
-            ; Update Resources List:
+                                                      ; Update Resources List:
             AddElement( ResourcesL() )
             ResourcesL()\File = entryName
             ResourcesL()\Path = PathSuffix + entryName
@@ -470,42 +474,75 @@ CompilerIf #PB_Compiler_IsMainFile
   ; custom Procedures calls on every Category or Resource.
   
   ; ------------------------------------------------------------------------------
-  ;                              Resources Iterators                              
+  ; Ex (a) -- Resources Iterator
   ; ------------------------------------------------------------------------------
   ; Arc::ResourcesIteratorCallback() is a quick way to call a custom Procedure on
   ; every resource in the CodeArchiv. The module will always expose references to
   ; current Resource and Category being iterated, via the Arch::Current structure.
   
+  Debug G::#DIV1$
+  Debug "Resources Iterator Example" + #LF$ + G::#DIV1$
+  Debug ~"We'll use Arc::ResourcesIteratorCallback() to iterate through every resource in\n"+
+        ~"the CodeArchiv and acces info about the current resource and its host category.\n"
+  
+  #tmpResType$ = "     Resource Type: "
+  
   Procedure ResIterTest()
     Static cnt
     cnt +1
-    Debug LSet("", 80, "-")
-    Debug Str(cnt) + ". " + Arc::Current\Resource\File
-    Debug LSet("", 80, "-")
+    Debug LSet(" ", 3 - Len(Str(cnt))) + Str(cnt) + ". " + Arc::Current\Resource\File
+    Debug LSet("     ", Len(Arc::Current\Resource\File) +5, "-")
     
-    Debug "Resource Path (relative to Archiv Root): " + Arc::Current\Resource\Path
+    Debug "     Resource Path (relative to Archiv Root): " + Arc::Current\Resource\Path
     
     Select Arc::Current\Resource\Type
       Case G::#ResT_PBSrc
-        Debug "Resource Type: PureBasic source file"
+        Debug #tmpResType$ + "PureBasic source file"
       Case G::#ResT_PBInc 
-        Debug "Resource Type: PureBasic include file"
+        Debug #tmpResType$ + "PureBasic include file"
       Case G::#ResT_Folder
-        Debug "Resource Type: Folder resource"
+        Debug #tmpResType$ + "Folder resource"
       Default
-        Debug "Resource Type: (unknown)"
+        Debug #tmpResType$ + "(unknown)"
     EndSelect
     
-    ; Even though we're iterating through resources without iterating through categories,
-    ; the full info of the Category to which the current resource belongs to is available
-    ; because Arc::Current\Category will represent the hosting category of current resource:
-    Debug "Host category info:"
-    Debug " * Category Path: " + Arc::Current\Category\Path
-    Debug " * Total resources in category: " + ListSize( Arc::Current\Category\FilesToParseL() )
-    Debug " * Total subcategories: " + ListSize( Arc::Current\Category\SubCategoriesL() )
+    ; Although we're iterating resources without going through categories, full
+    ; info on the Category of the current resource is available to us because
+    ; Arc::Current\Category represents the host category of current resource:
+    Debug "     Host category info:"
+    Debug "       * Category Path: " + Arc::Current\Category\Path
+    Debug "       * Total resources in category: " + ListSize( Arc::Current\Category\FilesToParseL() )
+    Debug "       * Total subcategories: " + ListSize( Arc::Current\Category\SubCategoriesL() ) + G::#EOL
   EndProcedure
   
   Arc::ResourcesIteratorCallback( @ResIterTest() )
+  
+  ; ------------------------------------------------------------------------------
+  ; Ex (b) -- Aborting a Resources Iteration
+  ; ------------------------------------------------------------------------------
+  ; Now, an example of aborting an iterator: we'll iterate through all resources
+  ; until the first Res of type Folder is encountered.
+  Debug G::#DIV1$
+  Debug "Resources Iterator Abort Example" + #LF$ + G::#DIV1$
+  Debug ~"Iterate all Archiv resources and abort iteration at first Folder resource...\n"
+  
+  
+  
+  Procedure ResIterUntilFolder()
+    Static cnt
+    
+    cnt +1
+    Debug LSet(" ", 3 - Len(Str(cnt))) + Str(cnt) + ". " + Arc::Current\Resource\File
+    If Arc::Current\Resource\Type = G::#ResT_Folder
+      Debug LSet("     ", Len(Arc::Current\Resource\File) +5, "-")
+      Debug ~"\n     *** ABORTING ITERATION ***\n"
+      ProcedureReturn 1 ; <- Abort iteration cycle!
+    EndIf
+  EndProcedure
+  
+  Arc::ResourcesIteratorCallback( @ResIterUntilFolder() )
+  
+  
   
   ; TEMP DEBUGGING
   ; ==============
@@ -518,6 +555,9 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.9 (2018/05/30)
+;     - Arc::ResourcesIteratorCallback() now aborts iteration when its Callback Procedure
+;       returns non-zero.
 ; v0.0.8 (2018/05/30)
 ;     - New Arc::ResourcesIteratorCallback( *CallbackProc ) -- this procedure iterates through
 ;       every resource of the Archiv and calls *CallbackProc() at each step.
