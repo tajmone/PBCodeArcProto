@@ -7,14 +7,14 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.7 (2018/05/29) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.8 (2018/05/30) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
 ; ------------------------------------------------------------------------------
 ; modules dependencies:
 XIncludeFile "mod_G.pbi"
-; ------------------------------------------------------------------------------
+;{------------------------------------------------------------------------------
 ; NOTE: Currently being developed on its own before integration into the current
 ;       HTMLPageConvert (or maybe into the new GUI version of it).
 ;       Toward the end of the file, a `CompilerIf #PB_Compiler_IsMainFile` block
@@ -60,6 +60,8 @@ XIncludeFile "mod_G.pbi"
 ;  - [x] Add Resources list: structured data containing resource name, path and
 ;        type. This will allow to build resources iterators which are independent
 ;        of categories, and therefore quicker in accessing the res files.
+;}
+
 ; ******************************************************************************
 ; *                                                                            *
 ; *                         MODULE'S PUBLIC INTERFACE                          *
@@ -112,18 +114,34 @@ DeclareModule Arc
   
   ;- Create Resources List
   ;  ======================
+  ; NOTE: `\File` string for resources of Folder type will also include the subfolder name
+  ;       because in most cases its intended use is relative to the Category path.
+  ;       So "<subfolder>/CodeInfo.txt" are considered together as being the resource
+  ;       File, because subfoldering is like an extension of the current category.
   Structure Resource
-    File.s    ; Filename ( <filename>.pb | <filename>.pbi | "CodeInfo.txt" )
+    File.s    ; Filename ( <filename>.pb | <filename>.pbi | "<subfolder>/CodeInfo.txt" )
     Path.s    ; Path relative to CodeArchiv root (includes filename)
     Type.i    ; ( G::#ResT_PBSrc | G::#ResT_PBInc | G::#ResT_Folder )
+    *Category.Category ; pointer to its parent category
   EndStructure
   NewList ResourcesL.Resource()
+  
+  ;- Current Resource/Category
+  ;  =========================
+  ; This structured public var stores info on the current Category/Resource being
+  ; iterated through by the iterating procedures.
+  Structure Current
+    Category.Category
+    Resource.Resource
+  EndStructure
+  Current.Current
   
   ; ============================================================================
   ;                        PUBLIC PROCEDURES DECLARATION                        
   ; ============================================================================
   Declare ScanProject()
   Declare Reset()
+  Declare ResourcesIteratorCallback( *CallbackProc )
 EndDeclareModule
 
 Module Arc
@@ -243,6 +261,33 @@ Module Arc
     
   EndProcedure
   
+  Procedure ResourcesIteratorCallback( *CallbackProc )
+    ; TODO: If CallCFunctionFast() returns 1 abort iteration...
+    Shared ResourcesL(), CategoriesL()
+    Shared Current
+    
+    ; Preserve Curr Res/Cat Lists Positions
+    ; -------------------------------------
+    ; (make no assumption on what the main code/tool is doing)
+    PushListPosition( CategoriesL() )
+    PushListPosition( ResourcesL() )
+    
+    ForEach ResourcesL()
+      ; Set Arch::Current to the current Res and its host Category
+      Current\Resource = ResourcesL()
+      ChangeCurrentElement( CategoriesL(), Current\Resource\Category ) ; <- pointer!
+      Current\Category =  CategoriesL()
+      
+      CallCFunctionFast( *CallbackProc )
+    Next
+    
+    ; Restore Res/Cat Lists Positions
+    ; -------------------------------------
+    PopListPosition( CategoriesL() )
+    PopListPosition( ResourcesL() )
+    
+  EndProcedure
+  
   ; ****************************************************************************
   ; *                                                                          *
   ; *                            PRIVATE PROCEDURES                            *
@@ -263,12 +308,15 @@ Module Arc
     Static recCnt ; recursion level counter (at the end of each Archiv scan will
                   ; always be back to the original value of '0'; no need to reset)
     
+    Static *currCat = #NUL ; This pointer is used internally to track the current
+                           ; Category, used to store a pointer to the hosting cat
+                           ; of a resource in ResourcesL().
+    
     For i=1 To recCnt
       Ind$ + " |" ; <- for DBG purposes (proj tree)
     Next
     recCnt +1
-    
-    
+        
     If ExamineDirectory(recCnt, PathSuffix, "")
       While NextDirectoryEntry(recCnt)
         
@@ -286,6 +334,7 @@ Module Arc
             AddElement( ResourcesL() )
             ResourcesL()\File = entryName
             ResourcesL()\Path = PathSuffix + entryName
+            ResourcesL()\Category = *currCat
             ; Update Proj Stats:
             info\totResources +1
             If fExt = "pb"
@@ -321,9 +370,10 @@ Module Arc
             CategoriesL()\FilesToParseL() = fName
             ; Update Resources List:
             AddElement( ResourcesL() )
-            ResourcesL()\File = G::#CodeInfoFile
+            ResourcesL()\File = fName ; includes res-folder name
             ResourcesL()\Path = PathSuffix + fName
             ResourcesL()\Type = G::#ResT_Folder
+            ResourcesL()\Category = *currCat
             ; Update Proj Stats:
             info\totResources +1
             info\totResT_Folder +1
@@ -343,12 +393,14 @@ Module Arc
             ; Recurse into Sub-Category
             ; -------------------------
             entryPath.s = PathSuffix + entryName + "/"
+            *prevCurrCat = *currCat                 ; <- preserve *currCat before recursion
             PushListPosition( CategoriesL() )
-            AddElement( CategoriesL() )
+            *currCat = AddElement( CategoriesL() )
             CategoriesL()\name = entryName
             CategoriesL()\Path = entryPath
             ScanFolder(CategoriesL(), entryPath)
             PopListPosition( CategoriesL() )
+            *currCat = *prevCurrCat                 ; <- restore *currCat after recursion
           EndIf
         EndIf
         
@@ -411,17 +463,67 @@ CompilerIf #PB_Compiler_IsMainFile
     Debug " - " + Arc::ResourcesL()\Path
   Next
   
+  ; ==============================================================================
+  ;                               Iterators Examples                              
+  ; ==============================================================================
+  ; Here we demonstrate how to use mod CodeArchiv's built-in iterators to execute
+  ; custom Procedures calls on every Category or Resource.
+  
+  ; ------------------------------------------------------------------------------
+  ;                              Resources Iterators                              
+  ; ------------------------------------------------------------------------------
+  ; Arc::ResourcesIteratorCallback() is a quick way to call a custom Procedure on
+  ; every resource in the CodeArchiv. The module will always expose references to
+  ; current Resource and Category being iterated, via the Arch::Current structure.
+  
+  Procedure ResIterTest()
+    Static cnt
+    cnt +1
+    Debug LSet("", 80, "-")
+    Debug Str(cnt) + ". " + Arc::Current\Resource\File
+    Debug LSet("", 80, "-")
+    
+    Debug "Resource Path (relative to Archiv Root): " + Arc::Current\Resource\Path
+    
+    Select Arc::Current\Resource\Type
+      Case G::#ResT_PBSrc
+        Debug "Resource Type: PureBasic source file"
+      Case G::#ResT_PBInc 
+        Debug "Resource Type: PureBasic include file"
+      Case G::#ResT_Folder
+        Debug "Resource Type: Folder resource"
+      Default
+        Debug "Resource Type: (unknown)"
+    EndSelect
+    
+    ; Even though we're iterating through resources without iterating through categories,
+    ; the full info of the Category to which the current resource belongs to is available
+    ; because Arc::Current\Category will represent the hosting category of current resource:
+    Debug "Host category info:"
+    Debug " * Category Path: " + Arc::Current\Category\Path
+    Debug " * Total resources in category: " + ListSize( Arc::Current\Category\FilesToParseL() )
+    Debug " * Total subcategories: " + ListSize( Arc::Current\Category\SubCategoriesL() )
+  EndProcedure
+  
+  Arc::ResourcesIteratorCallback( @ResIterTest() )
+  
   ; TEMP DEBUGGING
   ; ==============
   ShowVariableViewer()
   Repeat
-    ; loop forever to keep Variable Viwer open...
+    ; loop forever to keep Variable Viewer open...
   ForEver
   
 CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.8 (2018/05/30)
+;     - New Arc::ResourcesIteratorCallback( *CallbackProc ) -- this procedure iterates through
+;       every resource of the Archiv and calls *CallbackProc() at each step.
+;     - New Arch::Current public variable (structured): this will always contain info about
+;       the current resource and category being iterated.
+;     - Demo/Test code block: a full example on how to use the Res iterator.
 ; v0.0.7 (2018/05/29)
 ;    - New Arc::ResourcesL() list to store structured data about all resources in Archiv.
 ;    - ScanFolder() now also populates the ResourcesL() when scanning the Archiv.
