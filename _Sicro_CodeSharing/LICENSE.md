@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) Sicro
+Copyright (c) Sicro [github.com/SicroAtGit/PureBasic-CodeArchiv-Rebirth]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
