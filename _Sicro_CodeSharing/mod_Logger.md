@@ -58,13 +58,13 @@
 	
 		It can be one of the following values:
 		
-		- `#LogLevel_Error`
+		- `Logger::#LogLevel_Error`
 		
-		- `#LogLevel_Warn`
+		- `Logger::#LogLevel_Warn`
 		
-		- `#LogLevel_Info`
+		- `Logger::#LogLevel_Info`
 		
-		- `#LogLevel_Debug`
+		- `Logger::#LogLevel_Debug`
 		
 		---
 		
@@ -124,13 +124,13 @@
 	
 		It can be one of the following values:
 		
-		- `#LogLevel_Error`
+		- `Logger::#LogLevel_Error`
 		
-		- `#LogLevel_Warn`
+		- `Logger::#LogLevel_Warn`
 		
-		- `#LogLevel_Info`
+		- `Logger::#LogLevel_Info`
 		
-		- `#LogLevel_Debug`
+		- `Logger::#LogLevel_Debug`
 		
 	---
 	
