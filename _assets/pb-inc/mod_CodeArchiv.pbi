@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.9 (2018/05/30) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.10 (2018/06/02) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -108,6 +108,7 @@ DeclareModule Arc
   Structure Category
     Name.s                  ; Folder name
     Path.s                  ; Path relative to CodeArchiv root (includes folder name)
+    Level.i                 ; 0-2 (Root, Top-Level Category, Subcategory)
     List SubCategoriesL.s() ; Name/Link List to SubCategories
     List FilesToParseL.s()  ; List of files to parse (including "<subf>/CodeInfo.txt")
   EndStructure
@@ -177,9 +178,7 @@ Module Arc
     
     Debug "Scanning project to build list of categories and resources:"
     
-    ;     NewList CategoriesL.Category()
     AddElement( CategoriesL() )
-    CategoriesL()\Path = "" ; Root folder
     
     ; TODO: ScanFolder() should return 1 if errors were encountered!
     ScanFolder(CategoriesL())
@@ -206,7 +205,6 @@ Module Arc
     ;  ---------------------------------------------------------------------------
     #ListSortFlags = #PB_Sort_Ascending | #PB_Sort_NoCase
     
-    ; Sort CategoriesL()
     endIndex = ListSize( CategoriesL() ) -1
     SortStructuredList(CategoriesL(), #ListSortFlags, OffsetOf(Category\Name),
                        #PB_String, 1, endIndex) ; <= exclude index 0 from sorting!
@@ -311,6 +309,7 @@ Module Arc
     
     Static recCnt ; recursion level counter (at the end of each Archiv scan will
                   ; always be back to the original value of '0'; no need to reset)
+                  ; It's value is also equal to the Catgory Level.
     
     Static *currCat = #NUL ; This pointer is used internally to track the current
                            ; Category, used to store a pointer to the hosting cat
@@ -400,8 +399,11 @@ Module Arc
             *prevCurrCat = *currCat                 ; <- preserve *currCat before recursion
             PushListPosition( CategoriesL() )
             *currCat = AddElement( CategoriesL() )
-            CategoriesL()\name = entryName
-            CategoriesL()\Path = entryPath
+            With CategoriesL()
+              \Name = entryName
+              \Path = entryPath
+              \Level = recCnt
+            EndWith
             ScanFolder(CategoriesL(), entryPath)
             PopListPosition( CategoriesL() )
             *currCat = *prevCurrCat                 ; <- restore *currCat after recursion
@@ -555,6 +557,14 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.10 (2018/06/02)
+;     - new CategoriesL()\Level (int: 0-2) to store the Level of a Category:
+;         0 = Root
+;         1 = Top-level category
+;         2 = Subcategory
+;       This is going to be useful for the Categories Iterator, both as a filter to limit
+;       the categories on which the callback should be called, as well as a mean to be able
+;       to check during resource iteration which level the current res host category belongs to.
 ; v0.0.9 (2018/05/30)
 ;     - Arc::ResourcesIteratorCallback() now aborts iteration when its Callback Procedure
 ;       returns non-zero.
