@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.10 (2018/06/02) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.11 (2018/06/02) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -37,12 +37,13 @@ XIncludeFile "mod_G.pbi"
 ;              demand -- but this should be handled by logger module.
 ;  - [ ] Add ITERATION procedures that take a procedure pointer as parameter and
 ;        allow to:
-;        - [ ] Call that procedure during each Category iteration
-;        - [ ] Call the procedure on iterations of curr Category's resources
+;        - [x] Call that procedure during each Category iteration
+;              - [ ] Also allow opt param to restric categories by Level.
+;        - [ ] ??? Call the procedure on iterations of curr Category's resources
 ;              (extra param to optionally restrict call to some res types)
 ;        - [x] Call the procedure on iteration of every resource (regardless of
 ;              categogires). 
-;              - [ ] Also allow opt param To restric res types.
+;              - [ ] Also allow opt param to restric res types.
 ;  - [ ] ScanFolder():
 ;        - [x] While building Categories list, also build a Resources List.
 ;        - [ ] Implement handling of ExamineDirectory() error.
@@ -143,6 +144,7 @@ DeclareModule Arc
   ; ============================================================================
   Declare ScanProject()
   Declare Reset()
+  Declare CategoriesIteratorCallback( *CallbackProc )
   Declare ResourcesIteratorCallback( *CallbackProc )
 EndDeclareModule
 
@@ -261,8 +263,47 @@ Module Arc
     
   EndProcedure
   
+  Procedure CategoriesIteratorCallback( *CallbackProc )
+    ; ==========================================================================
+    ; Iterate Through the CodeArchiv Categories
+    ; ==========================================================================
+    ; NOTE: This iterator sets Current\Resource to no resources at all.
+    ;       Could this be a problem in some situations? Should it instead set it
+    ;       to the first resource in the category? or no resource is better?
+    ;       After all, the Root category doesn't have any resources. 
+    ;       Also, the current category resource are available from the FilesToParseL().
+    ; TODO: Implement optional filter for Cat Level
+    Shared CategoriesL()
+    Shared Current
+    
+    ; Preserve Curr Cat List Position
+    ; -------------------------------
+    ; (make no assumption on what the main code/tool is doing)
+    PushListPosition( CategoriesL() )
+    
+    ; Set Current\Resource to None
+    ; -----------------------------
+    ClearStructure(@Current\Resource, Resource)
+    
+    ForEach CategoriesL()
+      ; Set Arch::Current to the current Category
+      Current\Category =  CategoriesL()
+      
+      If CallCFunctionFast( *CallbackProc )
+        Break
+      EndIf
+    Next
+    
+    ; Restore Cat List Position
+    ; -------------------------
+    PopListPosition( CategoriesL() )
+    
+  EndProcedure
+  
   Procedure ResourcesIteratorCallback( *CallbackProc )
-    ; TODO: If CallCFunctionFast() returns non-zero abort iteration...
+    ; ==========================================================================
+    ; Iterate Through the CodeArchiv Resources
+    ; ==========================================================================
     ; TODO: Implement optional filter for Res Types
     Shared ResourcesL(), CategoriesL()
     Shared Current
@@ -544,6 +585,29 @@ CompilerIf #PB_Compiler_IsMainFile
   
   Arc::ResourcesIteratorCallback( @ResIterUntilFolder() )
   
+  ; ------------------------------------------------------------------------------
+  ; Ex (a) -- Categories Iterator
+  ; ------------------------------------------------------------------------------
+  ; Here is an example of how the Categories iterator works.
+  Debug G::#DIV1$
+  Debug "Categories Iterator Example" + #LF$ + G::#DIV1$
+  Debug ~"Iterate all Archiv categories and display some info...\n"
+  
+  Procedure CatIteratorTest()
+    Static cnt
+    
+    cnt +1
+    tmp$ = LSet(" ", 3 - Len(Str(cnt))) + Str(cnt) + ". "
+    If Arc::Current\Category\Level = 0
+      tmp$ + "(project's root)"
+    Else
+      tmp$ + ~"\"" + Arc::Current\Category\Path + ~"\" (Level: " + Str(Arc::Current\Category\Level) + ")"
+    EndIf
+    Debug tmp$
+    
+  EndProcedure
+  
+  Arc::CategoriesIteratorCallback( @CatIteratorTest() )
   
   
   ; TEMP DEBUGGING
@@ -557,6 +621,9 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.11 (2018/06/02)
+;     - New Arc::CategoriesIteratorCallback() -- this procedure iterates through
+;       every category of the Archiv and calls *CallbackProc() at each step.
 ; v0.0.10 (2018/06/02)
 ;     - new CategoriesL()\Level (int: 0-2) to store the Level of a Category:
 ;         0 = Root
