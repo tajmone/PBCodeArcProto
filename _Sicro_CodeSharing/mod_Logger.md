@@ -22,6 +22,12 @@
 	
 	- `#False` on error
 	
+	---
+	
+- **Remarks**
+
+	An unnamed logger (`LoggerName$ = ""`) exists automatically and doesn't need to be created before.
+	
 ---
 
 	Result = Logger::AddDevice(LoggerName$, DeviceType, LogLevel [, Device])
@@ -58,13 +64,13 @@
 	
 		It can be one of the following values:
 		
-		- `#LogLevel_Error`
+		- `Logger::#LogLevel_Error`
 		
-		- `#LogLevel_Warn`
+		- `Logger::#LogLevel_Warn`
 		
-		- `#LogLevel_Info`
+		- `Logger::#LogLevel_Info`
 		
-		- `#LogLevel_Debug`
+		- `Logger::#LogLevel_Debug`
 		
 		---
 		
@@ -124,13 +130,13 @@
 	
 		It can be one of the following values:
 		
-		- `#LogLevel_Error`
+		- `Logger::#LogLevel_Error`
 		
-		- `#LogLevel_Warn`
+		- `Logger::#LogLevel_Warn`
 		
-		- `#LogLevel_Info`
+		- `Logger::#LogLevel_Info`
 		
-		- `#LogLevel_Debug`
+		- `Logger::#LogLevel_Debug`
 		
 	---
 	

@@ -75,7 +75,7 @@ Module Logger
   Procedure Create(LoggerName$)
     
     ; Try to add a new logger to the logger map
-    If Not AddMapElement(Logger(), LoggerName$)
+    If FindMapElement(Logger(), LoggerName$) Or Not AddMapElement(Logger(), LoggerName$)
       ProcedureReturn #False
     EndIf
     
@@ -141,6 +141,8 @@ Module Logger
     ProcedureReturn #True
     
   EndProcedure
+  
+  Create("") ; Create a default unnamed logger
   
 EndModule
 
