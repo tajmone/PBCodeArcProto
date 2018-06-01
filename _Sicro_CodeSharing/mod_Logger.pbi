@@ -142,6 +142,8 @@ Module Logger
     
   EndProcedure
   
+  Create("") ; Create a default unnamed logger
+  
 EndModule
 
 ; -------------------------------------------------------------------

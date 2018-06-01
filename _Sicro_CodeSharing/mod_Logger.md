@@ -22,6 +22,12 @@
 	
 	- `#False` on error
 	
+	---
+	
+- **Remarks**
+
+	An unnamed logger (`LoggerName$ = ""`) exists automatically and doesn't need to be created before.
+	
 ---
 
 	Result = Logger::AddDevice(LoggerName$, DeviceType, LogLevel [, Device])
