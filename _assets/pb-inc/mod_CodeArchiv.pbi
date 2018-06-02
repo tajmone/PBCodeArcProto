@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.12 (2018/06/02) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.13 (2018/06/02) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -29,8 +29,16 @@ XIncludeFile "mod_G.pbi"
 ;    hosting code still needs to be removed.
 ;
 ; TODOs:
-;  - [x] Expose interal data statistics via a structured var.
-;        (this will also make Shared usage simpler in the module).
+;  - [ ] Check Project Integrity -- Integrate from "HTMLPagesCreator.pb" the code
+;        to check the project's integrity. But I need to decide first if:
+;        - [ ] Check Integrity at each ScanProject() execution? or
+;        - [ ] leave CheckIntegrity() to be carried out at tool/user discretion.
+;        This decision will cascade-affect other procedure too. Also, some status
+;        var should be exposed via info (info\IsReady, \Errors, etc.). Iterators
+;        and other functionality that deals with the project's structure should
+;        not be executed if the Integry Check failed or was not carried out?
+;        Also, how is the module going to know if proj files/folder have changed
+;        since the last ScanProject() call?
 ;  - [ ] ScanFolder()'s Debug output must be either:
 ;        - [ ] removed from code (probably not needed anyhow), or
 ;        - [ ] captured in a string and stored somewhere, and only shown on 
@@ -51,18 +59,13 @@ XIncludeFile "mod_G.pbi"
 ;              were encountered during recursive scanning of folders. Possibly,
 ;              this should also be returned as a Bool value when exiting from the
 ;              top level Procedure call (so it can be used as an exit code).
-;  - [x] mod_G -- Add Resource Types Enum (maybe also Binary Enum, so that iterators
-;        and other Procedures could use them as flags to filter resource types to
-;        include in iterations).
 ;  - [ ] Add public procedures:
 ;        - [ ] ShowTree() -- return a str with Proj tree (Categories and Resources).
 ;        - [x] ShowStats() -- return a resume str of Categories and Resources.
 ;        - [ ] ShowCategoriesL() -- returns a str with list of all Categories.
 ;        - [x] ShowRootCategoriesL() -- returns a str with list of all Root Categories.
 ;        - [ ] ShowResourcesL() -- returns a str with list of all Resources.
-;  - [x] Add Resources list: structured data containing resource name, path and
-;        type. This will allow to build resources iterators which are independent
-;        of categories, and therefore quicker in accessing the res files.
+
 ;}
 
 ; ******************************************************************************
@@ -671,6 +674,8 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.13 (2018/06/02)
+;      - Comments clean-up and add useful notes.
 ; v0.0.12 (2018/06/02)
 ;     - New Arc::ShowStats() -- returns a résumé str of Categories and Resources.
 ;     - New Arc::ShowRootCategories() -- returns a str listing Root Categories.
