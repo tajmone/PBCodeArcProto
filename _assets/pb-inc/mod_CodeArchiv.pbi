@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.11 (2018/06/02) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.12 (2018/06/02) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -56,8 +56,9 @@ XIncludeFile "mod_G.pbi"
 ;        include in iterations).
 ;  - [ ] Add public procedures:
 ;        - [ ] ShowTree() -- return a str with Proj tree (Categories and Resources).
-;        - [ ] ShowStats() -- return a resume str of Categories and Resources.
+;        - [x] ShowStats() -- return a resume str of Categories and Resources.
 ;        - [ ] ShowCategoriesL() -- returns a str with list of all Categories.
+;        - [x] ShowRootCategoriesL() -- returns a str with list of all Root Categories.
 ;        - [ ] ShowResourcesL() -- returns a str with list of all Resources.
 ;  - [x] Add Resources list: structured data containing resource name, path and
 ;        type. This will allow to build resources iterators which are independent
@@ -66,7 +67,7 @@ XIncludeFile "mod_G.pbi"
 
 ; ******************************************************************************
 ; *                                                                            *
-; *                         MODULE'S PUBLIC INTERFACE                          *
+;-                          MODULE'S PUBLIC INTERFACE                          *
 ; *                                                                            *
 ; ******************************************************************************
 DeclareModule Arc
@@ -76,6 +77,7 @@ DeclareModule Arc
   ; These have been moved here to simplify readapting the code, but they should
   ; be remove from the final module...
   ; ----------------------------------------------------------------------------
+  ; FIXME: Remove left-over code from original source
   #DBG_LEVEL = 4
   DebugLevel #DBG_LEVEL
   ; These constants are just to simplify finding Debug lines in the code by their
@@ -115,6 +117,8 @@ DeclareModule Arc
   EndStructure
   NewList CategoriesL.Category()
   
+  NewList RootCategoriesL.s() ; Quick-List of Top-level Categories
+
   ;- Create Resources List
   ;  ======================
   ; NOTE: `\File` string for resources of Folder type will also include the subfolder name
@@ -142,10 +146,12 @@ DeclareModule Arc
   ; ============================================================================
   ;                        PUBLIC PROCEDURES DECLARATION                        
   ; ============================================================================
-  Declare ScanProject()
-  Declare Reset()
-  Declare CategoriesIteratorCallback( *CallbackProc )
-  Declare ResourcesIteratorCallback( *CallbackProc )
+  Declare    ScanProject()
+  Declare    Reset()
+  Declare    CategoriesIteratorCallback( *CallbackProc )
+  Declare    ResourcesIteratorCallback( *CallbackProc )
+  Declare.s  ShowStats()
+  Declare.s  ShowRootCategories()
 EndDeclareModule
 
 Module Arc
@@ -156,7 +162,7 @@ Module Arc
   
   ; ****************************************************************************
   ; *                                                                          *
-  ; *                            PUBLIC PROCEDURES                             *
+  ;-                             PUBLIC PROCEDURES                             *
   ; *                                                                          *
   ; ****************************************************************************
   Procedure ScanProject()
@@ -168,7 +174,7 @@ Module Arc
     
     Reset()
     Shared IsInit ; <~ UNUSED!!!
-    Shared CategoriesL(), ResourcesL()
+    Shared CategoriesL(), ResourcesL(), RootCategoriesL()
     Shared info
     
     ; Preserve Current Directory
@@ -185,14 +191,6 @@ Module Arc
     ; TODO: ScanFolder() should return 1 if errors were encountered!
     ScanFolder(CategoriesL())
     
-    ; TODO: The following debug info should become the str output of a dedicated
-    ;       public Procedure --- eg: Arc::stats()
-    Debug "- Categories found: "+ Str(info\totCategories) + " (excluding root folder)"
-    Debug "  - Root Categories: "+ Str(info\totRootCategories)
-    Debug "- Resources found: "+ Str(info\totResources) 
-    Debug "  - PB Source resources: "+ Str(info\totResT_PBSrc)
-    Debug "  - PB Include-file resources: "+ Str(info\totResT_PBInc)
-    Debug "  - Folder resources: "+ Str(info\totResT_Folder)
     
     ;  ===========================
     ;- Sort Lists in CategoriesL()
@@ -218,19 +216,8 @@ Module Arc
     ;- Build Root Categories List (for sidebar navigation)
     ;  ==========================
     FirstElement( CategoriesL() )
-    NewList RootCategoriesL.s()
     CopyList( CategoriesL()\SubCategoriesL(), RootCategoriesL() )
-    
-    CompilerIf #DBG_LEVEL >= #DBGL2
-      Debug "Root Categories:"
-      cnt = 1
-      ForEach RootCategoriesL()
-        Debug RSet(Str(cnt), 3, " ") + ". '" + RootCategoriesL() + "'"
-        cnt +1
-      Next
-    CompilerEndIf
-    
-    
+        
     ; Restore Previous Current Directory
     ; ----------------------------------
     SetCurrentDirectory(PrevCurrDir)
@@ -332,19 +319,57 @@ Module Arc
     
   EndProcedure
   
+  Procedure.s ShowStats()
+    ; ==========================================================================
+    ; Return a String With Statistic About the CodeArchiv
+    ; ==========================================================================
+    Shared info
+    TXT$ = "- Total Categories: "+ Str(info\totCategories) + " (+ root)" + G::#EOL +
+           "  - Root Categories: "+ Str(info\totRootCategories) + G::#EOL +
+           "- Total Resources: "+ Str(info\totResources) + G::#EOL +
+           "  - PB Source resources: "+ Str(info\totResT_PBSrc) + G::#EOL +
+           "  - PB Include-file resources: "+ Str(info\totResT_PBInc) + G::#EOL +
+           "  - Folder resources: "+ Str(info\totResT_Folder) +  G::#EOL
+    ProcedureReturn TXT$
+    
+  EndProcedure
+  
+  Procedure.s ShowRootCategories()
+    ; ==========================================================================
+    ; Return a String Listing the Top-Level Categories
+    ; ==========================================================================
+    ; Ideally, this procedure could take an optional parameter with flags to
+    ; enable more details in the output (eg: add a count of total resources in
+    ; each root category, and/or count of subcategories, etc.).
+    
+    Shared RootCategoriesL()
+    
+    TXT$ = "Root Categories:" + G::#EOL2
+    cnt = 1
+    ForEach RootCategoriesL()
+      TXT$ + RSet(Str(cnt), 3, " ") + ". " + RootCategoriesL() + G::#EOL
+      cnt +1
+    Next
+    
+    ProcedureReturn TXT$
+    
+  EndProcedure
+
   ; ****************************************************************************
   ; *                                                                          *
   ; *                            PRIVATE PROCEDURES                            *
   ; *                                                                          *
   ; ****************************************************************************
   Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
-    ;     Debug ">>> ScanFolder()" ; DELME
     ; ==========================================================================
-    ; Recursively scan project folders and build the List of Categories.
+    ; Recursively Scan Archiv folders and build Categories and Resources Lists.
     ; ==========================================================================
     ; TODO: Debug info of this procedure should be either removed or stored in
     ;       a string for optional use; else I could use a constant to check if
     ;       it should be shown or not.
+    
+    ;     Debug ">>> ScanFolder()" ; DELME
+    
     Shared CategoriesL(), ResourcesL()
     Shared info
     
@@ -353,8 +378,11 @@ Module Arc
                   ; It's value is also equal to the Catgory Level.
     
     Static *currCat = #NUL ; This pointer is used internally to track the current
-                           ; Category, used to store a pointer to the hosting cat
-                           ; of a resource in ResourcesL().
+                           ; Category in order to store a pointer to the host Cat
+                           ; of a resource in ResourcesL(). Since it's never used
+                           ; in Root, the fact that on successive runs it will be
+                           ; pointing to the last Category scanned it's not going
+                           ; to cause problems.
     
     For i=1 To recCnt
       Ind$ + " |" ; <- for DBG purposes (proj tree)
@@ -368,17 +396,22 @@ Module Arc
         entryDBG$ = Ind$ + " |-"
         
         If DirectoryEntryType(recCnt) = #PB_DirectoryEntry_File
+          ;  =================
+          ;- EntryType is File
+          ;  =================
           entryDBG$ + "- " + entryName + "  "
           fExt.s = GetExtensionPart(entryName)
           
           If fExt = "pb" Or fExt = "pbi"
             AddElement( CategoriesL()\FilesToParseL() )
             CategoriesL()\FilesToParseL() = entryName ; relative path
-                                                      ; Update Resources List:
+            
+            ; Update Resources List:
             AddElement( ResourcesL() )
             ResourcesL()\File = entryName
             ResourcesL()\Path = PathSuffix + entryName
             ResourcesL()\Category = *currCat
+            
             ; Update Proj Stats:
             info\totResources +1
             If fExt = "pb"
@@ -394,7 +427,10 @@ Module Arc
             Debug entryDBG$ + "(ignore file)", #DBGL4
           EndIf
           
-        Else ; EntryType is Directory
+        Else
+          ;  ======================
+          ;- EntryType is Directory
+          ;  ======================
           
           ; Folder-Ignore patterns
           ; ----------------------
@@ -412,12 +448,14 @@ Module Arc
             AddElement( CategoriesL()\FilesToParseL() )
             fName.s = entryName + "/" + G::#CodeInfoFile ; relative path
             CategoriesL()\FilesToParseL() = fName
+            
             ; Update Resources List:
             AddElement( ResourcesL() )
             ResourcesL()\File = fName ; includes res-folder name
             ResourcesL()\Path = PathSuffix + fName
             ResourcesL()\Type = G::#ResT_Folder
             ResourcesL()\Category = *currCat
+            
             ; Update Proj Stats:
             info\totResources +1
             info\totResT_Folder +1
@@ -456,7 +494,7 @@ Module Arc
     EndIf ; <= ExamineDirectory(recCnt, PathSuffix, "")
           ; TODO: handle failure of ExamineDirectory() -- ie: returns "0"
           ;       Currently the code doesn't contemplate possibility of
-          ;       failure, but it must; moreover, I must work out how to
+          ;       failure, but it should; moreover, I must work out how to
           ;       handle it in a way that suits all possible uses of this
           ;       module. Should it interface this failure with mod_Error?
     
@@ -470,7 +508,7 @@ EndModule
 
 ; ******************************************************************************
 ; *                                                                            *
-; *                         STANDALONE EXECUTION CODE                          *
+;-                          STANDALONE EXECUTION CODE                          *
 ; *                                                                            *
 ; ******************************************************************************
 ; The following CompilerIf code block will be executed only if this file is run
@@ -501,6 +539,18 @@ CompilerIf #PB_Compiler_IsMainFile
   Else
     Debug "The module has correctly preserved our initial Curr Directory."
   EndIf
+  
+  ; ------------------------------------------------------------------------------
+  ; Show Statistics
+  ; ------------------------------------------------------------------------------
+  Debug G::#DIV1$
+  Debug "CodeArchiv Info Procedures" + #LF$ + G::#DIV1$
+  
+  Debug "CodeArchiv statistics résumé via `Arc::ShowStats()`:" + #LF$
+  Debug Arc::ShowStats()
+  
+  Debug "List of Root Categories (Top-level) via `Arc::ShowRootCategories()`:" + #LF$
+  Debug Arc::ShowRootCategories()
   
   ; TEST RESOURCES LIST
   ; ===================
@@ -621,6 +671,9 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.12 (2018/06/02)
+;     - New Arc::ShowStats() -- returns a résumé str of Categories and Resources.
+;     - New Arc::ShowRootCategories() -- returns a str listing Root Categories.
 ; v0.0.11 (2018/06/02)
 ;     - New Arc::CategoriesIteratorCallback() -- this procedure iterates through
 ;       every category of the Archiv and calls *CallbackProc() at each step.
