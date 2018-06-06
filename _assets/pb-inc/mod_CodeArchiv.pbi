@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.14 (2018/06/06) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.15 (2018/06/06) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -244,7 +244,7 @@ Module Arc
   Procedure CheckIntegrity()
     ; ==========================================================================
     ; Check integrity of the CodeArchiv project structure and settings
-    ; --------------------------------------------------------------------------
+    ;{--------------------------------------------------------------------------
     ;  1. Check that "_assets/meta.yaml" file exists and is not 0 Kb.
     ;  2. Check that every category has a "REAMDE.md" file.
     ;  3. Check that every category contains resources.
@@ -252,8 +252,31 @@ Module Arc
     ; - Returns the number of errors found (if any).
     ; - Stores in info\Errors the number of errors found.
     ; - Stores in info\IntegrityReport a report on the integrity checks.
-    ; ==========================================================================
-    ; TODO: Preserve Cat & Res Lists position
+    ; --------------------------------------------------------------------------
+    ; All structural requirements of the CodeArchiv should be handled by this
+    ; procedure, so that if in the future new criteria are introduced for Integrity
+    ; Checks on the Archiv, any tools will automatically cover them via this proc.
+    ;   The Integrity Checks pertain only to Archiv settings file (required by the
+    ; HTML creation tool, or any other future tool on which the project depends
+    ; on), the presence of required files (like README.md, etc), and that every
+    ; Category satisfy basic criteria.
+    ;   It doesn't check single resources, as that is a job that belongs to the
+    ; module that deals with resources; nor it deals with HTML conversion tests
+    ; and pandoc related checks, for those should be handled by the module that
+    ; deals with HTML conversion.
+    ;   As for the Integrity Report, it doesn't rely on the Errors Tracker module
+    ; for these are initialization problems, and the Errors Tracker is intended
+    ; to be used by single tools and apps to track execution steps. The report
+    ; is just a string résumé, which tools might choose to display or ignore.
+    ; --------------------------------------------------------------------------
+    ; NOTE: This procedure is kept public, and separate from ScanFolder().
+    ;       Maybe some tools might need to access this procedure independently
+    ;       of ScanFolder() -- if not, we can always make it private later on.
+    ;       It might still be worth to keep it separate from ScanFolder() for
+    ;       ease of maintainance and also because it uses a lot of temp strings
+    ;       which would be released on exit.
+    ;}==========================================================================
+    ; TODO: Preserve Cat & Res Lists positions
     
     ; Preserve Current Directory
     ; --------------------------
@@ -884,6 +907,8 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.15 (2018/06/06)
+;      - Add some comments to clarify the context of CheckIntegrity() and its report.
 ; v0.0.14 (2018/06/06)
 ;      - new vars in Arc::info structered var:
 ;          - Arc::info\Errors
