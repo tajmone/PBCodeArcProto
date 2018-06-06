@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_G.pbi" v0.0.11 (2018/05/29) | PureBASIC 5.62 | MIT License
+; "mod_G.pbi" v0.0.12 (2018/06/06) | PureBASIC 5.62 | MIT License
 
 ; Stores Data shared by any tool dealing with CodeArchiv and its resources.
 
@@ -78,6 +78,9 @@ DeclareModule G
   #CodeInfoFile  = "CodeInfo.txt" ; <- found in multi-file subfoldered resources
   #AssetsFolder  = "_assets"
   #ModulesFolder = "pb-inc"
+  
+  ; WebSite Settings Files
+  #YAMLSettingsFile  = "meta.yaml"
 
   ; The following absolute paths will be initialized by the module at inclusion:
   Define.s CodeArchivPath ; Abs path to CodeArchiv's Root.

@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.13 (2018/06/02) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.14 (2018/06/06) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -97,7 +97,9 @@ DeclareModule Arc
   
   ; Arc::info -- Structured var gathering/exposing statistics about the project.
   Structure info
-    IsReady.i             ; Boolean for querying the module's status
+    IsReady.i             ; (Bool) True if no errors were found in scanning.   <~ CURRENTLY UNUSED!
+    Errors.i              ; Total errors found in scanning.
+    IntegrityReport.s     ; Integrity Checks Report (with Errors details, if any).
     totCategories.i       ; Total Categories count (Root excluded)
     totRootCategories.i   ; Total Top-Level Categories count
     totResources.i        ; Total Resources count
@@ -121,7 +123,7 @@ DeclareModule Arc
   NewList CategoriesL.Category()
   
   NewList RootCategoriesL.s() ; Quick-List of Top-level Categories
-
+  
   ;- Create Resources List
   ;  ======================
   ; NOTE: `\File` string for resources of Folder type will also include the subfolder name
@@ -150,6 +152,7 @@ DeclareModule Arc
   ;                        PUBLIC PROCEDURES DECLARATION                        
   ; ============================================================================
   Declare    ScanProject()
+  Declare    CheckIntegrity()
   Declare    Reset()
   Declare    CategoriesIteratorCallback( *CallbackProc )
   Declare    ResourcesIteratorCallback( *CallbackProc )
@@ -215,18 +218,215 @@ Module Arc
       SortList(CategoriesL()\FilesToParseL(), #ListSortFlags)
       SortList(CategoriesL()\SubCategoriesL(), #ListSortFlags)
     Next
+    
+    ;  =======================
+    ;- Check Project Integrity
+    ;  =======================
+    Err = CheckIntegrity()
+    
     ;  ==========================
     ;- Build Root Categories List (for sidebar navigation)
     ;  ==========================
     FirstElement( CategoriesL() )
     CopyList( CategoriesL()\SubCategoriesL(), RootCategoriesL() )
-        
+    
     ; Restore Previous Current Directory
     ; ----------------------------------
     SetCurrentDirectory(PrevCurrDir)
     
     
     Debug "<<< ScanProject()" ; DELME <<< ScanProject()
+    
+    ProcedureReturn Err ; <- Return Errors found by CheckIntegrity()
+    
+  EndProcedure
+  
+  Procedure CheckIntegrity()
+    ; ==========================================================================
+    ; Check integrity of the CodeArchiv project structure and settings
+    ; --------------------------------------------------------------------------
+    ;  1. Check that "_assets/meta.yaml" file exists and is not 0 Kb.
+    ;  2. Check that every category has a "REAMDE.md" file.
+    ;  3. Check that every category contains resources.
+    ; --------------------------------------------------------------------------
+    ; - Returns the number of errors found (if any).
+    ; - Stores in info\Errors the number of errors found.
+    ; - Stores in info\IntegrityReport a report on the integrity checks.
+    ; ==========================================================================
+    ; TODO: Preserve Cat & Res Lists position
+    
+    ; Preserve Current Directory
+    ; --------------------------
+    ; (make no assumption on what the tool invoking this module might be doing):
+    PrevCurrDir.s = GetCurrentDirectory()
+    SetCurrentDirectory(G::CodeArchivPath)
+    
+    Shared CategoriesL()
+    Shared info
+    
+    errCnt = 0                    ; Errors Counter
+    info\IntegrityReport = #Empty$; Reset Err Report
+    
+    ; Temporary Lists to Store Errors by Groups:
+    NewList ErrConfigL.s()    ; Errors List -> Configuration
+    NewList ErrReadmeL.s()    ; Errors List -> README Files
+    NewList ErrEmptyCatsL.s() ; Errors List -> Empty Categories
+    
+    ; Configuration Errors (currently only YAML Metadata/Settings File)
+    ; ==================================
+    ; Check status of YAML Metadata file
+    ; ==================================
+    ; TODO: test all errors with real scenarios
+    FileRef$ = Chr(34) + G::#AssetsFolder + G::#DSEP + G::#YAMLSettingsFile + Chr(34)
+    
+    SizeResult = FileSize(G::AssetsPath + G::#YAMLSettingsFile)
+    If SizeResult <= 0
+      errCnt +1      
+      Select SizeResult
+        Case 0 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+               ; File is 0 Kb
+               ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          tmp$ = FileRef$ + " has size 0 Kb!"
+        Case -1 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                ; File not found
+                ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          tmp$ = "missing " + FileRef$ + "!"
+        Case -2 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                ; File is a directory
+                ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          tmp$ = FileRef$ + " is a directory!"
+      EndSelect
+      ; Enlist Error for Report
+      AddElement( ErrConfigL() )
+      ErrConfigL() = tmp$
+    EndIf
+    
+    ForEach CategoriesL()
+      ; ===========================================
+      ; Check that every category has a REAMDE file
+      ; ===========================================
+      README$ =  CategoriesL()\Path+"README.md"
+      FileRef$ = Chr(34) + README$ + Chr(34)
+      
+      SizeResult = FileSize(README$)
+      If SizeResult <= 0
+        errCnt +1      
+        Select SizeResult
+          Case 0 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                 ; File is 0 Kb
+                 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            tmp$ = FileRef$ + " file size is 0 Kb!"
+          Case -1 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  ; File not found
+                  ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            tmp$ = "missing " + FileRef$ + "!"
+          Case -2 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  ; File is a directory
+                  ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                  ; This shouldn't happen; but just in case...
+            tmp$ = FileRef$ + " is directory!"
+        EndSelect
+        ; Enlist Error for Report
+        AddElement( ErrReadmeL() )
+        ErrReadmeL() = tmp$
+        ; =======================================
+        ; Check that every category has resources
+        ; =======================================
+        If Not ListSize( CategoriesL()\FilesToParseL() ) And
+           CategoriesL()\Level <> 0 ; Root Folder can be empty (always is)
+          
+          errCnt +1
+          ; Enlist Error for Report
+          AddElement( ErrEmptyCatsL() )
+          ErrEmptyCatsL() = ~"Category \"" + CategoriesL()\Path + ~"\" has no resources!"
+        EndIf
+      EndIf
+    Next     
+    
+    If errCnt
+      ; ===========================================
+      ; Errors Where Found: Create Errors Report
+      ; ===========================================
+      
+      totErrConfig    = ListSize( ErrConfigL() )
+      totErrReadme    = ListSize( ErrReadmeL() )
+      totErrEmptyCats = ListSize( ErrEmptyCatsL() )
+      
+      tmp$ = "Total Errors: " + Str(errCnt) + G::#EOL
+      
+      If totErrConfig
+        ; -----------------------------
+        ; Handle Configuration Problems
+        ; -----------------------------
+        head$ = "Configuration Errors"
+        tmp$ + "- " + head$ + ": " + Str(totErrConfig) + G::#EOL
+        
+        tmp2$ + G::#EOL + head$ + G::#EOL +
+                LSet("", Len(head$), "=") + G::#EOL
+        cnt = 1
+        cntW = Len(Str(totErrConfig)) ; Width of max counter
+        
+        ForEach ErrConfigL()
+          tmp2$ + LSet(Str(cnt), cntW) + ". " + ErrConfigL() + G::#EOL
+          cnt +1
+        Next
+        
+      EndIf
+      
+      If totErrReadme
+        ; ----------------------------
+        ; Handle README Files Problems
+        ; ----------------------------
+        head$ = "README File Errors"
+        tmp$ + "- " + head$ + ": " + Str(totErrReadme) + G::#EOL
+        
+        tmp2$ + G::#EOL + head$ + G::#EOL +
+                LSet("", Len(head$), "=") + G::#EOL
+        cnt = 1
+        cntW = Len(Str(totErrReadme)) ; Width of max counter
+        
+        ForEach ErrReadmeL()
+          tmp2$ + LSet(Str(cnt), cntW) + ". " + ErrReadmeL() + G::#EOL
+          cnt +1
+        Next
+        
+      EndIf
+      
+      If totErrEmptyCats
+        ; --------------------------------
+        ; Handle EMpty Categories Problems
+        ; --------------------------------
+        head$ = "Empty Categories Errors"
+        tmp$ + "- " + head$ + ": " + Str(totErrEmptyCats) + G::#EOL
+        
+        tmp2$ + G::#EOL + head$ + G::#EOL +
+                LSet("", Len(head$), "=") + G::#EOL
+        cnt = 1
+        cntW = Len(Str(totErrEmptyCats)) ; Width of max counter
+        
+        ForEach ErrEmptyCatsL()
+          tmp2$ + LSet(Str(cnt), cntW) + ". " + ErrEmptyCatsL() + G::#EOL
+          cnt +1
+        Next
+        
+      EndIf
+      
+      ; Store Error Report
+      info\IntegrityReport = tmp$ + tmp2$
+      
+    Else
+      ; ===========================================
+      ; No Errors Found: Standard Report
+      ; ===========================================
+      info\IntegrityReport = "The CodeArchiv passed all tests without any errors." + G::#EOL
+    EndIf
+    
+    ; Restore Previous Current Directory
+    ; ----------------------------------
+    SetCurrentDirectory(PrevCurrDir)
+    
+    ProcedureReturn errCnt
+    
   EndProcedure
   
   Procedure Reset()
@@ -357,7 +557,7 @@ Module Arc
     ProcedureReturn TXT$
     
   EndProcedure
-
+  
   ; ****************************************************************************
   ; *                                                                          *
   ; *                            PRIVATE PROCEDURES                            *
@@ -528,7 +728,17 @@ CompilerIf #PB_Compiler_IsMainFile
   ; module has restored it:
   TestCurrDir.s = GetCurrentDirectory()
   
-  Arc::ScanProject()
+  err = Arc::ScanProject()
+  
+  If err
+    Debug "ScanProject() reported " + Str(err) + " errors!"
+  EndIf
+  Debug "These are the contents of Arc::info\IntegrityReport:" + G::#EOL + 
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" + G::#EOL + 
+        Arc::info\IntegrityReport +
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" + G::#EOL
+  
+  
   
   ; Scan again the Archiv, to ensure that all vars are properly reset...
   ; ====================================================================
@@ -674,6 +884,20 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.14 (2018/06/06)
+;      - new vars in Arc::info structered var:
+;          - Arc::info\Errors
+;          - Arc::info\IntegrityReport
+;      - New Arc::CheckIntegrity() -- this procedure carries out all the integrity
+;        checks on the Archive project:
+;          1. Check that "_assets/meta.yaml" file exists and is not 0 Kb.
+;          2. Check that every category has a "REAMDE.md" file.
+;          3. Check that every category contains resources.
+;        Returns the total number of errors found (if any). Also:
+;          - Stores in info\Errors the number of errors found.
+;          - Stores in info\IntegrityReport a report on the integrity checks.
+;      - Arc::ScanProject() always invokes Arc::CheckIntegrity(), and now returns
+;        the value returned by CheckIntegrity().
 ; v0.0.13 (2018/06/02)
 ;      - Comments clean-up and add useful notes.
 ; v0.0.12 (2018/06/02)
