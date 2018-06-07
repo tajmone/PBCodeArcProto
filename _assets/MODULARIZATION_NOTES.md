@@ -14,10 +14,10 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
 - [Modules Description](#modules-description)
     - [Global Module](#global-module)
     - [CodeArchiv Module](#codearchiv-module)
-        - [Design Choice Problems](#design-choice-problems)
     - [Errors Tracker](#errors-tracker)
         - [Required Vars Access](#required-vars-access)
         - [Some Considerations...](#some-considerations)
+    - [Resources module](#resources-module)
 - [Notes on Modules Usage](#notes-on-modules-usage)
     - [Global Enumerators](#global-enumerators)
 - [New Converter Goal](#new-converter-goal)
@@ -46,6 +46,7 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
 - [`mod_G.pbi`][mod_G] — (`G::`) __[Global module]__ for commonly shared data.
 - [`mod_Errors.pbi`][mod_Errors] — (`Err::`) __[Errors Tracker]__ module.
 - [`mod_CodeArchiv.pbi`][mod_CodeArchiv]  — (`Arc::`) __[CodeArchiv module]__.
+- [`mod_Resources.pbi`][mod_Resources]  — (`Res::`) __[Resources module]__.
 
 # Modules and Tools
 
@@ -56,10 +57,13 @@ Here is an outline of which modules will be reused by which tools.
 | `mod_G.pbi`          | yes            | yes           | yes           |
 | `mod_Errors.pbi`     | yes            | ???           | ???           |
 | `mod_CodeArchiv.pbi` | yes            | no            | no            |
+| `mod_Resources.pbi`  | yes            | yes           | yes           |
 
 The presence of "???" in the above table indicates uncertainty on wether some tools should make use of a module or not.
 
 For example, both the Codes Checker and Cleaner could use the Errors Tracker, even though they deal with single resources. The pros and cons have to be weighed. Using the Errors Tracker would simplify managing errors, but might also introduce the burden of updating the tool if the module is updated in backward compatibility breaking manner.
+
+--------------------------------------
 
 # Modules Description
 
@@ -84,53 +88,56 @@ This module (`G::`) holds data commonly shared by all tools.
 
 - [`mod_CodeArchiv.pbi`][mod_CodeArchiv]
 
-This module (`Arc::`) handles the Archiv categories and resources:
+> This section was last updated according to `mod_CodeArchiv.pbi` __v0.0.19__ (2018/06/07)
 
-- Scans the Archiv project tree and
-    + builds list of Categories (`Arc::CategoriesL()`)
-    + builds list of Root Categories (`Arc::RootCategoriesL()`)
-    + builds list of Resources (`Arc::ResourcesL()`)
+This module (`Arc::`) is intended as an interface for all tools to handle the CodeArchiv categories and resources:
+
+- `Arc::ScanProject()` — Scans the CodeArchiv project tree and
+    + builds list of all Categories (`Arc::CategoriesL()`)
+    + builds list of the Top-Level Categories (`Arc::RootCategoriesL()`)
+    + builds list of all Resources (`Arc::ResourcesL()`)
+    + carries out integrity checks on the CodeArchiv:
+        * Check that "`_assets/meta.yaml`" file exists and is not 0 Kb.
+        * Check that every category has a "`REAMDE.md`" file and is not 0 Kb.
+        * Check that every category contains resources.
+        * Returns the number of errors found (if any).
+        * Stores in `info\Errors` the number of errors found.
+        * Stores in `info\IntegrityReport` a report on the integrity checks. (if everything went fine, the report will either contain a standard "everything is OK" message, otherwise a detailed report on the encountered errors)
 - Exposes statistics via `Arc::info` data structure:
-    + `info\IsReady.i` — Boolean for querying the module's status
+    + `info\IsReady.i` — Boolean for querying the module's status (_currently unused!_).
+    + `info\Errors` Total errors found during project scanning.
+    + `info\IntegrityReport ` Integrity Checks Report (with Errors details, if any).
     + `info\totCategories.i` — Total Categories count (Root excluded)
     + `info\totRootCategories.i` — Total Top-Level Categories count
     + `info\totResources.i` — Total Resources count
     + `info\totResT_PBSrc.i` — Total Resources of PureBasic Source type
     + `info\totResT_PBInc.i` — Total Resources of PureBasic Include-file type
     + `info\totResT_Folder.i` — Total Resources of Subfolder type
-- Provides some text info helpers:
-    + `Arc::ShowStats()` — returns a str with rèsumè of Archiv Categories and Resources
-    + `Arc::ShowRootCategories()` — returns a str with numbered list of Root Categories (top-level categories).
-- Provide some Iterators for invoking a CallBack procedure on iterated items:
+- Provides some plaintext __Info Helpers__:
+    + `Arc::GetStats()` — returns a str with rèsumè of CodeArchiv Categories and Resources.
+    + `Arc::GetTree()` — returns a str with an Ascii-Art Tree representation of the CodeArchiv Categories and Resources.
+    + `Arc::GetCategories()` — returns a str with numbered list of all Categories in the CodeeArchiv.
+    + `Arc::GetRootCategories()` — returns a str with numbered list of Root Categories (top-level categories).
+    + `Arc::GetResources()` — returns a str with numbered list of all resources in the CodeArchiv.
+- Provide some __Iterators__ for invoking a CallBack procedure on iterated items:
     + `Arc::CategoriesIteratorCallback( *CallbackProc )` — iterate categories and invoke `CallbackProc()` at each iteration
     + `Arc::ResourcesIteratorCallback( *CallbackProc )` — iterate through resources and invoke `CallbackProc()` at each iteration
 - Exposes to the `CallbackProc()` info about the current Resource and Category being iterated, via `Arc::Current` structure:
-    + `Current\Resource` — a struct var containing all required info about the current resource
-    + `Current\Category` — a struct var containing all required info about the current category being iterated, or the host category of the current resource being iterated
+    + `Arc::Current\Resource` — a struct var containing all required info about the current resource:
+        * `File.s` — Filename ( `<filename>.pb` | `<filename>.pbi` | "`<subfolder>/CodeInfo.txt`" )
+        * `Path.s` — Path relative to CodeArchiv root (includes filename)
+        * `Type.i` — ( `G::#ResT_PBSrc` | `G::#ResT_PBInc` | `G::#ResT_Folder` )
+        * `*Category.Category` — pointer to its parent category
+    + `Arc::Current\Category` — a struct var containing all required info about the current category being iterated, or the host category of the current resource being iterated
+        * `Name.s` —  Folder name
+        * `Path.s` —  Path relative to CodeArchiv root (includes folder name)
+        * `Level.i` —  0-2 (Root, Top-Level Category, Subcategory)
+        * `SubCategoriesL.s()` List —  Name/Link List to SubCategories
+        * `FilesToParseL.s()` List —  List of files to parse (including "`<subf>/CodeInfo.txt`")
 
 The above feature of the module's API are intended to offer flexible access to the CodeArchiv resources and categories via specific API procedures and vars that hide away the complexity of the Archiv internals, and could change in the future without requiring rewriting the code of the tools using this module — a few tweaks should suffice to adapt to major API changes.
 
 Having separate lists and iterators for Categories and Resources allows the module to be useful for both tools dealing with Categories (eg, the HTML pages creator) and tools that focus on checking that resources meet the requirements.
-
-### Design Choice Problems
-
-There are some important choices to be made regardin how this module should handle validation of the Archiv project structure and handling any errors found.
-
-- [ ] __Project Integrity Checks__ — I still have to integrate from the HTML Pages Creator the old code that validates the Archiv structure (checks for `README.md` files, YAML settings, etc).
-    + [ ] Should Integrity Checks be carried out every time the Archiv is scanned, or should it be a separate step which is left to the main app/tool to decide when to invoke?
-    + [ ] __Errors Handling__ — Should errors be stored in this module (some structured var)? or should they be delegated to the [Errors Tracker] module?
-
-The above considerations bring up an issue with the design of the Errors Tracker: since scanning (cataloging) and integrity checks concerning the Archiv project structure and its resources are handled by different modules, which can be refreshed separately, tracking errors requires to be able to manage status refreshes of either of them without conflicts.
-
-#### Errors Tracker: Each Modules Should Register Itself?
-
-Ideally, each module should store information about its errors, but the [Errors Tracker] module has to also track all the errors of all the modules, so that it can print out to the user/tool a report on all the errors encountered at any stage (wether it's just an integrity check stage or an actual attempt to build the HTML pages).
-
-Probably, I'll have to devise a way to allow each module to "register" itself with the [Errors Tracker] at initialization time (like Sicro is doing with the logger module), so that the Errors module is able to handle errors from various modules separately (internally) and at the same time produce unified error reports from all modules. 
-
-After all, different tools might use some modules and not others (eg, the Code Checker for single resources will not need the CodeArchiv module), so the Errors module shouldn't make assumptions about which modules will be present during use.
-
-This topic introduces another need too, that of some global initialization system (via mod G) that allows all modules to initialize themselves according to other modules included by the app, and their settings. This might be especially true for the Errors and Logger modules. I should think of some simple way to handle registering modules via mod_G.
 
 
 ## Errors Tracker
@@ -176,6 +183,45 @@ The error tracker is intended to gather statistics of any errors encountered dur
 
 Also, I must keep in mind that the final app might implement a dry-run feature to actually test building the whole project without writing any changes to disk, only in order to check if any errors are encountered with pandoc or at other places. So the error tracker must be able to accomodate that too.
 
+#### The Tracker is For Tools, not Modules?
+
+_Here are some arguments in favor of the fact that the Errors Tracker should be used only by the main tools/apps, not by modules..._
+
+The fact that we have a module dedicated to tracking Errors doesn't mean that _every_ error type should be delegated to the Error Tracker. For example, when [mod CodeArchiv] carries out its Integrity Checks, the number of errors found are stored in `Arc::info\Errors`, and a report is stored in  `Arc::info\IntegrityReport`, which will contain details of every error (if any). In this case, there seems to be no need for this type of check to rely on the Errors Tracker, for we're dealing with basic initialization of the CodeArchiv (project and module). Most tools will probably just need to know if the Archiv is ready for being processed, and the above vars suffice for this.
+
+Usually, a tool will consider the Error Tracker as a way to track errors encountered during the main steps which the tool is specifically designed to perform, so that it can be produce a detailed custom report at the end. Modules initialization failures (like the example above) are subsidiary to the tool tasks, and instead of having those initialization procedures communicate directly with the Error Tracker, it should be up to the tool to decide if to include these errors and how. 
+
+In other words: the Tracker should be fully controlled by the app/tool, not by the single modules; the latter should store their errors internally, and offer an interface to the main tool for examining such errors, but it's up to the main tool to fully control the Tracker.
+
+The next section shows the complications that derive from having the modules use the Tracker — ie, the modules would have to register themselves with the Tracker in order to be managed.
+
+#### Should Modules Register Themselves with mod Errors?
+
+_Here are some considerations of the complications that would arise if the Tracker was to be used by modules too...._
+
+Ideally, each module should store information about its errors, but the [Errors Tracker] module has to also track all the errors of all the modules, so that it can print out to the user/tool a report on all the errors encountered at any stage (wether it's just an integrity check stage or an actual attempt to build the HTML pages).
+
+Probably, I'll have to devise a way to allow each module to "register" itself with the [Errors Tracker] at initialization time (like Sicro is doing with the logger module), so that the Errors module is able to handle errors from various modules separately (internally) and at the same time produce unified error reports from all modules. 
+
+After all, different tools might use some modules and not others (eg, the Code Checker for single resources will not need the CodeArchiv module), so the Errors module shouldn't make assumptions about which modules will be present during use.
+
+This topic introduces another need too, that of some global initialization system (via mod G) that allows all modules to initialize themselves according to other modules included by the app, and their settings. This might be especially true for the Errors and Logger modules. I should think of some simple way to handle registering modules via mod_G.
+
+## Resources module
+
+[Resources module]:  #resources-module "Jump to this module's section"
+[mod Resources]:     #resources-module "Jump to this module's section"
+
+- [`mod_Resources.pbi`][mod_Resources]
+
+Currently an empty module that does nothing.
+
+Eventually, it will offer an interface to manage and query all the resources of the CodeArchiv — and behind the scenes, it will also handle caching the parsed resources output to speed up processing time (See [Issue #18]).
+
+[Issue #18]: https://github.com/tajmone/PBCodeArcProto/issues/18 "Caching Proposal & Ideas #18"
+
+--------------------------------------
+
 # Notes on Modules Usage
 
 Since the whole purpose of splitting the app into modules, here are some important notes on how the modules should be used in custom tools for this project.
@@ -204,6 +250,8 @@ It also means that any third party tools willing to reuse some of the modules of
 ------------------------------
 
 # New Converter Goal
+
+> _**BEWARE** — THIS SECTION IS OLD AND MIGHT NOT REFLECT THE LATEST CHANGES!_
 
 Currently, the HTMLPageConvert has always been intended as a tool to merely create the HTML pages for the project; this was strongly determined by the fact that it was a "runnable" and guiless app. The upcoming introduction of the GUI lifts these limits, and the new app could be considered as a general purpose project maintainment tools providing this functionality:
 
@@ -235,7 +283,11 @@ Creation of the HTML pages should have a panel of its own. Running this task wil
 
 These three functionalities/panels are to be considered as representing three successive steps of the process — Integrity Checks implicitly require gathering Statistics, and HTML Conversion implicitly requires Integrity Checks to be run. Their separation into independent panel is simply a way to presen them to the end user and independently manageable features.
 
+--------------------------------------
+
 # Modules Roadmap
+
+> _**BEWARE** — THIS SECTION IS OLD AND MIGHT NOT REFLECT THE LATEST CHANGES!_
 
 I still need to work out properly how to move all the current functionality into separate modules. Presently, the main challenges are posed by the Error Tracking system, the Debug logging and the Final Report: in order to move any part of the current code to independent modules, I must first address these three systems so that they don't break down.
 
@@ -448,6 +500,7 @@ With this in mind, I should start to move all resource related functionality to 
 <!-- REEFERENCE LINKS -->
 
 [HTMLPagesCreator]: ./HTMLPagesCreator.pb
-[mod_CodeArchiv]: ./mod_CodeArchiv.pbi "View sourcefile of CodeArchiv module"
-[mod_Errors]:     ./mod_Errors.pbi "View sourcefile of Errors module"
-[mod_G]:          ./mod_G.pbi "View sourcefile of Global module"
+[mod_CodeArchiv]: ./pb-inc/mod_CodeArchiv.pbi "View sourcefile of CodeArchiv module"
+[mod_Errors]:     ./pb-inc/mod_Errors.pbi "View sourcefile of Errors module"
+[mod_G]:          ./pb-inc/mod_G.pbi "View sourcefile of Global module"
+[mod_Resources]:  ./pb-inc/mod_Resources.pbi "View sourcefile of Resources module"
