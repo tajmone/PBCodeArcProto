@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.1.7 (2018/06/07) | PureBasic 5.62 | MIT License
+; "HTMLPagesCreator.pb" v0.1.8 (2018/06/07) | PureBasic 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -53,6 +53,8 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+; v0.1.8 (2018/06/07)
+;    - Change Arc::ShowStats() to Arc::GetStats() --- mod_CodeArchiv renamed it.
 ; v0.1.7 (2018/06/07)
 ;    - Set DBG Level to 0 for cleaner testing.
 ; v0.1.6 (2018/06/07)
@@ -218,7 +220,7 @@ Err = Arc::ScanProject()
 ; ====================
 Debug G::#DIV2$ + G::#EOL + "CodeArchiv Info" +  G::#EOL + G::#DIV2$
 Debug "Project statistics:"
-Debug Arc::ShowStats()
+Debug Arc::GetStats()
 ; TODO: Show Proj Tree...
 
 ; =====================

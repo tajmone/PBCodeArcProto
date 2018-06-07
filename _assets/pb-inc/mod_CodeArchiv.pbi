@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.16 (2018/06/07) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.17 (2018/06/07) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -15,10 +15,10 @@
 ; modules dependencies:
 XIncludeFile "mod_G.pbi"
 ;{------------------------------------------------------------------------------
-; NOTE: Currently being developed on its own before integration into the current
-;       HTMLPageConvert (or maybe into the new GUI version of it).
-;       Toward the end of the file, a `CompilerIf #PB_Compiler_IsMainFile` block
-;       is provided for standalone test execution.
+; NOTES:
+;   -- The Module is now being integrated into HTMLPageConvert.
+;   -- Toward the end of the file, a `CompilerIf #PB_Compiler_IsMainFile` block
+;      is provided for standalone test execution.
 ; ------------------------------------------------------------------------------
 ; \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 ;                                STATUS AND TODOS                               
@@ -56,11 +56,11 @@ XIncludeFile "mod_G.pbi"
 ;              this should also be returned as a Bool value when exiting from the
 ;              top level Procedure call (so it can be used as an exit code).
 ;  - [ ] Add public procedures:
-;        - [ ] ShowTree() -- return a str with Proj tree (Categories and Resources).
-;        - [x] ShowStats() -- return a resume str of Categories and Resources.
-;        - [ ] ShowCategoriesL() -- returns a str with list of all Categories.
-;        - [x] ShowRootCategoriesL() -- returns a str with list of all Root Categories.
-;        - [ ] ShowResourcesL() -- returns a str with list of all Resources.
+;        - [ ] GetTree() -- return a str with Proj tree (Categories and Resources).
+;        - [x] GetStats() -- return a resume str of Categories and Resources.
+;        - [ ] GetCategoriesL() -- returns a str with list of all Categories.
+;        - [x] GetRootCategoriesL() -- returns a str with list of all Root Categories.
+;        - [ ] GetResourcesL() -- returns a str with list of all Resources.
 
 ;}
 
@@ -151,9 +151,9 @@ DeclareModule Arc
   Declare    Reset()
   Declare    CategoriesIteratorCallback( *CallbackProc )
   Declare    ResourcesIteratorCallback( *CallbackProc )
-  Declare.s  ShowStats()
-  Declare.s  ShowTree()
-  Declare.s  ShowRootCategories()
+  Declare.s  GetStats()
+  Declare.s  GetTree()
+  Declare.s  GetRootCategories()
 EndDeclareModule
 
 Module Arc
@@ -532,7 +532,7 @@ Module Arc
     
   EndProcedure
   
-  Procedure.s ShowStats()
+  Procedure.s GetStats()
     ; ==========================================================================
     ; Return a String With Statistic About the CodeArchiv
     ; ==========================================================================
@@ -547,14 +547,14 @@ Module Arc
     
   EndProcedure
   
-  Procedure.s ShowTree()
+  Procedure.s GetTree()
     ; ==========================================================================
     ; Return a String with the CodeArchiv's Structure Ascii Tree
     ; ==========================================================================
     
   EndProcedure
   
-  Procedure.s ShowRootCategories()
+  Procedure.s GetRootCategories()
     ; ==========================================================================
     ; Return a String Listing the Top-Level Categories
     ; ==========================================================================
@@ -776,11 +776,11 @@ CompilerIf #PB_Compiler_IsMainFile
   Debug G::#DIV1$
   Debug "CodeArchiv Info Procedures" + #LF$ + G::#DIV1$
   
-  Debug "CodeArchiv statistics résumé via `Arc::ShowStats()`:" + #LF$
-  Debug Arc::ShowStats()
+  Debug "CodeArchiv statistics résumé via `Arc::GetStats()`:" + #LF$
+  Debug Arc::GetStats()
   
-  Debug "List of Root Categories (Top-level) via `Arc::ShowRootCategories()`:" + #LF$
-  Debug Arc::ShowRootCategories()
+  Debug "List of Root Categories (Top-level) via `Arc::GetRootCategories()`:" + #LF$
+  Debug Arc::GetRootCategories()
   
   ; TEST RESOURCES LIST
   ; ===================
@@ -901,6 +901,14 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.17 (2018/06/07)
+;      - Rename all `ShowXXX()` procedure to `GetXXX()`, because the term `Show`
+;        doesn't reflect what they do (they return strings, not display them):
+;        - ShowTree()             ->  GetTree()
+;        - ShowStats()            ->  GetStats()
+;        - ShowCategoriesL()      ->  GetCategoriesL()
+;        - ShowRootCategoriesL()  ->  GetRootCategoriesL()
+;        - ShowResourcesL()       ->  GetResourcesL()
 ; v0.0.16 (2018/06/07)
 ;      - Make CheckIntegrity() private --- now the procedure is for internal use only.
 ;        After all, before checking the integrity the whole project should alwyas be
