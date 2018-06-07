@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.1.6 (2018/06/07) | PureBasic 5.62 | MIT License
+; "HTMLPagesCreator.pb" v0.1.7 (2018/06/07) | PureBasic 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -53,6 +53,8 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+; v0.1.7 (2018/06/07)
+;    - Set DBG Level to 0 for cleaner testing.
 ; v0.1.6 (2018/06/07)
 ;    - Use "mod_CodeArchiv.pbi"
 ;      - Finally the CodeArchiv module is being integrated into the app, so we
@@ -94,7 +96,8 @@
 ; ==============================================================================
 ;-                                   SETTINGS                                   
 ;{==============================================================================
-#DBG_LEVEL = 4  ; Details Range 0—4:
+; FIXME: The whole DebugLevel approach has to be changed.
+#DBG_LEVEL = 0  ; Details Range 0—4:
                 ;  - 0 : No extra info, just the basic feedback.
                 ;  - 1 : (currently unused) 
                 ;  - 2 : Extra details on Main code 

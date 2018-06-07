@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.15 (2018/06/06) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.16 (2018/06/07) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -29,16 +29,12 @@ XIncludeFile "mod_G.pbi"
 ;    hosting code still needs to be removed.
 ;
 ; TODOs:
-;  - [ ] Check Project Integrity -- Integrate from "HTMLPagesCreator.pb" the code
-;        to check the project's integrity. But I need to decide first if:
-;        - [ ] Check Integrity at each ScanProject() execution? or
-;        - [ ] leave CheckIntegrity() to be carried out at tool/user discretion.
-;        This decision will cascade-affect other procedure too. Also, some status
-;        var should be exposed via info (info\IsReady, \Errors, etc.). Iterators
-;        and other functionality that deals with the project's structure should
-;        not be executed if the Integry Check failed or was not carried out?
-;        Also, how is the module going to know if proj files/folder have changed
-;        since the last ScanProject() call?
+;  - [x] Check Project Integrity -- Integrate from "HTMLPagesCreator.pb" the code
+;        to check the project's integrity:
+;        - [x] Check Integrity at each ScanProject() execution
+;        - [x] Make the procedure private for internal use only, and remove the
+;              code to preserve curr dir and lists positions (since ScanProject()
+;              already does that it would be redundant).
 ;  - [ ] ScanFolder()'s Debug output must be either:
 ;        - [ ] removed from code (probably not needed anyhow), or
 ;        - [ ] captured in a string and stored somewhere, and only shown on 
@@ -81,8 +77,9 @@ DeclareModule Arc
   ; be remove from the final module...
   ; ----------------------------------------------------------------------------
   ; FIXME: Remove left-over code from original source
-  #DBG_LEVEL = 4
-  DebugLevel #DBG_LEVEL
+  ; ==============
+  ; DBG References
+  ; ==============
   ; These constants are just to simplify finding Debug lines in the code by their
   ; DBG Level (no practical use beside that):
   Enumeration DBG_Levels 1
@@ -94,7 +91,6 @@ DeclareModule Arc
   ; ============================================================================
   ;                                 PUBLIC DATA                                 
   ; ============================================================================
-  
   ; Arc::info -- Structured var gathering/exposing statistics about the project.
   Structure info
     IsReady.i             ; (Bool) True if no errors were found in scanning.   <~ CURRENTLY UNUSED!
@@ -152,11 +148,11 @@ DeclareModule Arc
   ;                        PUBLIC PROCEDURES DECLARATION                        
   ; ============================================================================
   Declare    ScanProject()
-  Declare    CheckIntegrity()
   Declare    Reset()
   Declare    CategoriesIteratorCallback( *CallbackProc )
   Declare    ResourcesIteratorCallback( *CallbackProc )
   Declare.s  ShowStats()
+  Declare.s  ShowTree()
   Declare.s  ShowRootCategories()
 EndDeclareModule
 
@@ -164,7 +160,8 @@ Module Arc
   ; ============================================================================
   ;                        PRIVATE PROCEDURES DECLARATION                       
   ; ============================================================================
-  Declare ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
+  Declare    ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
+  Declare    CheckIntegrity()
   
   ; ****************************************************************************
   ; *                                                                          *
@@ -172,7 +169,7 @@ Module Arc
   ; *                                                                          *
   ; ****************************************************************************
   Procedure ScanProject()
-    Debug ">>> ScanProject()" ; DELME >>> ScanProject()
+    Debug ">>> Arch::ScanProject()", #DBGL4
     
     ; ==========================================================================
     ; Scan the CodeArchiv project and build List of Categories and Resources.
@@ -188,9 +185,8 @@ Module Arc
     ; (make no assumption on what the tool invoking this module might be doing):
     PrevCurrDir.s = GetCurrentDirectory()
     SetCurrentDirectory(G::CodeArchivPath)
-    Debug ":: CurrDir: " + PrevCurrDir ; DELME DBG Preserve Current Directory
     
-    Debug "Scanning project to build list of categories and resources:"
+    Debug "Scanning project to build list of categories and resources:", #DBGL4
     
     AddElement( CategoriesL() )
     
@@ -235,7 +231,7 @@ Module Arc
     SetCurrentDirectory(PrevCurrDir)
     
     
-    Debug "<<< ScanProject()" ; DELME <<< ScanProject()
+    Debug "<<< ScanProject()", #DBGL4
     
     ProcedureReturn Err ; <- Return Errors found by CheckIntegrity()
     
@@ -269,21 +265,16 @@ Module Arc
     ; to be used by single tools and apps to track execution steps. The report
     ; is just a string résumé, which tools might choose to display or ignore.
     ; --------------------------------------------------------------------------
-    ; NOTE: This procedure is kept public, and separate from ScanFolder().
-    ;       Maybe some tools might need to access this procedure independently
-    ;       of ScanFolder() -- if not, we can always make it private later on.
-    ;       It might still be worth to keep it separate from ScanFolder() for
-    ;       ease of maintainance and also because it uses a lot of temp strings
-    ;       which would be released on exit.
+    ; NOTE 1: This procedure is kept private, and separate from ScanFolder().
+    ;         It's intended for internal use only, and Integrity Checks should
+    ;         always require the whole project to be scanned again.
+    ;         It's worth keeping it separate from ScanFolder() both for ease of
+    ;         maintainance and also because it uses a lot of temp strings which
+    ;         are memory released on exit.
+    ; NOTE 2: No need to preserve Curr Dir or Cat & Res Lists positions, because
+    ;         ScanProject() is already taking care of that, and this procedure
+    ;         is never called on its own.
     ;}==========================================================================
-    ; TODO: Preserve Cat & Res Lists positions
-    
-    ; Preserve Current Directory
-    ; --------------------------
-    ; (make no assumption on what the tool invoking this module might be doing):
-    PrevCurrDir.s = GetCurrentDirectory()
-    SetCurrentDirectory(G::CodeArchivPath)
-    
     Shared CategoriesL()
     Shared info
     
@@ -444,10 +435,6 @@ Module Arc
       info\IntegrityReport = "The CodeArchiv passed all tests without any errors." + G::#EOL
     EndIf
     
-    ; Restore Previous Current Directory
-    ; ----------------------------------
-    SetCurrentDirectory(PrevCurrDir)
-    
     ProcedureReturn errCnt
     
   EndProcedure
@@ -560,6 +547,13 @@ Module Arc
     
   EndProcedure
   
+  Procedure.s ShowTree()
+    ; ==========================================================================
+    ; Return a String with the CodeArchiv's Structure Ascii Tree
+    ; ==========================================================================
+    
+  EndProcedure
+  
   Procedure.s ShowRootCategories()
     ; ==========================================================================
     ; Return a String Listing the Top-Level Categories
@@ -594,7 +588,7 @@ Module Arc
     ;       a string for optional use; else I could use a constant to check if
     ;       it should be shown or not.
     
-    ;     Debug ">>> ScanFolder()" ; DELME
+    Debug ">>> ScanFolder()", #DBGL4
     
     Shared CategoriesL(), ResourcesL()
     Shared info
@@ -685,7 +679,7 @@ Module Arc
             ; Update Proj Stats:
             info\totResources +1
             info\totResT_Folder +1
-            Debug entryDBG$ + "- " + fName, #DBGL3
+            Debug entryDBG$ + "- " + fName, #DBGL4
           Else
             ;  =========================
             ;- SubFolder is Sub-Category
@@ -696,7 +690,7 @@ Module Arc
             If recCnt = 1
               info\totRootCategories +1
             EndIf
-            Debug entryDBG$ + "+ /" + entryName + "/", #DBGL3          
+            Debug entryDBG$ + "+ /" + entryName + "/", #DBGL4          
             ; -------------------------
             ; Recurse into Sub-Category
             ; -------------------------
@@ -727,7 +721,7 @@ Module Arc
     recCnt -1
     Debug Ind$, #DBGL3 ; adds separation after sub-folders ends
     
-    ;     Debug "<<< ScanFolder()" ; DELME
+    Debug "<<< ScanFolder()", #DBGL4
   EndProcedure
   
 EndModule
@@ -907,6 +901,18 @@ CompilerEndIf
 
 ;{ CHANGELOG
 ;  =========
+; v0.0.16 (2018/06/07)
+;      - Make CheckIntegrity() private --- now the procedure is for internal use only.
+;        After all, before checking the integrity the whole project should alwyas be
+;        scanned again.
+;        - Remove from CheckIntegrity() the code that preserved and restored Curr Dir
+;          and Cat/Res Lists posistions (ScanProject() already takes care of that so
+;          there is no need to do it also here if the proc is never going to be called
+;          on its own).
+;      - Fix DBG Level management in public procedures --- now all internal DBG info is
+;        printed out only if DebugLevel is >= 4.
+;      - Don't set anymore the DebugLevel via this module, but leave it to the main app.
+;      - Add ShowTree() Public Procedure (currently does nothing, just a place holder).
 ; v0.0.15 (2018/06/06)
 ;      - Add some comments to clarify the context of CheckIntegrity() and its report.
 ; v0.0.14 (2018/06/06)
