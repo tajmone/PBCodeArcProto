@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.1.5 (2018/05/24) | PureBasic 5.62 | MIT License
+; "HTMLPagesCreator.pb" v0.1.6 (2018/06/07) | PureBasic 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -53,6 +53,19 @@
 ;  =========
 ;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+; v0.1.6 (2018/06/07)
+;    - Use "mod_CodeArchiv.pbi"
+;      - Finally the CodeArchiv module is being integrated into the app, so we
+;        start to remove code dealing with Archiv structure and use the module's
+;        data and procedures instead.
+;      - Now Steps 1 & 2 ("build categories list" and "integrity checks") have 
+;        been merged into a single step that relies on Arc::ScanFolder() to gather
+;        info about the Archiv and check its integrity:
+;        - If any errors are found, a résumé is displayed and the users is asked if
+;          he wishes to continue or abort. (just like before, but the code is simpler)
+;      - All references to Categories Lists now point to `Arc::` instead of using
+;        local lists.
+;    - Remove 1 STEP: Steps 1 & 2 are now a single Step.
 ; v0.1.5 (2018/05/24)
 ;    - Replaced all occurences of
 ;      - PROJ_ROOT$ -> G::CodeArchivPath
@@ -109,8 +122,9 @@ DebugLevel #DBG_LEVEL
 ; ------------------------------------------------------------------------------
 ;-                      INCLUDE MODULES AND EXTERNAL FILES                      
 ; ------------------------------------------------------------------------------
-XIncludeFile "pb-inc/mod_G.pbi"      ; G::     => Global Module
-XIncludeFile "pb-inc/mod_Errors.pbi" ; Err::   => Errors Tracker
+XIncludeFile "pb-inc/mod_G.pbi"          ; G::     => Global Module
+XIncludeFile "pb-inc/mod_CodeArchiv.pbi" ; Arc::   => CodeArchiv Module
+XIncludeFile "pb-inc/mod_Errors.pbi"     ; Err::   => Errors Tracker
 
 ;- Procedures Declaration
 
@@ -132,7 +146,7 @@ Enumeration DBG_Levels 1
 EndEnumeration
 
 
-#TOT_STEPS = "4"
+#TOT_STEPS = "3"
 Macro StepHeading(Text)
   StepNum +1
   Debug G::#DIV1$ + G::#EOL + "STEP "+Str(StepNum)+"/"+#TOT_STEPS+" | "+Text+ G::#EOL + G::#DIV1$
@@ -169,6 +183,7 @@ If Not CreateRegularExpression(#RE_URL, #RE_URL$)
             QuoteText( RegularExpressionError() )
   Err::Abort(ErrMSG$, Err::#FATAL_ERR_INTERNAL)
 EndIf
+;}
 
 ;}==============================================================================
 ;-                                  INITIALIZE                                  
@@ -190,152 +205,49 @@ Debug "Project's Root Path: '" + G::CodeArchivPath + "'", #DBGL2
 ; Build a list of all the project's categories and their associated resources.
 ; ------------------------------------------------------------------------------
 StepHeading("Build Categories List")
-Debug "Scanning project to build list of categories and resources:"
+Debug ~"Scanning the CodeArchiv to build the lists of categories and resources, and to\n"+
+      ~"check the project's structural integrity.\n"
 
-Structure Category
-  Name.s
-  Path.s
-  List SubCategoriesL.s() ; Name/Link List to SubCategories
-  List FilesToParseL.s()  ; List of files to parse (including "<subf>/CodeInfo.txt")
-EndStructure
+Err = Arc::ScanProject()
 
-Declare ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
+; ====================
+; Show CodeArchiv Info
+; ====================
+Debug G::#DIV2$ + G::#EOL + "CodeArchiv Info" +  G::#EOL + G::#DIV2$
+Debug "Project statistics:"
+Debug Arc::ShowStats()
+; TODO: Show Proj Tree...
 
-
-NewList CategoriesL.Category()
-AddElement( CategoriesL() )
-CategoriesL()\Path = "" ; Root folder
-
-totCategories = 0 ; Total Categories count (Root excluded)
-totResources = 0  ; Total Resources count
-totSubFRes = 0    ; Total subfolder Resources  count
-
-ScanFolder(CategoriesL())
-
-Debug "- Categories found: "+ Str(totCategories) + " (excluding root folder)"
-Debug "- Resources found: "+ Str(totResources) + " ("+ Str(totSubFRes) +" are subfolders)"
-
-;  ===========================
-;- Sort Lists in CategoriesL()
-;  ===========================
-;  Different OSs will return files and folders in different order due to API
-;  differences; therefore we must enforce a standard sorting criteria for each
-;  category's FilesToParseL() list (affects order of resource cards in page)
-;  and SubCategoriesL() list (affects order of sidebar navmenu entries and
-;  subcategory links in page). CategoriesL() is also sorted, to ensure same
-;  processing order on all OSs, but the first entry must not be moved because
-;  it's the Root Category and the code expects it to be at index 0.
-;  ---------------------------------------------------------------------------
-#ListSortFlags = #PB_Sort_Ascending | #PB_Sort_NoCase
-
-; Sort CategoriesL()
-endIndex = ListSize( CategoriesL() ) -1
-SortStructuredList(CategoriesL(), #ListSortFlags, OffsetOf(Category\Name),
-                   #PB_String, 1, endIndex) ; <= exclude index 0 from sorting!
-ForEach CategoriesL()                       ; Sort sub-lists...
-  SortList(CategoriesL()\FilesToParseL(), #ListSortFlags)
-  SortList(CategoriesL()\SubCategoriesL(), #ListSortFlags)
-Next
-;  ==========================
-;- Build Root Categories List (for sidebar navigation)
-;  ==========================
-FirstElement( CategoriesL() )
-NewList RootCategoriesL.s()
-CopyList( CategoriesL()\SubCategoriesL(), RootCategoriesL() )
-
-CompilerIf #DBG_LEVEL >= #DBGL2
-  Debug "Root Categories:"
-  cnt = 1
-  ForEach RootCategoriesL()
-    Debug RSet(Str(cnt), 3, " ") + ". '" + RootCategoriesL() + "'"
-    cnt +1
-  Next
-CompilerEndIf
-;}==============================================================================
-;- 2. Check Project Integrity
-;{==============================================================================
-StepHeading("Checking Project Integrity")
-; FIXME: Missing README should be Error, not warning?
-; TODO: Cleanup TESTS Reporting
-
-; Check status of YAML Metadata file
-; ==================================
-; TODO: test all errors with real scenarios
-Select FileSize(G::AssetsPath + "meta.yaml")
-  Case 0 ; File is 0 Kb
-         ; ~~~~~~~~~~~~
-    Debug "ERROR!! meta.yaml has size 0 Kb!"
-    WARN +1
-  Case -1 ; File not found
-          ; ~~~~~~~~~~~~~~
-    Debug "ERROR!!! Missing meta.yaml file"
-    WARN +1
-  Case -2 ; File is a directory
-          ; ~~~~~~~~~~~~~~~~~~~~
-    Debug "ERROR!! meta.yaml is a directory!"
-    WARN +1
-  Default ; TEST Passed
-          ; ===========
-    Debug "meta.yaml file seems Ok.", #DBGL2 ; FIXME Debug Level
-EndSelect
-
-
-ForEach CategoriesL()
-  ; Check that every category has a REAMDE file
-  ; ===========================================
-  README$ =  CategoriesL()\Path+"README.md"
-  Select FileSize(README$)
-    Case 0
-      Debug "- WARNING: '" + README$ + "' file size is 0 Kb!"
-      WARN +1
-    Case -1
-      Debug "- WARNING: Missing '" + README$ + "' file!"
-      WARN +1
-    Case -2
-      ; This shouldn't happen; but just in case...
-      Debug "- WARNING: '" + README$ + "' is directory!"
-      WARN +1
-  EndSelect
-  ; Check that every category has resources
-  ; =======================================
-  If Not ListSize( CategoriesL()\FilesToParseL() ) And
-     CategoriesL()\Name <> "" ; Allow Root Category to empty
-    Debug "- WARNING: Category '" + CategoriesL()\Path + "' has no entries!"
-    WARN +1
-  EndIf
-Next
-; Evaluate Found Warnings/Errors
-; ==============================
-; TODO: Check which warnings need to be enlisted in the Warnings-Tracker
-;       Some warnings might be catched later on, and they don't need to be enlisted here.
-;       But some other types of warning might not be catched later on (eg: For loops where
-;       there are 0 elements) and I must ensure they get all mentioned in the final report.
-;       The ideal solution would be to catch all of them in their place instead of here
-;       (this is just an overall integrity check), so it might be worth implemening some
-;       checks on For loops, to catch skipped iterations.
-If WARN | ERR = 0
-  Debug "All tests passed."
-Else
-  Debug "Total warnings: " + Str(WARN)
-  Debug "Total errors: " + Str(ERR)
-  If ERR
-    Debug ~"Fix errors and try again!\nAborting..."
+; =====================
+; Eval Integrity Checks
+; =====================
+Debug G::#DIV2$ + G::#EOL + "CodeArchiv Integrity Cheks" +  G::#EOL + G::#DIV2$
+If Err
+  ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ; CodeArchiv Integrity Checks Failed
+  ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Debug "Some errors were decteted while checking the integrity of CodeArchiv "+
+        "project structure!"
+  Debug "Please confirm if you wish to continue..."
+  If MessageRequester("WARNING CONFIRMATION", 
+                      ~"Some warnings were decteted during project integrity check.\n"+
+                      "Do you wish to continue anyhow?", 
+                      #PB_MessageRequester_YesNo | 
+                      #PB_MessageRequester_Warning) = #PB_MessageRequester_No
+    Debug "Aborting..."
     End 1
-  Else
-    Debug "Please confirm if you wish to continue..."
-    If MessageRequester("WARNING CONFIRMATION", 
-                        ~"Some warnings were issued during project integrity check.\n"+
-                        "Do you wish to continue anyhow?", 
-                        #PB_MessageRequester_YesNo | 
-                        #PB_MessageRequester_Warning) = #PB_MessageRequester_No
-      Debug "Aborting..."
-      End 1
-    EndIf
   EndIf
+Else
+  ; --------------------------------------
+  ; All CodeArchiv Integrity Checks Passed
+  ; --------------------------------------
+  Debug "All integrity checks passed, the CodeArchiv is good to go."
 EndIf
 
+; End ; DELME: Premature End for Testing
+
 ;}==============================================================================
-;- 3. Process Categories
+;- 2. Process Categories
 ;{==============================================================================
 StepHeading("Process Categories")
 
@@ -379,14 +291,14 @@ EndIf
 ;- Iterate Through Categories
 ;  ==========================
 cntCat = 1
-ForEach CategoriesL()
+ForEach Arc::CategoriesL()
   
-  catPath.s = CategoriesL()\Path
+  catPath.s = Arc::CategoriesL()\Path
   Err::currCat = catPath
   ; TODO: Use a macro to print category header? (looks cleaner)
   Debug G::#DIV2$ + G::#EOL + "CATEGORY " + Str(cntCat) + "/" + Str(totCategories +1) +
         " | ./" + catPath + G::#EOL + G::#DIV2$
-  Debug "Category name: '" + CategoriesL()\Name + "'", #DBGL2
+  Debug "Category name: '" + Arc::CategoriesL()\Name + "'", #DBGL2
   Debug "Category path: '" + catPath + "'", #DBGL2
   
   ; TODO: Add Proc to fix dir sep "/" into "\" for Win Path
@@ -475,8 +387,8 @@ ForEach CategoriesL()
   ; -----------------------
   ; Root Categories Entries
   ; -----------------------
-  ForEach RootCategoriesL()
-    linkPath = RootCategoriesL()
+  ForEach Arc::RootCategoriesL()
+    linkPath = Arc::RootCategoriesL()
     linkText = linkPath
     
     YAML_NAVMENU$ + "- text: " + linkText + G::#EOL +
@@ -488,22 +400,22 @@ ForEach CategoriesL()
       ; -----------------------
       ; SubLevel 1 Categories Entries
       ; -----------------------
-      PushListPosition( CategoriesL() ) ; <= Store curr pos in CategoriesL()
+      PushListPosition( Arc::CategoriesL() ) ; <= Store curr pos in CategoriesL()
       
       ; Find Curr Cat in Cats List:
-      ForEach CategoriesL()
-        If CategoriesL()\Path = pathSeg1 + "/"
+      ForEach Arc::CategoriesL()
+        If Arc::CategoriesL()\Path = pathSeg1 + "/"
           baseLinkPath = linkPath + "/"
           
           ; Check if Curr Cat has SubCats:
-          If ListSize( CategoriesL()\SubCategoriesL() )
+          If ListSize( Arc::CategoriesL()\SubCategoriesL() )
             YAML_NAVMENU$ + "  submenu:" + G::#EOL
             
             ; Iterate SubCategories of Curr Cat...
-            ForEach CategoriesL()\SubCategoriesL()
+            ForEach Arc::CategoriesL()\SubCategoriesL()
               
-              linkPath = baseLinkPath + CategoriesL()\SubCategoriesL()
-              linkText = CategoriesL()\SubCategoriesL()
+              linkPath = baseLinkPath + Arc::CategoriesL()\SubCategoriesL()
+              linkText = Arc::CategoriesL()\SubCategoriesL()
               
               YAML_NAVMENU$ + "  - text: " + linkText + G::#EOL +
                               "    link: " + path2root$ + linkPath + "/index.html" + G::#EOL            
@@ -518,8 +430,8 @@ ForEach CategoriesL()
         EndIf
       Next
       
-      PopListPosition( CategoriesL() ) ; <= Restore curr pos in CategoriesL()  
-    EndIf                              ; <<< END :: SubLevel 1 Categories Entries <<<
+      PopListPosition( Arc::CategoriesL() ) ; <= Restore curr pos in CategoriesL()  
+    EndIf                                   ; <<< END :: SubLevel 1 Categories Entries <<<
     
     SIDEBAR$ + "</li>" + G::#EOL ; Close Menu entry tag (Root Level)
   Next                           ; <= RootCategoriesL() iteration
@@ -574,7 +486,7 @@ ForEach CategoriesL()
   ;- Build SubCategories links
   ;{ =========================
   SubCatLinks.s = #Empty$
-  With CategoriesL()
+  With Arc::CategoriesL()
     If ListSize( \SubCategoriesL() )
       SubCatLinks = G::#EOL2 + "---" + G::#EOL2
       SubCatLinks + "# Subcategories" +  G::#EOL2
@@ -610,7 +522,7 @@ ForEach CategoriesL()
   ;- Build Resume Cards
   ;{===================
   Declare ParseFileComments(resourcefile.s)
-  With CategoriesL()
+  With Arc::CategoriesL()
     totResources = ListSize( \FilesToParseL() )
     If totResources ; if Category contains Resources...
       
@@ -717,11 +629,12 @@ ForEach CategoriesL()
   cntCat +1
   Debug G::#DIV2$
 Next ; <= ForEach CategoriesL()
-     ;}
+
+;}
 
 
 ;}==============================================================================
-;- 4. Final Report And Quit
+;- 3. Final Report And Quit
 ;{==============================================================================
 StepHeading("Final Report")
 
@@ -767,95 +680,11 @@ SaveDebugOutput(G::AssetsPath + "session.log")
 End ;}- <<< Main Ends Here <<<
 
 ;}==============================================================================
-;                                   PROCEDURES                                  
+;-                                  PROCEDURES                                  
 ;{==============================================================================
 
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;-> PROJECT DATA & ACCESS
-;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Procedure ScanFolder(List CategoriesL.Category(), PathSuffix.s = "")
-  ; ------------------------------------------------------------------------------
-  ; Recursively scan project folders and build the List of Categories.
-  ; ------------------------------------------------------------------------------
-  Static recCnt ; recursion level counter 
-  For i=1 To recCnt
-    Ind$ + " |" 
-  Next
-  recCnt +1
-  
-  Shared totCategories, totResources, totSubFRes
-  
-  If ExamineDirectory(recCnt, PathSuffix, "")
-    While NextDirectoryEntry(recCnt)
-      
-      entryName.s = DirectoryEntryName(recCnt)
-      entryDBG$ = Ind$ + " |-"
-      
-      If DirectoryEntryType(recCnt) = #PB_DirectoryEntry_File
-        entryDBG$ + "- " + entryName + "  "
-        fExt.s = GetExtensionPart(entryName)
-        
-        If fExt = "pb" Or fExt = "pbi"
-          AddElement( CategoriesL()\FilesToParseL() )
-          CategoriesL()\FilesToParseL() = entryName ; relative path
-          totResources +1
-          Debug entryDBG$, #DBGL3
-        Else
-          ; Ignore other PB extensions (*.pbp|*.pbf)
-          Debug entryDBG$ + "(ignore file)", #DBGL4
-        EndIf
-        
-      Else ; EntryType is Directory
-        
-        ; Folder-Ignore patterns
-        ; ----------------------
-        If entryName = "." Or entryName = ".." Or 
-           entryName = ".git" Or
-           Left(entryName, 1) = "_"
-          Debug entryDBG$ + "- /" + entryName + "/  (ignore folder)", #DBGL4
-          Continue 
-        EndIf
-        
-        If FileSize(PathSuffix + entryName + "/" + G::#CodeInfoFile) >= 0
-          ;  ================================          
-          ;- SubFolder is Multi-File Sub-Item
-          ;  ================================
-          AddElement( CategoriesL()\FilesToParseL() )
-          fName.s = entryName + "/" + G::#CodeInfoFile ; relative path
-          CategoriesL()\FilesToParseL() = fName
-          totResources +1
-          totSubFRes +1
-          Debug entryDBG$ + "- " + fName, #DBGL3
-        Else
-          ;  =========================
-          ;- SubFolder is Sub-Category
-          ;  =========================
-          AddElement( CategoriesL()\SubCategoriesL() )
-          CategoriesL()\SubCategoriesL() = entryName ; just the folder name
-          totCategories +1
-          Debug entryDBG$ + "+ /" + entryName + "/", #DBGL3          
-          ; -------------------------
-          ; Recurse into Sub-Category
-          ; -------------------------
-          entryPath.s = PathSuffix + entryName + "/"
-          PushListPosition( CategoriesL() )
-          AddElement( CategoriesL() )
-          CategoriesL()\name = entryName
-          CategoriesL()\Path = entryPath
-          ScanFolder(CategoriesL(), entryPath)
-          PopListPosition( CategoriesL() )
-        EndIf
-      EndIf
-      
-    Wend
-    FinishDirectory(recCnt)
-  EndIf
-  
-  recCnt -1
-  Debug Ind$, #DBGL3 ; adds separation after sub-folders ends
-EndProcedure
 
-;}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;-> PANDOC RELATED PROCEDURES
 ;{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
