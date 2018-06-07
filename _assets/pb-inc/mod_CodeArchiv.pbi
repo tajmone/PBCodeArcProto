@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.18 (2018/06/07) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.19 (2018/06/07) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -44,9 +44,9 @@ XIncludeFile "mod_G.pbi"
 ;        - [x] Call that procedure during each Category iteration
 ;              - [ ] Also allow opt param to restric categories by Level.
 ;        - [ ] ??? Call the procedure on iterations of curr Category's resources
-;              (extra param to optionally restrict call to some res types)
+;              - [ ] Also allow opt param to restric res types.
 ;        - [x] Call the procedure on iteration of every resource (regardless of
-;              categogires). 
+;              categories). 
 ;              - [ ] Also allow opt param to restric res types.
 ;  - [ ] ScanFolder():
 ;        - [x] While building Categories list, also build a Resources List.
@@ -55,12 +55,12 @@ XIncludeFile "mod_G.pbi"
 ;              were encountered during recursive scanning of folders. Possibly,
 ;              this should also be returned as a Bool value when exiting from the
 ;              top level Procedure call (so it can be used as an exit code).
-;  - [ ] Add public procedures:
+;  - [x] Add public procedures:
 ;        - [x] GetTree() -- return a str with Proj tree (Categories and Resources).
 ;        - [x] GetStats() -- return a resume str of Categories and Resources.
-;        - [ ] GetCategoriesL() -- returns a str with list of all Categories.
-;        - [x] GetRootCategoriesL() -- returns a str with list of all Root Categories.
-;        - [ ] GetResourcesL() -- returns a str with list of all Resources.
+;        - [x] GetCategories() -- returns a str with list of all Categories.
+;        - [x] GetRootCategories() -- returns a str with list of all Root Categories.
+;        - [x] GetResources() -- returns a str with list of all Resources.
 
 ;}
 
@@ -153,7 +153,9 @@ DeclareModule Arc
   Declare    ResourcesIteratorCallback( *CallbackProc )
   Declare.s  GetStats()
   Declare.s  GetTree()
+  Declare.s  GetCategories()
   Declare.s  GetRootCategories()
+  Declare.s  GetResources()
 EndDeclareModule
 
 Module Arc
@@ -377,11 +379,12 @@ Module Arc
         
         tmp2$ + G::#EOL + head$ + G::#EOL +
                 LSet("", Len(head$), "=") + G::#EOL
+        
         cnt = 1
         cntW = Len(Str(totErrConfig)) ; Width of max counter
         
         ForEach ErrConfigL()
-          tmp2$ + LSet(Str(cnt), cntW) + ". " + ErrConfigL() + G::#EOL
+          tmp2$ + G::CntStrM + ErrConfigL() + G::#EOL
           cnt +1
         Next
         
@@ -400,7 +403,7 @@ Module Arc
         cntW = Len(Str(totErrReadme)) ; Width of max counter
         
         ForEach ErrReadmeL()
-          tmp2$ + LSet(Str(cnt), cntW) + ". " + ErrReadmeL() + G::#EOL
+          tmp2$ + G::CntStrM + ErrReadmeL() + G::#EOL
           cnt +1
         Next
         
@@ -419,7 +422,7 @@ Module Arc
         cntW = Len(Str(totErrEmptyCats)) ; Width of max counter
         
         ForEach ErrEmptyCatsL()
-          tmp2$ + LSet(Str(cnt), cntW) + ". " + ErrEmptyCatsL() + G::#EOL
+          tmp2$ + G::CntStrM + ErrEmptyCatsL() + G::#EOL
           cnt +1
         Next
         
@@ -610,6 +613,34 @@ Module Arc
     
   EndProcedure
   
+  Procedure.s GetCategories()
+    ; ==========================================================================
+    ; Return a String Listing All Categories
+    ; ==========================================================================
+    ; Ideally, this procedure could take an optional parameter with flags to
+    ; enable more details in the output (eg: add a count of total resources in
+    ; each root category, and/or count of subcategories, etc.).
+    
+    ; TODO: Preserve and Restore Curr Cat List Position
+    Shared CategoriesL()
+    
+    TXT$ = "All Categories:" + G::#EOL2
+    
+    totCats = ListSize( CategoriesL() )
+    cntW = Len(Str(totCats)) ; Max Counter Width
+
+    cnt = 1
+    ForEach CategoriesL()
+      If CategoriesL()\Level = 0 : Continue : EndIf
+      TXT$ + "  " + G::CntStrM + "/" + CategoriesL()\Path + G::#EOL
+      cnt +1
+    Next
+    
+    ProcedureReturn TXT$
+    
+  EndProcedure
+  
+
   Procedure.s GetRootCategories()
     ; ==========================================================================
     ; Return a String Listing the Top-Level Categories
@@ -618,12 +649,44 @@ Module Arc
     ; enable more details in the output (eg: add a count of total resources in
     ; each root category, and/or count of subcategories, etc.).
     
+    ; TODO: Preserve and Restore Curr Cat List Position
+
     Shared RootCategoriesL()
+    
+    totCats = ListSize( RootCategoriesL() )
+    cntW = Len(Str(totCats)) ; Max Counter Width
+
     
     TXT$ = "Root Categories:" + G::#EOL2
     cnt = 1
     ForEach RootCategoriesL()
-      TXT$ + RSet(Str(cnt), 3, " ") + ". " + RootCategoriesL() + G::#EOL
+      TXT$ + "  " + G::CntStrM + "/" + RootCategoriesL() + "/" + G::#EOL
+      cnt +1
+    Next
+    
+    ProcedureReturn TXT$
+    
+  EndProcedure
+  
+  Procedure.s GetResources()
+    ; ==========================================================================
+    ; Return a String Listing all Resources
+    ; ==========================================================================
+    ; Ideally, this procedure could take an optional parameter with flags to
+    ; enable more details in the output.
+    
+    ; TODO: Preserve and Restore Curr Res List Position
+
+    Shared ResourcesL()
+    
+    totRes = ListSize( ResourcesL() )
+    cntW = Len(Str(totRes)) ; Max Counter Width
+
+    
+    TXT$ = "All Resouces:" + G::#EOL2
+    cnt = 1
+    ForEach ResourcesL()
+      TXT$ + "  " + G::CntStrM + ResourcesL()\Path + G::#EOL
       cnt +1
     Next
     
@@ -825,18 +888,31 @@ CompilerIf #PB_Compiler_IsMainFile
   ; Show Statistics
   ; ------------------------------------------------------------------------------
   Debug G::#DIV1$
-  Debug "CodeArchiv Info Procedures" + #LF$ + G::#DIV1$
+  Debug "CodeArchiv Info Helpers" + #LF$ + G::#DIV1$
+  Debug ~"Here are some examples of the helper procedures offered by this module to " +
+        ~"provide\ninfo about the CodeArchiv as preformatted strings."
   
+  Debug G::#DIV2$
   Debug "CodeArchiv statistics résumé via `Arc::GetStats()`:" + #LF$
   Debug Arc::GetStats()
   
+  Debug G::#DIV2$
   Debug "List of Root Categories (Top-level) via `Arc::GetRootCategories()`:" + #LF$
   Debug Arc::GetRootCategories()
   
+  Debug G::#DIV2$
+  Debug "List of all Categories via `Arc::GetCategories()`:" + #LF$
+  Debug Arc::GetCategories()
+  
+  Debug G::#DIV2$
+  Debug "List of all Resources via `Arc::GetResources()`:" + #LF$
+  Debug Arc::GetResources()
+    
   ; Show Tree
+  Debug G::#DIV2$
   Debug "CodeArchiv project Tree:" + #LF$
   Debug Arc::GetTree()
-    
+  
   ; TEST RESOURCES LIST
   ; ===================
   Debug LSet("", 80, "=")
@@ -956,6 +1032,11 @@ CompilerEndIf
 
 ;{- CHANGELOG
 ;   =========
+; v0.0.19 (2018/06/07)
+;      - Implement helper procedures:
+;        - GetCategories()
+;        - GetResources()
+;      - Use the new macro G::CntStrM to format counters of numbered lists in strings.
 ; v0.0.18 (2018/06/07)
 ;      - Implement GetTree() -- returns an Ascii-Art Tree str of the CodeArchiv
 ;        structure (Categories and resources).

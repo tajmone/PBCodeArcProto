@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_G.pbi" v0.0.12 (2018/06/06) | PureBASIC 5.62 | MIT License
+; "mod_G.pbi" v0.0.13 (2018/06/07) | PureBASIC 5.62 | MIT License
 
 ; Stores Data shared by any tool dealing with CodeArchiv and its resources.
 
@@ -88,7 +88,7 @@ DeclareModule G
 
   ;}============================================================================
   ;                       CROSS-MODULE REGEX ENUMERATIONS
-  ; ============================================================================
+  ;{============================================================================
   ; (RegExs IDs are "global" and module independent)
   ; Declare a common RegEx Enumeration Identifier to keep track of the RegExs ID
   ; across modules, otherwise Enums will start over from 0 and overwrite existing
@@ -103,7 +103,24 @@ DeclareModule G
   Enumeration RegExsIDs
     ; This Enum block it's empty because here we only need to set the Enum ID.
   EndEnumeration
-
+  
+  ;}============================================================================
+  ;                                     MACROS                                    
+  ; ============================================================================
+  
+  ; ====================
+  ; Counter String Macro
+  ; ====================
+  ; String helper for generating an aligned counter for numbered lists strings.
+  ; Requires the following vars to be set:
+  ;   - cnt  : (int) counter number.
+  ;   - cntW : (int) number of digits of the highest counter.
+  ; Converts a numeric counter (cnt) to a string aligned according to the number
+  ; of digits of the highest entry (cntW), followed by a trailing dot and space.
+  Macro CntStrM
+    RSet(Str(cnt), cntW) + ". "
+  EndMacro
+  
   ; ----------------------------------------------------------------------------
   ;                        Horizontal Dividers Constants
   ; ----------------------------------------------------------------------------
