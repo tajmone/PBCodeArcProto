@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_CodeArchiv.pbi" v0.0.17 (2018/06/07) | PureBASIC 5.62 | MIT License
+; "mod_CodeArchiv.pbi" v0.0.18 (2018/06/07) | PureBASIC 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; CodeArchiv's Categories and Resources data and functionality API.
 ; Shared by any CodeArchiv tools requiring to operate on the whole project.
@@ -56,7 +56,7 @@ XIncludeFile "mod_G.pbi"
 ;              this should also be returned as a Bool value when exiting from the
 ;              top level Procedure call (so it can be used as an exit code).
 ;  - [ ] Add public procedures:
-;        - [ ] GetTree() -- return a str with Proj tree (Categories and Resources).
+;        - [x] GetTree() -- return a str with Proj tree (Categories and Resources).
 ;        - [x] GetStats() -- return a resume str of Categories and Resources.
 ;        - [ ] GetCategoriesL() -- returns a str with list of all Categories.
 ;        - [x] GetRootCategoriesL() -- returns a str with list of all Root Categories.
@@ -551,6 +551,62 @@ Module Arc
     ; ==========================================================================
     ; Return a String with the CodeArchiv's Structure Ascii Tree
     ; ==========================================================================
+    Shared CategoriesL()
+    Define.s tree, ind
+    ; --------------------------------------
+    ; Preserve Curr Categories List Position
+    ; --------------------------------------
+    ; (make no assumption on what the main code/tool is doing)
+    PushListPosition( CategoriesL() )
+    
+    With CategoriesL()
+      ForEach CategoriesL()
+        catLev = \Level
+        If catLev ; Skip Root Cat
+          
+          ; Indentation for SubCategories
+          If catLev = 2
+            ind = " |"
+          Else
+            ind = ""
+          EndIf
+          ; --------------------------------------
+          ; Add Separation Line Between Tree Nodes
+          ; --------------------------------------
+          If CatLev < lastLev
+            ; We've finished parsing a SubCategory...
+            tree + " |" + G::#EOL
+          ElseIf CatLev >= lastLev And
+                 ; We're either carrying on parsing a Cat/SubCat
+                 ; or entering into a SubCategory...
+            lastLev <> 0 ; <- Skip first iteration
+            For i=1 To catLev
+              tree + " |"
+            Next
+            tree + G::#EOL
+          EndIf
+          ; ---------------
+          ; Add Folder Node
+          ; ---------------
+          tree + ind + " |-+ /" + \Name + "/" + G::#EOL
+          ; -------------------
+          ; Add Resource Leaves
+          ; -------------------
+          ForEach \FilesToParseL()
+            tree + ind + " | |-- " + \FilesToParseL() + G::#EOL
+          Next
+          
+          lastLev = catLev
+          
+        EndIf
+      Next
+    EndWith
+    ; --------------------------------
+    ; Restore Categories List Position
+    ; --------------------------------
+    PopListPosition( CategoriesL() )
+    
+    ProcedureReturn tree
     
   EndProcedure
   
@@ -587,9 +643,6 @@ Module Arc
     ; TODO: Debug info of this procedure should be either removed or stored in
     ;       a string for optional use; else I could use a constant to check if
     ;       it should be shown or not.
-    
-    Debug ">>> ScanFolder()", #DBGL4
-    
     Shared CategoriesL(), ResourcesL()
     Shared info
     
@@ -719,9 +772,7 @@ Module Arc
           ;       module. Should it interface this failure with mod_Error?
     
     recCnt -1
-    Debug Ind$, #DBGL3 ; adds separation after sub-folders ends
-    
-    Debug "<<< ScanFolder()", #DBGL4
+    Debug Ind$, #DBGL4 ; adds separation after sub-folders ends
   EndProcedure
   
 EndModule
@@ -782,6 +833,10 @@ CompilerIf #PB_Compiler_IsMainFile
   Debug "List of Root Categories (Top-level) via `Arc::GetRootCategories()`:" + #LF$
   Debug Arc::GetRootCategories()
   
+  ; Show Tree
+  Debug "CodeArchiv project Tree:" + #LF$
+  Debug Arc::GetTree()
+    
   ; TEST RESOURCES LIST
   ; ===================
   Debug LSet("", 80, "=")
@@ -899,8 +954,11 @@ CompilerIf #PB_Compiler_IsMainFile
   
 CompilerEndIf
 
-;{ CHANGELOG
-;  =========
+;{- CHANGELOG
+;   =========
+; v0.0.18 (2018/06/07)
+;      - Implement GetTree() -- returns an Ascii-Art Tree str of the CodeArchiv
+;        structure (Categories and resources).
 ; v0.0.17 (2018/06/07)
 ;      - Rename all `ShowXXX()` procedure to `GetXXX()`, because the term `Show`
 ;        doesn't reflect what they do (they return strings, not display them):

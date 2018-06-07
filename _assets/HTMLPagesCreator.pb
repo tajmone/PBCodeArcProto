@@ -5,7 +5,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "HTMLPagesCreator.pb" v0.1.8 (2018/06/07) | PureBasic 5.62 | MIT License
+; "HTMLPagesCreator.pb" v0.1.9 (2018/06/07) | PureBasic 5.62 | MIT License
 ; ------------------------------------------------------------------------------
 ; Scans the project's files and folders and automatically generates HTML5 pages
 ; for browsing the project online (via GitHub Pages website) or offline.
@@ -49,10 +49,12 @@
 ;                - Errors       (ask user if he wants to continue)
 ;} -- TODOs LIST «««------------------------------------------------------------
 
-;{ CHANGELOG
-;  =========
-;  For the full changelog, see "HTMLPagesCreator_changelog.txt"
+;{- CHANGELOG
+;   =========
+;   For the full changelog, see "HTMLPagesCreator_changelog.txt"
 ;
+; v0.1.9 (2018/06/07)
+;    - STEP 1 :: Display Archive Tree using the new Arc::GetTree() proc.
 ; v0.1.8 (2018/06/07)
 ;    - Change Arc::ShowStats() to Arc::GetStats() --- mod_CodeArchiv renamed it.
 ; v0.1.7 (2018/06/07)
@@ -218,10 +220,15 @@ Err = Arc::ScanProject()
 ; ====================
 ; Show CodeArchiv Info
 ; ====================
-Debug G::#DIV2$ + G::#EOL + "CodeArchiv Info" +  G::#EOL + G::#DIV2$
-Debug "Project statistics:"
+Debug G::#DIV2$ + G::#EOL + "CodeArchiv Info" + G::#EOL + G::#DIV2$ + G::#EOL
+
+Debug ~"Project statistics\n"+
+      ~"==================\n"
 Debug Arc::GetStats()
-; TODO: Show Proj Tree...
+
+Debug ~"CodeArchiv Tree\n"+
+      ~"===============\n"
+Debug Arc::GetTree()
 
 ; =====================
 ; Eval Integrity Checks
