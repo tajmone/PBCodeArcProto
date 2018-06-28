@@ -12,7 +12,8 @@
 
 - [Tool Info](#tool-info)
     - [Check Operations](#check-operations)
-    - [Unclear Points](#unclear-points)
+- [Some Considerations](#some-considerations)
+    - [Compiler checks](#compiler-checks)
 
 <!-- /MarkdownTOC -->
 
@@ -39,12 +40,19 @@ The CodesChecker performs the following actions:
 
 - Check code syntax via the compiler syntax checker (`--check --thread`):
     + Ignore code files that don't support the running OS — this is checked by scanning file name via RegEx that looks for presence of:
+
         * `\[.*Win.*\]`
         * `\[.*Lin.*\]`
         * `\[.*Mac.*\]`
+    
+        If the filename doesn't contain any OS reference, than it's assumed to be for all OSs, otherwise it must contain a ref to the currently running OS.
+
 - Check for errors in the resource headers ("`*.pb`", "`*.pbi`", "`CodeInfo.txt`"):
+
     + check that a code header-comments block is present
-    + check that the following keys are present:
+
+    + check that the values for the following keys are present:
+
         * `Author`
         * `Date`
         * `Description`
@@ -52,27 +60,26 @@ The CodesChecker performs the following actions:
         * `French-Forum`
         * `German-Forum`
         * `OS`
+
     + check well-formedness of values for the following keys:
         * `Date` » `^\d{4}-\d{2}-\d{2}$` (= `YEAR-MM-DD`)
 
 - If resource is an include file ("`*.pbi`"):
+
     + Check for presence of `CompilerIf #PB_Compiler_IsMainFile` block
 
-## Unclear Points
 
-I haven't worked out how the current tool behaves in some circumstances, and at the same time I'm asking here how it should behave in its updated version:
+# Some Considerations
 
-- Compiler checks:
-    + How are `CodeInfo.txt` resources handled? The tool has no way to know which is the main file in this case.
-    + How are code resources for other OSs checked? Are they just ignored?
-- Code headers:
-    + Is the order of the required key entries relevant? (or, should it be so?)
-    + Can extra custom keys be inserted between the required keys, as long as they don't affect their relative order?
-    + Should the required-keys checks allow empty values?
-        * Obviously, some keys are differnt from others: `Author` looks like it should always have a value, but others like the Forum keys are likely to be empty.
+Some personal comments on how this (old) tools works, and potential limitations/issues, in order to reason how it should behave in its updated version:
+
+## Compiler checks
 
 
++ Some subfoldered resources might contain multiple PB source/inc files, the tool has no way to know which is the main file in this case. The tools simply skips this check on `CodeInfo.txt` resources.
++ Code resources for other OSs are just ignored by this tool; but should the new version always run the PB Compiler check syntax? (see [Issue #10] for a discussion on this)
 
+[Issue #10]: https://github.com/tajmone/PBCodeArcProto/issues/10#issuecomment-386054821
 
 [Checker.pb]: ./CodesChecker.pb
 [Cleaner.pb]: ./CodesCleaner.pb

@@ -244,7 +244,7 @@ Module Arc
     ; Check integrity of the CodeArchiv project structure and settings
     ;{--------------------------------------------------------------------------
     ;  1. Check that "_assets/meta.yaml" file exists and is not 0 Kb.
-    ;  2. Check that every category has a "REAMDE.md" file.
+    ;  2. Check that every category has a "REAMDE.md" file and is not 0 Kb.
     ;  3. Check that every category contains resources.
     ; --------------------------------------------------------------------------
     ; - Returns the number of errors found (if any).

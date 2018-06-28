@@ -16,9 +16,19 @@
 
 ;- TODO LIST -------------------------------------------------------------------
 ;{ =========
-; TODO: 
+; [ ] Integrate the code from "HTMLPagesCreator.pb" that deals with parsing
+;     resources comments headers.
+;     [ ] 
+; [ ] Integrate functionality from Sicro's old "CodesChecker.pb":
+;     [ ] Check code syntax via the compiler syntax checker (--check --thread).
+;     [ ] Check for presence of `CompilerIf #PB_Compiler_IsMainFile` block in
+;         include file resources (*.pbi).
+;     [ ] Check for settings at the end of source file.
+;     [ ] 
+; [ ] Integrate functionality from Sicro's old "CodesCleaner.pb":
+;     [ ] Remove any settings at the end of source file.
+;     [ ] 
 ;}
-
 
 ; ******************************************************************************
 ; *                                                                            *
@@ -56,7 +66,7 @@ EndModule
 ;{  =========
 ;
 ; v0.0.1 (2018/06/07)
-;   -  
+;   - Created module boilerplate (no fucntionality).
 ;}
 
 

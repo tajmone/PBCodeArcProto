@@ -32,13 +32,11 @@
 
 ## Clean Operations
 
-(_trying to work out what it does by looking at the source file, so the list might not reflect the exact workings of the tool_)
-
-The CodesCleaner performs the following actions:
+The CodesCleaner performs a single action:
 
 - Remove any settings at the end of source file
 
-... as far as I can tell from a quick read of the code, this is all it does.
+The way it does it is by copying the source file to a temporary file, line by line, until the line "`; IDE Options = PureBasic`" is found — in this case, the temporary file replaces the original file.
 
 
 
