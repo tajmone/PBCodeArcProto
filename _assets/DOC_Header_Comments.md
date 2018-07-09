@@ -1,6 +1,6 @@
 # HTMLPagesCreator: Comment Parsing
 
-Documentation on how header-comments in source files are parsed by the __HTMLPagesCreator__ app.
+Documentation on the header-comments system used in CodeArchiv resource files for storing information that will be parsed by the __HTMLPagesCreator__ app (and by other maintainers/contributors tools).
 
 
 -----

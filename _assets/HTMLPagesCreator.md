@@ -1,6 +1,6 @@
 # HTMLPagesCreator: Introduction
 
-Documentation on the __HTMLPagesCreator__ app works.
+Documentation on how the __HTMLPagesCreator__ app works.
 
 
 -----
@@ -32,9 +32,9 @@ Currently, all source files already contain a commented header block with all th
 
 The idea is to implement a parsing system that can extract this info with very little modifications to current headers.
 
-The details on how the comments parser works are documented in:
+The details on how the header comments system and how its parser works are documented in:
 
-- [`DOC2_Comments_Parsing`](./DOC2_Comments_Parsing)
+- [`DOC_Header_Comments.md`](./DOC_Header_Comments.md)
 
 # Sections Metadata
 

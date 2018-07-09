@@ -14,9 +14,9 @@ Based on the original discussion with [@SicroAtGit] in [Issue #5].
 
 Project organization:
 
-- [`/_assets/`](./_assets) — the actual __HTMLPagesCreator__ code + HTML assets
-- [`/_tempwork/`](./_tempwork) — isolated code work
-- [`/_morgue/`](./_morgue) — left-over temp code
+- [`/_assets/`](./_assets) — the actual __HTMLPagesCreator__ code + HTML assets, and other maintainers/contributors tools.
+- [`/_tempwork/`](./_tempwork) — isolated code work.
+- [`/_morgue/`](./_morgue) — left-over temp code.
 
 the remaining folders are contents taken from the PureBasic CodeArchiv Rebirth project to test the app.
 
