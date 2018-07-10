@@ -10,6 +10,10 @@ Prototyping a cache system for the HTML Pages Builder.
 <!-- MarkdownTOC autolink="true" bracket="round" autoanchor="false" lowercase="only_ascii" uri_encoding="true" levels="1,2,3" -->
 
 - [Introduction](#introduction)
+    - [Caching Challenges](#caching-challenges)
+    - [What Needs to Be Cached?](#what-needs-to-be-cached)
+    - [Caching Resources Data](#caching-resources-data)
+    - [Avoiding Redundant File Accesses](#avoiding-redundant-file-accesses)
 - [Fingerprinting](#fingerprinting)
     - [PB Cipher Lib](#pb-cipher-lib)
     - [Alogrithms Comparison](#alogrithms-comparison)
@@ -37,6 +41,59 @@ Prototyping a cache system for the HTML Pages Builder.
 Because of the numerous integrity checks that Pages Builder has to carry out, and due to the large (and growing) number of resource files hosted in the [PureBasic CodeArchiv Rebirth] project, a cache system seems inevitable to optimize checks and build operations down to a reasonable execution time. Also, the various checks and preparatory stages for building the HTML website introduce redundant file access operations which could benefit greatly from caching and memoization.
 
 Having not worked with cache systems before, I'll be collecting here links to external resources on the topic as well as notes of interest.
+
+## Caching Challenges
+
+The need to introduce a cache system has brought in a series of new challenges which (alongside the problems introduced with modularization of code) have considerably slowed down the development of this project — whereas the standalone __HTMLPagesCreator__ app was almost production ready, the new system of independent modules shared by different tools has added a lot of complexity to the code, and the need to abstract into modules functions which were previously implement in a linear fashion. When working on modular code, PureBasic's intrinsic limitations as a language start to show up, and the code gets really verbose. 
+
+The main problem with the caching system is that it's going to affect the development of the resources modules from its onset — so much so that it might not be worthy writing the res module without the caching system in place, for the risk would be to have to rewrite the whole thing from scratch.
+
+## What Needs to Be Cached?
+
+So far, there are only two aspects of the project which are worth caching, and they both pertain to resources:
+
+- resources' header metadata (key-vals)
+- resources' HTML cards
+
+The latter depends on the former (ie, if the former has changed the latter should be rebuilt too). So, for the moment we'll only focus on the former.
+
+## Caching Resources Data
+
+For the purpose of manipulating resources metadata, all the app needs is access to the list of key-value pairs (string) which results from parsing the header comments. 
+
+Since this metadata is simply a structured List where each entry holds two strings (key and val), caching the data is easily achieved by iterating through the list and saving every string in the pair to file via `WriteStringN()`. Retriving the cached metadata is just a matter of reading the file one line at the time via `ReadString()` and populating the List until there is data. For an example implementation, see:
+
+- [`cache-write-metadata.pb`](./cache-write-metadata.pb)
+- [`cache-read-metadata.pb`](./cache-read-metadata.pb)
+- [`cached`](./cached) (the cached data)
+
+
+The cache should save the List in into a file whose name is the MD5 checksum of the resource file. This way, the cache system will only need to fingerprint a resource file and look for the presence of a corresponding file named with MD5 hash of the resource:
+
+- if a file named as the MD5 has of the resource it means that the resource had passed all tests and was cahced; 
+- if not, it means that either:
+    + the last time the resource was validated it failed some tests
+    + the resource file was changed since its last chaching
+
+This approach is simple, and it allows to retrive the cached binary metadata of the resource and skip all validation and processing steps when cached data is available, otherwise the usual processing steps will need to be carried out.
+
+
+
+## Avoiding Redundant File Accesses
+
+Resource files might be accessed more than once by some tools:
+
+- Resource integrity checks:
+    + header comments are extracted, parsed and validated
+    + the whole file (if a PB source) is parsed to check for:
+        * correct enconding
+        * presence of compiler options
+        * presence of `CompilerIf #PB_Compiler_IsMainFile` block (PB inc files only)
+- HTML page creation:
+    + header comments are extracted, parsed and validated
+    + HTML card is generated from extracted key-vals
+
+It's clear from the above list that without a cache system there could be a huge overhead of multiple file accesses, parsing and computations. Every procedure used to carry out any of the above passages should try to retrive cached data if available, and all checks should be reported as having passed if a cached file is present for the resource.
 
 # Fingerprinting
 

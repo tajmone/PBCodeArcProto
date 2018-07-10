@@ -18,6 +18,7 @@ Some notes on how to convert the current [`HTMLPagesCreator.pb`][HTMLPagesCreato
         - [Required Vars Access](#required-vars-access)
         - [Some Considerations...](#some-considerations)
     - [Resources module](#resources-module)
+        - [Resources Integrity Checks](#resources-integrity-checks)
 - [Notes on Modules Usage](#notes-on-modules-usage)
     - [Global Enumerators](#global-enumerators)
 - [New Converter Goal](#new-converter-goal)
@@ -218,7 +219,18 @@ Currently an empty module that does nothing.
 
 Eventually, it will offer an interface to manage and query all the resources of the CodeArchiv — and behind the scenes, it will also handle caching the parsed resources output to speed up processing time (See [Issue #18]).
 
-[Issue #18]: https://github.com/tajmone/PBCodeArcProto/issues/18 "Caching Proposal & Ideas #18"
+### Resources Integrity Checks
+
+These are the integrity checks that the module should carry out on each resource:
+
+- 
+
+
+See also:
+
+- [Issue #10  — Integrating The Old Tools][Issue #10]
+- [Issue #18  — Caching Proposal & Ideas][Issue #18]
+
 
 --------------------------------------
 
@@ -497,10 +509,19 @@ The details of how these are going to be implemented are yet to be established, 
 With this in mind, I should start to move all resource related functionality to an independent module, even if it doesn't take care of optimizations at the onset — as long as it won't break its usage when these are introduced.
 
 
-<!-- REEFERENCE LINKS -->
+
+<!-----------------------------------------------------------------------------
+                               REFERENCE LINKS                                
+------------------------------------------------------------------------------>
+
 
 [HTMLPagesCreator]: ./HTMLPagesCreator.pb
 [mod_CodeArchiv]: ./pb-inc/mod_CodeArchiv.pbi "View sourcefile of CodeArchiv module"
 [mod_Errors]:     ./pb-inc/mod_Errors.pbi "View sourcefile of Errors module"
 [mod_G]:          ./pb-inc/mod_G.pbi "View sourcefile of Global module"
 [mod_Resources]:  ./pb-inc/mod_Resources.pbi "View sourcefile of Resources module"
+
+<!-- GitHub Issues -->
+
+[Issue #10]: https://github.com/tajmone/PBCodeArcProto/issues/10 "Issue #10 — Integrating The Old Tools"
+[Issue #18]: https://github.com/tajmone/PBCodeArcProto/issues/18 "Issue #18 — Caching Proposal & Ideas"
