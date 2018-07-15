@@ -18,6 +18,11 @@ Prototyping a cache system for the HTML Pages Builder.
     - [PB Cipher Lib](#pb-cipher-lib)
     - [Alogrithms Comparison](#alogrithms-comparison)
 - [Tracking Files/Folder Changes](#tracking-filesfolder-changes)
+    - [Detecting Category Changes](#detecting-category-changes)
+        - [Desired Changes-Detection Level](#desired-changes-detection-level)
+        - [Test App](#test-app)
+        - [Test App Results Analysis](#test-app-results-analysis)
+    - [Monitoring Folder Changes via Events](#monitoring-folder-changes-via-events)
     - [PureBasic Commands](#purebasic-commands)
         - [File Changes](#file-changes)
         - [Time-Stamping](#time-stamping)
@@ -26,8 +31,6 @@ Prototyping a cache system for the HTML Pages Builder.
         - [fswatch](#fswatch)
     - [The Windows archive bit](#the-windows-archive-bit)
 - [PB Tests TODOs List](#pb-tests-todos-list)
-    - [Files Finger Printing](#files-finger-printing)
-    - [DirectoryEntryDate\(\)](#directoryentrydate)
 - [Reference Links](#reference-links)
     - [Wikipedia](#wikipedia)
     - [PureBasic Documentation](#purebasic-documentation)
@@ -135,13 +138,92 @@ See also:
 
 # Tracking Files/Folder Changes
 
-Because some tools will allow to carry out project scanning and HTML pages conversion in different steps, a system should be implemented to check if folders and files have been changed since the last project scan --- the project scanner functions and cache system could also benefit from this by allow further scans of the project/cache to avoid redundant operations.
+Because some tools will allow to carry out project scanning and HTML pages conversion in different steps, a system should be implemented to check if folders and files have been changed since the last project scan --- the project scanner functions and cache system could also benefit from this by allowing further scans of the project/cache to avoid redundant operations.
 
 I must tread carefully with this feature, as different OSs might handle this feature differently. So, great care must be taken to make sure that tracking changes works on all supported OSs, especially if resorting to OS native functionality.
 
 Most likely, the simplest approach is to just check that a single resource hans't changed before employing it — especially before critical operations that would rely on the cached data, but it might also affect tracking resources count and iterating them (eg, if a resource was deleted or renamed).
 
-Ideally, events could be used to track if the categories folder has been changed, and trigget some background function to detect significant changes and update the cache and the current data in memory. This might require OS specific code branching, or an external library tool, so unless it's strictly needed I should avoid it (at least for now) — but for the sake of completeness, links to such libraries are provided below.
+## Detecting Category Changes
+
+The CodeArchiv has only two depth of categories:
+
+- Categories (in root folder)
+    + Sub-Categories (one level down)
+
+Ideally, the project scanner should detect if a Category was changed by comparing the current `#PB_Date_Modified` attribute of the Category folder to the value stored during the last access. 
+
+Unfortunately, as the tests on Windows OS have show (see below), a folder's `#PB_Date_Modified` attribute doesn't reflect all expected file-changes cases:
+
+- File contents changes don't affect this attribute
+- Changes inside subfolders don't affect this attribute
+
+So, in order to achieve the desired goal we'd need to implement a custom procedure to ensure that changes are monitored as required by our project.
+
+### Desired Changes-Detection Level
+
+This would be the ideal changes detection system for checking if a Category (or one of its Sub-Categories) has changed:
+
+- for every watched _Category_ folder, report as changes:
+    + whenever a __file__ has been:
+        * added
+        * renamed
+        * deleted
+        * changed (its contents)
+    + whenever a __subfolder__ (ie, either _Sub-Category_ or a _Folder Resource_) has been:
+        * added
+        * renamed
+        * deleted
+        * changed (its contents) — ie, one of its __files__ has been:
+            - added
+            - renamed
+            - deleted
+            - changed (its contents)
+
+
+### Test App
+
+I've created a small app to test that directory changes are accurately detected:
+
+- [`detect-folder-changes.pb`][detect-folder-changes.pb]
+
+The app provides a button that on every click reads the `#PB_Date_Modified` attribute of the "`test`" folder. The purpose is to check that the folder's  `#PB_Date_Modified` effectively changes when any of the conditions listed in the following table occur:
+<!-- 
+    YES: &#x2705;
+    NOT: &#x274C;
+-->
+
+|            change type            |   Win    | Linux | macOS |
+|-----------------------------------|----------|-------|-------|
+| new file is added                 | &#x2705; |       |       |
+| file contents changed             | &#x274C; |       |       |
+| file is renamed                   | &#x2705; |       |       |
+| file is deleted                   | &#x2705; |       |       |
+| subfolder is added                | &#x2705; |       |       |
+| subfolder is renamed              | &#x2705; |       |       |
+| subfolder is deleted              | &#x2705; |       |       |
+| subfolder » new file is added     | &#x274C; |       |       |
+| subfolder » file contents changed | &#x274C; |       |       |
+| subfolder » file is renamed       | &#x274C; |       |       |
+| subfolder » file is deleted       | &#x274C; |       |       |
+
+
+The columns "__Win__", "__Linux__" and "__macOS__" indicate whether the condition of the "__change type__" column (on their left) was tested on that OS — "yes" and "no" are used to indicate if the test passed or failed.
+
+The above condititions mimick the possible changes to a Category's folder which we'd need to detect during CodeArchiv refresh operations. We must be 100% sure that none of the above changes ever goes undetected (eg, due to OS caching, delayed flushing, etc) --- the end user might be editing resource files with any kind of editor, making changes while the CodeArchiv tools are running.
+
+### Test App Results Analysis
+
+Looking at the results of the tests on Windows OS, it's clear that the native 'Date Modified' attribute is not enough for our needs — even if the tests were to pass on Linux and macOS, in order to implement a cross platform safe functionality we'd need to write a custom module to handle this (or consider a third party library).
+
+Clearly, any changes occuring inside a subfolder don't affect the folder's  `#PB_Date_Modified` attribute — therefore, Sub-Categories would have to be checked individually. But this is not a huge deal.
+
+The real problem is that  `#PB_Date_Modified` doesn't track content changes of one of it's file (only renaming and deletetion), so if a source code resource file was to be changed, checking the Category's `#PB_Date_Modified` won't tell us about it — and this means that the `#PB_Date_Modified` attribute of every single resource file would have to cheked individually, which defeats the whole purpose of checking if the Category folder `#PB_Date_Modified` has changed.
+
+
+## Monitoring Folder Changes via Events
+
+Ideally, events could be used to track if the categories folder has been changed, and trigger some background function to detect significant changes and update the cache and the current data in memory. This might require OS specific code branching, or an external library tool, so unless it's strictly needed I should avoid it (at least for now) — but for the sake of completeness, links to such libraries are provided below.
 
 ## PureBasic Commands
 
@@ -172,6 +254,14 @@ This would be a good way to track just the main project's folder (instad of ever
 
 I vaguely remember having read that the three OSs behave differently in this respect (and that there were some limitations with Windows, but I might be wrong on this one), so this must verified before implementing. Unfortunately, macOS testing is always a problem with cross platform projects (for a lack of contributors who could test it for us).
 
+#### `DirectoryEntryDate()` Problems
+
+> **IMPORTANT!!!**
+
+I've tested the `DirectoryEntryDate()` command and discovered that it will always return the value of the attribute as it was at the time `ExamineDirectory()` was invoked! This means that it can't be used to track changes without first using `FinishDirectory()` and invoking a new `ExamineDirectory()`.
+
+
+
 ### Time-Stamping
 
 PureBasic doesn't seem to have dedicated time-stamp commands, but these can easily be achieved via the [Date library] and the [`FormatDate()`][FormatDate()] command:
@@ -193,7 +283,14 @@ Mask$   The mask used to format the date. The following tokens in the mask
 Date    The date value to use.  
 ```
 
+In my test app, I've converted the `#PB_Date_Modified` date to a human readable string this way:
 
+```purebasic
+#TSForm$ = "%yyyy-%mm-%dd %hh:%ii:%ss" ; TimeStamp format
+FormatDate(#TSForm$, DirectoryEntryDate(0, #PB_Date_Modified))
+```
+
+... so it's a quick operation that can be achieved on a single line (maybe using a Macro).
 
 ## Monitoring File Changes Under Windows
 
@@ -240,21 +337,11 @@ See:
 
 # PB Tests TODOs List
 
-## Files Finger Printing
+Some PureBasic tests which need to be performed:
 
-Some tests need to be carried out for fingerprinting files with PB using MD5. 
-
-## DirectoryEntryDate()
-
-The following tests must be carried out for the [`DirectoryEntryDate(#Directory, #PB_Date_Modified)`][DirectoryEntryDate()] command:
-
-- [ ] Check that if a file inside that folder (or its subfolders) is changed the folder's `#PB_Date_Modified` attribute is changed too in:
-    + [ ] Windows
-    + [ ] Linux
-    + [ ] macOS
-
-If not, it means that all the critical project files need to be tracked individually (or a custom procedure has to be written, leveraging each OS API).
-
+- [ ] fingerprinting files via [Cipher library], using MD5.
+- [x] test reliability of `DirectoryEntryDate()` (result: _**unreliable!!!**_)
+- [x] test caching extracted key-vals from Headers (result: **successful!!!**)
 
 
 -------------------------------------------------------
@@ -295,6 +382,10 @@ If not, it means that all the critical project files need to be tracked individu
 ------------------------------------------------------------------------------>
 
 [PureBasic CodeArchiv Rebirth]: https://github.com/SicroAtGit/PureBasic-CodeArchive-Rebirth
+
+<!-- local files -->
+
+[detect-folder-changes.pb]: ./detect-folder-changes.pb
 
 <!-- WIKIPEDIA -->
 
