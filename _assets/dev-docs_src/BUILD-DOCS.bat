@@ -1,4 +1,4 @@
-:: "BUILD-DOCS.bat" v1.0.0 (2018/09/05) by Tristano Ajmone
+:: "BUILD-DOCS.bat" v1.0.1 (2018/09/05) by Tristano Ajmone
 :: -----------------------------------------------------------------------------
 :: This script is released into public domain via the Unlicense:
 ::     http://unlicense.org/
@@ -10,7 +10,7 @@ ECHO ===========================================================================
 ECHO                   Converting CodeArchiv Dev Docs to HTML ...                  
 ECHO ==============================================================================
 :: Preserve current folder:
-SET "_STARTFOLD=%CD%"
+SET "_STARTFOLD=%~dp0"
 CD ../
 :: Set some required vars
 SET "_BASEDIR=%CD%\"
@@ -32,7 +32,7 @@ EXIT /B
 
 CALL asciidoctor^
   -a data-uri^
-  --safe-mode safe^
+  --safe-mode unsafe^
   --verbose^
   %1
 EXIT /B

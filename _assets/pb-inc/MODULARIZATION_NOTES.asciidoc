@@ -1,7 +1,7 @@
 = MODULARIZATION NOTES
-:revnumber: 1.0.0
+:revnumber: 1.0.1
 :revdate:   September 5, 2018
-:revremark: Modularization dev notes
+:revremark: dev-notes
 :doctype: article
 :encoding: utf-8
 :lang: en
@@ -24,12 +24,6 @@
 // *                            Document Preamble                              *
 // *                                                                           *
 // *****************************************************************************
-
-[subs=attributes+]
-..................................
-Doc version: {revnumber}
-Last edited: {revdate}
-..................................
 
 .About This Document
 ********************************************************************************
@@ -77,9 +71,11 @@ This module (`G::`) holds data commonly shared by all tools.
 
 * link:./mod_CodeArchiv.pbi[`mod_CodeArchiv.pbi`^]
 
-________________________________________________________________________________
+[NOTE]
+================================================================================
 This section was last updated according to `mod_CodeArchiv.pbi` *v0.0.19* (2018/06/07)
-________________________________________________________________________________
+================================================================================
+
 
 This module (`Arc::`) is intended as an interface for all tools to handle the CodeArchiv categories and resources:
 
@@ -161,11 +157,13 @@ The Errors Tracker needs to access the following vars, which will have to be pla
 |`currRes` |string |`Err::`*
 |====================================
 
-________________________________________________________________________________
-**NOTE** -- `currCat` and `currRes` might be needed by other modules too, so I might need to move them in some common module later on. Since they refer to processing categories, they don't belong in G mod (which some tools might use for processing single resources only, like Codes Checker, etc.), so I should think of creating a module to store project-wide data (categories, etc.).
+[NOTE]
+================================================================================
+`currCat` and `currRes` might be needed by other modules too, so I might need to move them in some common module later on. Since they refer to processing categories, they don't belong in G mod (which some tools might use for processing single resources only, like Codes Checker, etc.), so I should think of creating a module to store project-wide data (categories, etc.).
 
 For now, I just place them in Err mod so I can go ahead with the work, and after all this is the module that deals with tracking processing, so it might even be OK to keep them here.
-________________________________________________________________________________
+================================================================================
+
 
 [[some-considerations]]
 ==== Some Considerations...
@@ -217,7 +215,6 @@ See also:
 * https://github.com/tajmone/PBCodeArcProto/issues/10[Issue #10 -- Integrating The Old Tools^]
 * https://github.com/tajmone/PBCodeArcProto/issues/18[Issue #18 -- Caching Proposal & Ideas^]
 
-'''''
 
 == Notes on Modules Usage
 
@@ -246,13 +243,14 @@ This system allows working with enumerated "`object`" without conflicts, and to 
 
 It also means that any third party tools willing to reuse some of the modules of this project will need to adhere to this enumeration scheme.
 
-'''''
+
 
 == New Converter Goal
 
-________________________________________________________________________________
-__**BEWARE**__ -- THIS SECTION IS OLD AND MIGHT NOT REFLECT THE LATEST CHANGES!_
-________________________________________________________________________________
+[WARNING]
+================================================================================
+THIS SECTION IS OLD AND MIGHT NOT REFLECT THE LATEST CHANGES!
+================================================================================
 
 Currently, the HTMLPageConvert has always been intended as a tool to merely create the HTML pages for the project; this was strongly determined by the fact that it was a "`runnable`" and guiless app. The upcoming introduction of the GUI lifts these limits, and the new app could be considered as a general purpose project maintainment tools providing this functionality:
 
@@ -284,13 +282,14 @@ Creation of the HTML pages should have a panel of its own. Running this task wil
 
 These three functionalities/panels are to be considered as representing three successive steps of the process -- Integrity Checks implicitly require gathering Statistics, and HTML Conversion implicitly requires Integrity Checks to be run. Their separation into independent panel is simply a way to presen them to the end user and independently manageable features.
 
-'''''
+
 
 == Modules Roadmap
 
-________________________________________________________________________________
-_*BEWARE* -- THIS SECTION IS OLD AND MIGHT NOT REFLECT THE LATEST CHANGES!_
-________________________________________________________________________________
+[WARNING]
+================================================================================
+THIS SECTION IS OLD AND MIGHT NOT REFLECT THE LATEST CHANGES!
+================================================================================
 
 I still need to work out properly how to move all the current functionality into separate modules. Presently, the main challenges are posed by the Error Tracking system, the Debug logging and the Final Report: in order to move any part of the current code to independent modules, I must first address these three systems so that they don't break down.
 
@@ -371,7 +370,7 @@ I need to brainstorm what the GUI should display to the user, and which options 
 
 As a general rule, the GUI should be divided in panel, each covering a given aspect of the project (info, error, conversion, etc.). Each panel should display elements resuming the overall status in a simple manner, and offer a button which can be clicked to get a pop-up window with detailed information.
 
-Proto GUI imgs
+image::../../_tempwork/GUI_prototype/dummyGUI_screenshot.png[Proto GUI imgs]
 
 Also, each panel should have a timestamp displaying when it was last refreshed, since some panel will be connected to different level of functionality -- refreshing one panel might render inactive other panels, depending on the cascading level of dependency amongst them, but the timestamp will always provide a visual clue to the last time it was updated (manually or automatically alike).
 
@@ -432,7 +431,7 @@ And so on.
 
 Looking at the proof of concept screenshot:
 
-Proto GUI imgs
+image::../../_tempwork/GUI_prototype/dummyGUI_screenshot.png[Proto GUI imgs]
 
 ... the GUI's "*Project Status*" panel is telling us that:
 
@@ -447,7 +446,7 @@ Of course, the `details` button will pop-up a detailed resume of all these probl
 
 The panel should then have an `Info` button which can be clicked to produce a pop-up window with a full status report -- structure, resources and dependencies, listing all the known problems and statistics. This would be a much cleaner approach (instead of a cluttered panel) and still allow access to full status details from within the GUI.
 
-'''''
+
 
 == Problems Ahead
 

@@ -48,11 +48,12 @@ PB source files:
 
 - [`/dev-docs_src/`](./dev-docs_src) — AsciiDoc documentation sources and build scripts.
 - [`/pb-inc/`](./pb-inc):
-    + [`MODULARIZATION_NOTES.asciidoc`][MODULARZ adoc] — notes and TODOs on the modularization of code shared by the various tools.
+    + [`MODULARIZATION_NOTES.asciidoc`][MODULARZ adoc] ([__html__][MODULARZ live]) — notes and TODOs on the modularization of code shared by the various tools.
 - [`DOC_Header_Comments.md`](./DOC_Header_Comments.md) — explains the system used to store info in the resources' comments.
 - [`HTMLPagesCreator.md`](./HTMLPagesCreator.md) — an overview of the website creation app.
 
 [MODULARZ adoc]: ./pb-inc/MODULARIZATION_NOTES.asciidoc
+[MODULARZ live]: https://tajmone.github.io/PBCodeArcProto/_assets/pb-inc/MODULARIZATION_NOTES "Live HTML Preview"
 
 ## Website Assets
 
