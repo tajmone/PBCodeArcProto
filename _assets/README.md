@@ -46,9 +46,13 @@ PB source files:
 
 ## Documentation
 
+- [`/dev-docs_src/`](./dev-docs_src) — AsciiDoc documentation sources and build scripts.
+- [`/pb-inc/`](./pb-inc):
+    + [`MODULARIZATION_NOTES.asciidoc`][MODULARZ adoc] — notes and TODOs on the modularization of code shared by the various tools.
 - [`DOC_Header_Comments.md`](./DOC_Header_Comments.md) — explains the system used to store info in the resources' comments.
 - [`HTMLPagesCreator.md`](./HTMLPagesCreator.md) — an overview of the website creation app.
-- [`MODULARIZATION_NOTES.md`](./MODULARIZATION_NOTES.md) — notes and TODOs on the modularization of code shared by the various tools.
+
+[MODULARZ adoc]: ./pb-inc/MODULARIZATION_NOTES.asciidoc
 
 ## Website Assets
 
@@ -97,3 +101,7 @@ __HTMLPagesCreator__ is going to be the website generator for the __[PureBasic C
 [Bulma CSS framework]: https://bulma.io/ "Visit Bulma CSS framework website"
 
 [HTML5 Boilerplate]: https://html5boilerplate.com/ "Visit HTML5 Boilerplate website"
+
+<!-- Project Files -->
+
+<!-- EOF -->

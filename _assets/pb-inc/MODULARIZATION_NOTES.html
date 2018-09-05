@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.7.1">
+<title>MODULARIZATION NOTES</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<style>
+/* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
+/* Uncomment @import statement below to use as custom stylesheet */
+/*@import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700";*/
+article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}
+audio,canvas,video{display:inline-block}
+audio:not([controls]){display:none;height:0}
+script{display:none!important}
+html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
+a{background:transparent}
+a:focus{outline:thin dotted}
+a:active,a:hover{outline:0}
+h1{font-size:2em;margin:.67em 0}
+abbr[title]{border-bottom:1px dotted}
+b,strong{font-weight:bold}
+dfn{font-style:italic}
+hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}
+mark{background:#ff0;color:#000}
+code,kbd,pre,samp{font-family:monospace;font-size:1em}
+pre{white-space:pre-wrap}
+q{quotes:"\201C" "\201D" "\2018" "\2019"}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.5em}
+sub{bottom:-.25em}
+img{border:0}
+svg:not(:root){overflow:hidden}
+figure{margin:0}
+fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
+legend{border:0;padding:0}
+button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
+button,input{line-height:normal}
+button,select{text-transform:none}
+button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}
+button[disabled],html input[disabled]{cursor:default}
+input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
+textarea{overflow:auto;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+*,*::before,*::after{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}
+html,body{font-size:100%}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto;tab-size:4;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
+a:hover{cursor:pointer}
+img,object,embed{max-width:100%;height:auto}
+object,embed{height:100%}
+img{-ms-interpolation-mode:bicubic}
+.left{float:left!important}
+.right{float:right!important}
+.text-left{text-align:left!important}
+.text-right{text-align:right!important}
+.text-center{text-align:center!important}
+.text-justify{text-align:justify!important}
+.hide{display:none}
+img,object,svg{display:inline-block;vertical-align:middle}
+textarea{height:auto;min-height:50px}
+select{width:100%}
+.center{margin-left:auto;margin-right:auto}
+.stretch{width:100%}
+.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0;direction:ltr}
+a{color:#2156a5;text-decoration:underline;line-height:inherit}
+a:hover,a:focus{color:#1d4b8f}
+a img{border:none}
+p{font-family:inherit;font-weight:400;font-size:1em;line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
+p aside{font-size:.875em;line-height:1.35;font-style:italic}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#ba3925;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
+h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
+h1{font-size:2.125em}
+h2{font-size:1.6875em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
+h4,h5{font-size:1.125em}
+h6{font-size:1em}
+hr{border:solid #ddddd8;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em;height:0}
+em,i{font-style:italic;line-height:inherit}
+strong,b{font-weight:bold;line-height:inherit}
+small{font-size:60%;line-height:inherit}
+code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
+ul,ol,dl{font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
+ul,ol{margin-left:1.5em}
+ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0;font-size:1em}
+ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
+ul.square{list-style-type:square}
+ul.circle{list-style-type:circle}
+ul.disc{list-style-type:disc}
+ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
+dl dt{margin-bottom:.3125em;font-weight:bold}
+dl dd{margin-bottom:1.25em}
+abbr,acronym{text-transform:uppercase;font-size:90%;color:rgba(0,0,0,.8);border-bottom:1px dotted #ddd;cursor:help}
+abbr{text-transform:none}
+blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
+blockquote cite{display:block;font-size:.9375em;color:rgba(0,0,0,.6)}
+blockquote cite::before{content:"\2014 \0020"}
+blockquote cite a,blockquote cite a:visited{color:rgba(0,0,0,.6)}
+blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
+@media screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
+h1{font-size:2.75em}
+h2{font-size:2.3125em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+h4{font-size:1.4375em}}
+table{background:#fff;margin-bottom:1.25em;border:solid 1px #dedede}
+table thead,table tfoot{background:#f7f8f7}
+table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
+table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
+table tr.even,table tr.alt,table tr:nth-of-type(even){background:#f8f8f7}
+table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{display:table-cell;line-height:1.6}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
+h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
+.clearfix::before,.clearfix::after,.float-group::before,.float-group::after{content:" ";display:table}
+.clearfix::after,.float-group::after{clear:both}
+*:not(pre)>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background-color:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed;word-wrap:break-word}
+*:not(pre)>code.nobreak{word-wrap:normal}
+*:not(pre)>code.nowrap{white-space:nowrap}
+pre,pre>code{line-height:1.45;color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;text-rendering:optimizeSpeed}
+em em{font-style:normal}
+strong strong{font-weight:400}
+.keyseq{color:rgba(51,51,51,.8)}
+kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background-color:#f7f7f7;border:1px solid #ccc;-webkit-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em white inset;box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em #fff inset;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
+.keyseq kbd:first-child{margin-left:0}
+.keyseq kbd:last-child{margin-right:0}
+.menuseq,.menuref{color:#000}
+.menuseq b:not(.caret),.menuref{font-weight:inherit}
+.menuseq{word-spacing:-.02em}
+.menuseq b.caret{font-size:1.25em;line-height:.8}
+.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
+b.button::before,b.button::after{position:relative;top:-1px;font-weight:400}
+b.button::before{content:"[";padding:0 3px 0 2px}
+b.button::after{content:"]";padding:0 2px 0 3px}
+p a>code:hover{color:rgba(0,0,0,.9)}
+#header,#content,#footnotes,#footer{width:100%;margin-left:auto;margin-right:auto;margin-top:0;margin-bottom:0;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
+#header::before,#header::after,#content::before,#content::after,#footnotes::before,#footnotes::after,#footer::before,#footer::after{content:" ";display:table}
+#header::after,#content::after,#footnotes::after,#footer::after{clear:both}
+#content{margin-top:1.25em}
+#content::before{content:none}
+#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #ddddd8}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #ddddd8;padding-bottom:8px}
+#header .details{border-bottom:1px solid #ddddd8;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:-ms-flexbox;display:-webkit-flex;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap}
+#header .details span:first-child{margin-left:-.125em}
+#header .details span.email a{color:rgba(0,0,0,.85)}
+#header .details br{display:none}
+#header .details br+span::before{content:"\00a0\2013\00a0"}
+#header .details br+span.author::before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
+#header .details br+span#revremark::before{content:"\00a0|\00a0"}
+#header #revnumber{text-transform:capitalize}
+#header #revnumber::after{content:"\00a0"}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #ddddd8;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{border-bottom:1px solid #efefed;padding-bottom:.5em}
+#toc>ul{margin-left:.125em}
+#toc ul.sectlevel0>li>a{font-style:italic}
+#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
+#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
+#toc li{line-height:1.3334;margin-top:.3334em}
+#toc a{text-decoration:none}
+#toc a:active{text-decoration:underline}
+#toctitle{color:#7a2518;font-size:1.2em}
+@media screen and (min-width:768px){#toctitle{font-size:1.375em}
+body.toc2{padding-left:15em;padding-right:0}
+#toc.toc2{margin-top:0!important;background-color:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #efefed;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+#toc.toc2>ul{font-size:.9em;margin-bottom:0}
+#toc.toc2 ul ul{margin-left:0;padding-left:1em}
+#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+body.toc2.toc-right{padding-left:0;padding-right:15em}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #efefed;left:auto;right:0}}
+@media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
+#toc.toc2{width:20em}
+#toc.toc2 #toctitle{font-size:1.375em}
+#toc.toc2>ul{font-size:.95em}
+#toc.toc2 ul ul{padding-left:1.25em}
+body.toc2.toc-right{padding-left:0;padding-right:20em}}
+#content #toc{border-style:solid;border-width:1px;border-color:#e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;-webkit-border-radius:4px;border-radius:4px}
+#content #toc>:first-child{margin-top:0}
+#content #toc>:last-child{margin-bottom:0}
+#footer{max-width:100%;background-color:rgba(0,0,0,.8);padding:1.25em}
+#footer-text{color:rgba(255,255,255,.8);line-height:1.44}
+#content{margin-bottom:.625em}
+.sect1{padding-bottom:.625em}
+@media screen and (min-width:768px){#content{margin-bottom:1.25em}
+.sect1{padding-bottom:1.25em}}
+.sect1:last-child{padding-bottom:0}
+.sect1+.sect1{border-top:1px solid #efefed}
+#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
+#content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
+#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
+#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
+#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
+.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
+.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
+table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
+.paragraph.lead>p,#preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
+table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:inherit}
+.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
+.admonitionblock>table td.icon{text-align:center;width:80px}
+.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #ddddd8;color:rgba(0,0,0,.6)}
+.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content{border-style:solid;border-width:1px;border-color:#e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;-webkit-border-radius:4px;border-radius:4px}
+.exampleblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child{margin-bottom:0}
+.sidebarblock{border-style:solid;border-width:1px;border-color:#e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;-webkit-border-radius:4px;border-radius:4px}
+.sidebarblock>:first-child{margin-top:0}
+.sidebarblock>:last-child{margin-bottom:0}
+.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
+.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.literalblock pre,.listingblock pre:not(.highlight),.listingblock pre[class="highlight"],.listingblock pre[class^="highlight "],.listingblock pre.CodeRay,.listingblock pre.prettyprint{background:#f7f7f8}
+.sidebarblock .literalblock pre,.sidebarblock .listingblock pre:not(.highlight),.sidebarblock .listingblock pre[class="highlight"],.sidebarblock .listingblock pre[class^="highlight "],.sidebarblock .listingblock pre.CodeRay,.sidebarblock .listingblock pre.prettyprint{background:#f2f1f1}
+.literalblock pre,.literalblock pre[class],.listingblock pre,.listingblock pre[class]{-webkit-border-radius:4px;border-radius:4px;word-wrap:break-word;padding:1em;font-size:.8125em}
+.literalblock pre.nowrap,.literalblock pre[class].nowrap,.listingblock pre.nowrap,.listingblock pre[class].nowrap{overflow-x:auto;white-space:pre;word-wrap:normal}
+@media screen and (min-width:768px){.literalblock pre,.literalblock pre[class],.listingblock pre,.listingblock pre[class]{font-size:.90625em}}
+@media screen and (min-width:1280px){.literalblock pre,.literalblock pre[class],.listingblock pre,.listingblock pre[class]{font-size:1em}}
+.literalblock.output pre{color:#f7f7f8;background-color:rgba(0,0,0,.9)}
+.listingblock pre.highlightjs{padding:0}
+.listingblock pre.highlightjs>code{padding:1em;-webkit-border-radius:4px;border-radius:4px}
+.listingblock pre.prettyprint{border-width:0}
+.listingblock>.content{position:relative}
+.listingblock code[data-lang]::before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:#999}
+.listingblock:hover code[data-lang]::before{display:block}
+.listingblock.terminal pre .command::before{content:attr(data-prompt);padding-right:.5em;color:#999}
+.listingblock.terminal pre .command:not([data-prompt])::before{content:"$"}
+table.pyhltable{border-collapse:separate;border:0;margin-bottom:0;background:none}
+table.pyhltable td{vertical-align:top;padding-top:0;padding-bottom:0;line-height:1.45}
+table.pyhltable td.code{padding-left:.75em;padding-right:0}
+pre.pygments .lineno,table.pyhltable td:not(.code){color:#999;padding-left:0;padding-right:.5em;border-right:1px solid #ddddd8}
+pre.pygments .lineno{display:inline-block;margin-right:.25em}
+table.pyhltable .linenodiv{background:none!important;padding-right:0!important}
+.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
+.quoteblock>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock blockquote,.quoteblock blockquote p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote{margin:0;padding:0;border:0}
+.quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
+.quoteblock .attribution{margin-top:.5em;margin-right:.5ex;text-align:right}
+.quoteblock .quoteblock{margin-left:0;margin-right:0;padding:.5em 0;border-left:3px solid rgba(0,0,0,.6)}
+.quoteblock .quoteblock blockquote{padding:0 0 0 .75em}
+.quoteblock .quoteblock blockquote::before{display:none}
+.verseblock{margin:0 1em 1.25em}
+.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
+.verseblock pre strong{font-weight:400}
+.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
+.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
+.quoteblock .attribution br,.verseblock .attribution br{display:none}
+.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract{margin:0 1em 1.25em;display:block}
+.quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
+.quoteblock.abstract blockquote,.quoteblock.abstract blockquote p{word-spacing:0;line-height:1.6}
+.quoteblock.abstract blockquote::before,.quoteblock.abstract p::before{display:none}
+table.tableblock{max-width:100%;border-collapse:separate}
+p.tableblock:last-child{margin-bottom:0}
+td.tableblock>.content{margin-bottom:-1.25em}
+table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
+table.grid-all>thead>tr>.tableblock,table.grid-all>tbody>tr>.tableblock{border-width:0 1px 1px 0}
+table.grid-all>tfoot>tr>.tableblock{border-width:1px 1px 0 0}
+table.grid-cols>*>tr>.tableblock{border-width:0 1px 0 0}
+table.grid-rows>thead>tr>.tableblock,table.grid-rows>tbody>tr>.tableblock{border-width:0 0 1px}
+table.grid-rows>tfoot>tr>.tableblock{border-width:1px 0 0}
+table.grid-all>*>tr>.tableblock:last-child,table.grid-cols>*>tr>.tableblock:last-child{border-right-width:0}
+table.grid-all>tbody>tr:last-child>.tableblock,table.grid-all>thead:last-child>tr>.tableblock,table.grid-rows>tbody>tr:last-child>.tableblock,table.grid-rows>thead:last-child>tr>.tableblock{border-bottom-width:0}
+table.frame-all{border-width:1px}
+table.frame-sides{border-width:0 1px}
+table.frame-topbot,table.frame-ends{border-width:1px 0}
+table.stripes-all tr,table.stripes-odd tr:nth-of-type(odd){background:#f8f8f7}
+table.stripes-none tr,table.stripes-odd tr:nth-of-type(even){background:none}
+th.halign-left,td.halign-left{text-align:left}
+th.halign-right,td.halign-right{text-align:right}
+th.halign-center,td.halign-center{text-align:center}
+th.valign-top,td.valign-top{vertical-align:top}
+th.valign-bottom,td.valign-bottom{vertical-align:bottom}
+th.valign-middle,td.valign-middle{vertical-align:middle}
+table thead th,table tfoot th{font-weight:bold}
+tbody tr th{display:table-cell;line-height:1.6;background:#f7f8f7}
+tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
+p.tableblock>code:only-child{background:none;padding:0}
+p.tableblock{font-size:1em}
+td>div.verse{white-space:pre}
+ol{margin-left:1.75em}
+ul li ol{margin-left:1.5em}
+dl dd{margin-left:1.125em}
+dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
+ol>li p,ul>li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
+ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
+ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
+ul.unstyled,ol.unstyled{margin-left:0}
+ul.checklist{margin-left:.625em}
+ul.checklist li>p:first-child>.fa-square-o:first-child,ul.checklist li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
+ul.checklist li>p:first-child>input[type="checkbox"]:first-child{margin-right:.25em}
+ul.inline{display:-ms-flexbox;display:-webkit-box;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap;list-style:none;margin:0 0 .625em -1.25em}
+ul.inline>li{margin-left:1.25em}
+.unstyled dl dt{font-weight:400;font-style:normal}
+ol.arabic{list-style-type:decimal}
+ol.decimal{list-style-type:decimal-leading-zero}
+ol.loweralpha{list-style-type:lower-alpha}
+ol.upperalpha{list-style-type:upper-alpha}
+ol.lowerroman{list-style-type:lower-roman}
+ol.upperroman{list-style-type:upper-roman}
+ol.lowergreek{list-style-type:lower-greek}
+.hdlist>table,.colist>table{border:0;background:none}
+.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
+td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
+td.hdlist1{font-weight:bold;padding-bottom:1.25em}
+.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
+.colist td:not([class]):first-child{padding:.4em .75em 0;line-height:1;vertical-align:top}
+.colist td:not([class]):first-child img{max-width:none}
+.colist td:not([class]):last-child{padding:.25em 0}
+.thumb,.th{line-height:0;display:inline-block;border:solid 4px #fff;-webkit-box-shadow:0 0 0 1px #ddd;box-shadow:0 0 0 1px #ddd}
+.imageblock.left,.imageblock[style*="float: left"]{margin:.25em .625em 1.25em 0}
+.imageblock.right,.imageblock[style*="float: right"]{margin:.25em 0 1.25em .625em}
+.imageblock>.title{margin-bottom:0}
+.imageblock.thumb,.imageblock.th{border-width:6px}
+.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
+.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
+.image.left{margin-right:.625em}
+.image.right{margin-left:.625em}
+a.image{text-decoration:none;display:inline-block}
+a.image object{pointer-events:none}
+sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
+sup.footnote a,sup.footnoteref a{text-decoration:none}
+sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
+#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
+#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
+#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none;margin-left:-1.05em}
+#footnotes .footnote:last-of-type{margin-bottom:0}
+#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
+.gist .file-data>table{border:0;background:#fff;width:100%;margin-bottom:0}
+.gist .file-data>table td.line-data{width:99%}
+div.unbreakable{page-break-inside:avoid}
+.big{font-size:larger}
+.small{font-size:smaller}
+.underline{text-decoration:underline}
+.overline{text-decoration:overline}
+.line-through{text-decoration:line-through}
+.aqua{color:#00bfbf}
+.aqua-background{background-color:#00fafa}
+.black{color:#000}
+.black-background{background-color:#000}
+.blue{color:#0000bf}
+.blue-background{background-color:#0000fa}
+.fuchsia{color:#bf00bf}
+.fuchsia-background{background-color:#fa00fa}
+.gray{color:#606060}
+.gray-background{background-color:#7d7d7d}
+.green{color:#006000}
+.green-background{background-color:#007d00}
+.lime{color:#00bf00}
+.lime-background{background-color:#00fa00}
+.maroon{color:#600000}
+.maroon-background{background-color:#7d0000}
+.navy{color:#000060}
+.navy-background{background-color:#00007d}
+.olive{color:#606000}
+.olive-background{background-color:#7d7d00}
+.purple{color:#600060}
+.purple-background{background-color:#7d007d}
+.red{color:#bf0000}
+.red-background{background-color:#fa0000}
+.silver{color:#909090}
+.silver-background{background-color:#bcbcbc}
+.teal{color:#006060}
+.teal-background{background-color:#007d7d}
+.white{color:#bfbfbf}
+.white-background{background-color:#fafafa}
+.yellow{color:#bfbf00}
+.yellow-background{background-color:#fafa00}
+span.icon>.fa{cursor:default}
+a span.icon>.fa{cursor:inherit}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip::before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
+.conum[data-value]{display:inline-block;color:#fff!important;background-color:rgba(0,0,0,.8);-webkit-border-radius:100px;border-radius:100px;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
+.conum[data-value] *{color:#fff!important}
+.conum[data-value]+b{display:none}
+.conum[data-value]::after{content:attr(data-value)}
+pre .conum[data-value]{position:relative;top:-.125em}
+b.conum *{color:inherit!important}
+.conum:not([data-value]):empty{display:none}
+dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
+h1,h2,p,td.content,span.alt{letter-spacing:-.01em}
+p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
+p,blockquote,dt,td.content,span.alt{font-size:1.0625rem}
+p{margin-bottom:1.25rem}
+.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
+.exampleblock>.content{background-color:#fffef7;border-color:#e0e0dc;-webkit-box-shadow:0 1px 4px #e0e0dc;box-shadow:0 1px 4px #e0e0dc}
+.print-only{display:none!important}
+@page{margin:1.25cm .75cm}
+@media print{*{-webkit-box-shadow:none!important;box-shadow:none!important;text-shadow:none!important}
+html{font-size:80%}
+a{color:inherit!important;text-decoration:underline!important}
+a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+a[href^="http:"]:not(.bare)::after,a[href^="https:"]:not(.bare)::after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+abbr[title]::after{content:" (" attr(title) ")"}
+pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+thead{display:table-header-group}
+svg{max-width:100%}
+p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+#toc,.sidebarblock,.exampleblock>.content{background:none!important}
+#toc{border-bottom:1px solid #ddddd8!important;padding-bottom:0!important}
+body.book #header{text-align:center}
+body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
+body.book #header .details{border:0!important;display:block;padding:0!important}
+body.book #header .details span:first-child{margin-left:0!important}
+body.book #header .details br{display:block}
+body.book #header .details br+span::before{content:none!important}
+body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+.listingblock code[data-lang]::before{display:block}
+#footer{padding:0 .9375em}
+.hide-on-print{display:none!important}
+.print-only{display:block!important}
+.hide-for-print{display:none!important}
+.show-for-print{display:inherit!important}}
+@media print,amzn-kf8{#header>h1:first-child{margin-top:1.25rem}
+.sect1{padding:0!important}
+.sect1+.sect1{border:0}
+#footer{background:none}
+#footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
+@media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>MODULARIZATION NOTES</h1>
+<div class="details">
+<span id="revnumber">version 1.0.0,</span>
+<span id="revdate">September 5, 2018</span>
+<br><span id="revremark">Modularization dev notes</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_source_files">1. Source Files</a></li>
+<li><a href="#_modules_and_tools">2. Modules and Tools</a></li>
+<li><a href="#_modules_description">3. Modules Description</a>
+<ul class="sectlevel2">
+<li><a href="#_global_module">3.1. Global Module</a></li>
+<li><a href="#_codearchiv_module">3.2. CodeArchiv Module</a></li>
+<li><a href="#_errors_tracker">3.3. Errors Tracker</a>
+<ul class="sectlevel3">
+<li><a href="#_required_vars_access">3.3.1. Required Vars Access</a></li>
+<li><a href="#some-considerations">3.3.2. Some Considerations&#8230;&#8203;</a>
+<ul class="sectlevel4">
+<li><a href="#_the_tracker_is_for_tools_not_modules">3.3.2.1. The Tracker is For Tools, not Modules?</a></li>
+<li><a href="#_should_modules_register_themselves_with_mod_errors">3.3.2.2. Should Modules Register Themselves with mod Errors?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#_resources_module">3.4. Resources module</a>
+<ul class="sectlevel3">
+<li><a href="#_resources_integrity_checks">3.4.1. Resources Integrity Checks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#_notes_on_modules_usage">4. Notes on Modules Usage</a>
+<ul class="sectlevel2">
+<li><a href="#_global_enumerators">4.1. Global Enumerators</a></li>
+</ul>
+</li>
+<li><a href="#_new_converter_goal">5. New Converter Goal</a>
+<ul class="sectlevel2">
+<li><a href="#_gathering_statistic">5.1. Gathering Statistic</a></li>
+<li><a href="#_integrity_check">5.2. Integrity Check</a></li>
+<li><a href="#_html_page_creation">5.3. HTML Page Creation</a></li>
+</ul>
+</li>
+<li><a href="#_modules_roadmap">6. Modules Roadmap</a>
+<ul class="sectlevel2">
+<li><a href="#_errors_management">6.1. Errors Management</a>
+<ul class="sectlevel3">
+<li><a href="#_current_status">6.1.1. Current Status</a></li>
+<li><a href="#_possible_changes">6.1.2. Possible Changes</a></li>
+</ul>
+</li>
+<li><a href="#_log_module">6.2. Log Module</a></li>
+<li><a href="#_gui_introduction">6.3. GUI Introduction</a>
+<ul class="sectlevel3">
+<li><a href="#_gui_prototype">6.3.1. GUI Prototype</a></li>
+<li><a href="#_brainstorming">6.3.2. Brainstorming</a>
+<ul class="sectlevel4">
+<li><a href="#_project_info_panel">6.3.2.1. Project Info Panel</a></li>
+<li><a href="#_project_errors_panel">6.3.2.2. Project Errors Panel</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#_problems_ahead">7. Problems Ahead</a>
+<ul class="sectlevel2">
+<li><a href="#_issues_with_resource_files">7.1. Issues With Resource Files</a>
+<ul class="sectlevel3">
+<li><a href="#_memoization_a_possible_solution">7.1.1. Memoization: A Possible Solution</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="literalblock">
+<div class="content">
+<pre>Doc version: 1.0.0
+Last edited: September 5, 2018</pre>
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="title">About This Document</div>
+<div class="paragraph">
+<p>Some notes on how to convert the current <a href="../HTMLPagesCreator.pb" target="_blank" rel="noopener"><code>HTMLPagesCreator.pb</code></a> from a single sourcefile to a modules-based project so that some of its functionality can be shared by other tools of the CodeArchiv.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_source_files">1. Source Files</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../HTMLPagesCreator.pb" target="_blank" rel="noopener"><code>HTMLPagesCreator.pb</code></a></p>
+</li>
+<li>
+<p><a href="./mod_G.pbi" target="_blank" rel="noopener"><code>mod_G.pbi</code></a>&#8201;&#8212;&#8201;(<code>G::</code>) <a href="#_global_module"><strong>Global module</strong></a> for commonly shared data.</p>
+</li>
+<li>
+<p><a href="./mod_Errors.pbi" target="_blank" rel="noopener"><code>mod_Errors.pbi</code></a>&#8201;&#8212;&#8201;(<code>Err::</code>) <a href="#_errors_tracker"><strong>Errors Tracker</strong></a> module.</p>
+</li>
+<li>
+<p><a href="./mod_CodeArchiv.pbi" target="_blank" rel="noopener"><code>mod_CodeArchiv.pbi</code></a>&#8201;&#8212;&#8201;(<code>Arc::</code>) <a href="#_codearchiv_module"><strong>CodeArchiv module</strong></a>.</p>
+</li>
+<li>
+<p><a href="./mod_Resources.pbi" target="_blank" rel="noopener"><code>mod_Resources.pbi</code></a>&#8201;&#8212;&#8201;(<code>Res::</code>) <a href="#_resources_module"><strong>Resources module</strong></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_modules_and_tools">2. Modules and Tools</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Here is an outline of which modules will be reused by which tools.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">module</th>
+<th class="tableblock halign-left valign-top">HTML Generator</th>
+<th class="tableblock halign-left valign-top">Codes Checker</th>
+<th class="tableblock halign-left valign-top">Codes Cleaner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mod_G.pbi</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mod_Errors.pbi</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">???</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">???</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mod_CodeArchiv.pbi</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">no</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mod_Resources.pbi</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>The presence of &#8220;???&#8221; in the above table indicates uncertainty on wether some tools should make use of a module or not.</p>
+</div>
+<div class="paragraph">
+<p>For example, both the Codes Checker and Cleaner could use the Errors Tracker, even though they deal with single resources. The pros and cons have to be weighed. Using the Errors Tracker would simplify managing errors, but might also introduce the burden of updating the tool if the module is updated in backward compatibility breaking manner.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_modules_description">3. Modules Description</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_global_module">3.1. Global Module</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="./mod_G.pbi" target="_blank" rel="noopener"><code>mod_G.pbi</code></a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This module (<code>G::</code>) holds data commonly shared by all tools.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Cross platform constants</strong> (<code>#EOL</code>, <code>#EOL_WRONG</code>, <code>#DSEP</code>, etc.)</p>
+</li>
+<li>
+<p><a href="#_global_enumerators"><strong>Global enumerators</strong></a></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_codearchiv_module">3.2. CodeArchiv Module</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="./mod_CodeArchiv.pbi" target="_blank" rel="noopener"><code>mod_CodeArchiv.pbi</code></a></p>
+</li>
+</ul>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>This section was last updated according to <code>mod_CodeArchiv.pbi</code> <strong>v0.0.19</strong> (2018/06/07)</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>This module (<code>Arc::</code>) is intended as an interface for all tools to handle the CodeArchiv categories and resources:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Arc::ScanProject()</code>&#8201;&#8212;&#8201;Scans the CodeArchiv project tree and</p>
+<div class="ulist">
+<ul>
+<li>
+<p>builds list of all Categories (<code>Arc::CategoriesL()</code>)</p>
+</li>
+<li>
+<p>builds list of the Top-Level Categories (<code>Arc::RootCategoriesL()</code>)</p>
+</li>
+<li>
+<p>builds list of all Resources (<code>Arc::ResourcesL()</code>)</p>
+</li>
+<li>
+<p>carries out integrity checks on the CodeArchiv:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Check that &#8220;<code>_assets/meta.yaml</code>&#8221; file exists and is not 0 Kb.</p>
+</li>
+<li>
+<p>Check that every category has a &#8220;<code>REAMDE.md</code>&#8221; file and is not 0 Kb.</p>
+</li>
+<li>
+<p>Check that every category contains resources.</p>
+</li>
+<li>
+<p>Returns the number of errors found (if any).</p>
+</li>
+<li>
+<p>Stores in <code>info\Errors</code> the number of errors found.</p>
+</li>
+<li>
+<p>Stores in <code>info\IntegrityReport</code> a report on the integrity checks. (if everything went fine, the report will either contain a standard &#8220;everything is OK&#8221; message, otherwise a detailed report on the encountered errors)</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Exposes statistics via <code>Arc::info</code> data structure:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>info\IsReady.i</code>&#8201;&#8212;&#8201;Boolean for querying the module&#8217;s status (<em>currently unused!</em>).</p>
+</li>
+<li>
+<p><code>info\Errors</code> Total errors found during project scanning.</p>
+</li>
+<li>
+<p><code>info\IntegrityReport</code> Integrity Checks Report (with Errors details, if any).</p>
+</li>
+<li>
+<p><code>info\totCategories.i</code>&#8201;&#8212;&#8201;Total Categories count (Root excluded)</p>
+</li>
+<li>
+<p><code>info\totRootCategories.i</code>&#8201;&#8212;&#8201;Total Top-Level Categories count</p>
+</li>
+<li>
+<p><code>info\totResources.i</code>&#8201;&#8212;&#8201;Total Resources count</p>
+</li>
+<li>
+<p><code>info\totResT_PBSrc.i</code>&#8201;&#8212;&#8201;Total Resources of PureBasic Source type</p>
+</li>
+<li>
+<p><code>info\totResT_PBInc.i</code>&#8201;&#8212;&#8201;Total Resources of PureBasic Include-file type</p>
+</li>
+<li>
+<p><code>info\totResT_Folder.i</code>&#8201;&#8212;&#8201;Total Resources of Subfolder type</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Provides some plaintext <strong>Info Helpers</strong>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Arc::GetStats()</code>&#8201;&#8212;&#8201;returns a str with rèsumè of CodeArchiv Categories and Resources.</p>
+</li>
+<li>
+<p><code>Arc::GetTree()</code>&#8201;&#8212;&#8201;returns a str with an Ascii-Art Tree representation of the CodeArchiv Categories and Resources.</p>
+</li>
+<li>
+<p><code>Arc::GetCategories()</code>&#8201;&#8212;&#8201;returns a str with numbered list of all Categories in the CodeeArchiv.</p>
+</li>
+<li>
+<p><code>Arc::GetRootCategories()</code>&#8201;&#8212;&#8201;returns a str with numbered list of Root Categories (top-level categories).</p>
+</li>
+<li>
+<p><code>Arc::GetResources()</code>&#8201;&#8212;&#8201;returns a str with numbered list of all resources in the CodeArchiv.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Provide some <strong>Iterators</strong> for invoking a CallBack procedure on iterated items:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Arc::CategoriesIteratorCallback( *CallbackProc )</code>&#8201;&#8212;&#8201;iterate categories and invoke <code>CallbackProc()</code> at each iteration</p>
+</li>
+<li>
+<p><code>Arc::ResourcesIteratorCallback( *CallbackProc )</code>&#8201;&#8212;&#8201;iterate through resources and invoke <code>CallbackProc()</code> at each iteration</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Exposes to the <code>CallbackProc()</code> info about the current Resource and Category being iterated, via <code>Arc::Current</code> structure:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Arc::Current\Resource</code>&#8201;&#8212;&#8201;a struct var containing all required info about the current resource:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>File.s</code>&#8201;&#8212;&#8201;Filename ( <code>&lt;filename&gt;.pb</code> | <code>&lt;filename&gt;.pbi</code> | &#8220;<code>&lt;subfolder&gt;/CodeInfo.txt</code>&#8221; )</p>
+</li>
+<li>
+<p><code>Path.s</code>&#8201;&#8212;&#8201;Path relative to CodeArchiv root (includes filename)</p>
+</li>
+<li>
+<p><code>Type.i</code>&#8201;&#8212;&#8201;( <code>G::#ResT_PBSrc</code> | <code>G::#ResT_PBInc</code> | <code>G::#ResT_Folder</code> )</p>
+</li>
+<li>
+<p><code>*Category.Category</code>&#8201;&#8212;&#8201;pointer to its parent category</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code>Arc::Current\Category</code>&#8201;&#8212;&#8201;a struct var containing all required info about the current category being iterated, or the host category of the current resource being iterated</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Name.s</code>&#8201;&#8212;&#8201;Folder name</p>
+</li>
+<li>
+<p><code>Path.s</code>&#8201;&#8212;&#8201;Path relative to CodeArchiv root (includes folder name)</p>
+</li>
+<li>
+<p><code>Level.i</code>&#8201;&#8212;&#8201;0-2 (Root, Top-Level Category, Subcategory)</p>
+</li>
+<li>
+<p><code>SubCategoriesL.s()</code> List&#8201;&#8212;&#8201;Name/Link List to SubCategories</p>
+</li>
+<li>
+<p><code>FilesToParseL.s()</code> List&#8201;&#8212;&#8201;List of files to parse (including &#8220;<code>&lt;subf&gt;/CodeInfo.txt</code>&#8221;)</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The above feature of the module&#8217;s API are intended to offer flexible access to the CodeArchiv resources and categories via specific API procedures and vars that hide away the complexity of the Archiv internals, and could change in the future without requiring rewriting the code of the tools using this module&#8201;&#8212;&#8201;a few tweaks should suffice to adapt to major API changes.</p>
+</div>
+<div class="paragraph">
+<p>Having separate lists and iterators for Categories and Resources allows the module to be useful for both tools dealing with Categories (eg, the HTML pages creator) and tools that focus on checking that resources meet the requirements.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_errors_tracker">3.3. Errors Tracker</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="./mod_Errors.pbi" target="_blank" rel="noopener"><code>mod_Errors.pbi</code></a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This module (<code>Err::</code>) tracks and handles all errors encountered during the processing stage of the project (validation, extraction, conversion, etc.). Every module that takes part in the Archiv processing should report errors to this module and let the module handle them.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Err::TrackError(ErrMessage.s)</code>&#8201;&#8212;&#8201;signal an error and carry on.</p>
+</li>
+<li>
+<p><code>Err::Abort(ErrorMsg.s, ErrorType)</code>&#8201;&#8212;&#8201;signal a fatal error and request aborting processing the Archiv.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>When requesting <code>Abort()</code>, the passed <code>ErrorType</code> should be one of the following</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Err::#FATAL_ERR_GENERIC</code> (default if none specified)</p>
+</li>
+<li>
+<p><code>Err::#FATAL_ERR_INTERNAL</code>&#8201;&#8212;&#8201;error due to App internals.</p>
+</li>
+<li>
+<p><code>Err::#FATAL_ERR_FILE_ACCESS</code>&#8201;&#8212;&#8201;App can&#8217;t get access to file resources.</p>
+</li>
+<li>
+<p><code>Err::#FATAL_ERR_PANDOC</code>&#8201;&#8212;&#8201;any blocking error related to pandoc.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Before Aborting, the Errors Tracker will ensure that any statistics gathered so far are printed in the final report, so that the user can be made aware of all problems encountred (and not just the last one, which halted processing).</p>
+</div>
+<div class="sect3">
+<h4 id="_required_vars_access">3.3.1. Required Vars Access</h4>
+<div class="paragraph">
+<p>The Errors Tracker needs to access the following vars, which will have to be placed either in its module or in a common module:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">var name</th>
+<th class="tableblock halign-left valign-top">type</th>
+<th class="tableblock halign-left valign-top">namespace</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FatalErrTypeInfo()</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Array</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Err::</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ErrTrackL()</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Err::</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>currCat</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Err::</code>*</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>currRes</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Err::</code>*</p></td>
+</tr>
+</tbody>
+</table>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p><strong>NOTE</strong>&#8201;&#8212;&#8201;<code>currCat</code> and <code>currRes</code> might be needed by other modules too, so I might need to move them in some common module later on. Since they refer to processing categories, they don&#8217;t belong in G mod (which some tools might use for processing single resources only, like Codes Checker, etc.), so I should think of creating a module to store project-wide data (categories, etc.).</p>
+</div>
+<div class="paragraph">
+<p>For now, I just place them in Err mod so I can go ahead with the work, and after all this is the module that deals with tracking processing, so it might even be OK to keep them here.</p>
+</div>
+</blockquote>
+</div>
+</div>
+<div class="sect3">
+<h4 id="some-considerations">3.3.2. Some Considerations&#8230;&#8203;</h4>
+<div class="paragraph">
+<p>The error tracker is intended to gather statistics of any errors encountered during the actual processing of the project, in order to present a detailed report at the end. The way errors are stored should be independent of their final representation (ie: the app&#8217;s GUI, the debug window, or a log file).</p>
+</div>
+<div class="paragraph">
+<p>Also, I must keep in mind that the final app might implement a dry-run feature to actually test building the whole project without writing any changes to disk, only in order to check if any errors are encountered with pandoc or at other places. So the error tracker must be able to accomodate that too.</p>
+</div>
+<div class="sect4">
+<h5 id="_the_tracker_is_for_tools_not_modules">3.3.2.1. The Tracker is For Tools, not Modules?</h5>
+<div class="paragraph">
+<p><em>Here are some arguments in favor of the fact that the Errors Tracker should be used only by the main tools/apps, not by modules&#8230;&#8203;</em></p>
+</div>
+<div class="paragraph">
+<p>The fact that we have a module dedicated to tracking Errors doesn&#8217;t mean that <em>every</em> error type should be delegated to the Error Tracker. For example, when <a href="#_codearchiv_module">mod CodeArchiv</a> carries out its Integrity Checks, the number of errors found are stored in <code>Arc::info\Errors</code>, and a report is stored in <code>Arc::info\IntegrityReport</code>, which will contain details of every error (if any). In this case, there seems to be no need for this type of check to rely on the Errors Tracker, for we&#8217;re dealing with basic initialization of the CodeArchiv (project and module). Most tools will probably just need to know if the Archiv is ready for being processed, and the above vars suffice for this.</p>
+</div>
+<div class="paragraph">
+<p>Usually, a tool will consider the Error Tracker as a way to track errors encountered during the main steps which the tool is specifically designed to perform, so that it can be produce a detailed custom report at the end. Modules initialization failures (like the example above) are subsidiary to the tool tasks, and instead of having those initialization procedures communicate directly with the Error Tracker, it should be up to the tool to decide if to include these errors and how.</p>
+</div>
+<div class="paragraph">
+<p>In other words: the Tracker should be fully controlled by the app/tool, not by the single modules; the latter should store their errors internally, and offer an interface to the main tool for examining such errors, but it&#8217;s up to the main tool to fully control the Tracker.</p>
+</div>
+<div class="paragraph">
+<p>The next section shows the complications that derive from having the modules use the Tracker&#8201;&#8212;&#8201;ie, the modules would have to register themselves with the Tracker in order to be managed.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_should_modules_register_themselves_with_mod_errors">3.3.2.2. Should Modules Register Themselves with mod Errors?</h5>
+<div class="paragraph">
+<p><em>Here are some considerations of the complications that would arise if the Tracker was to be used by modules too&#8230;&#8203;.</em></p>
+</div>
+<div class="paragraph">
+<p>Ideally, each module should store information about its errors, but the <a href="#_errors_tracker">Errors Tracker</a> module has to also track all the errors of all the modules, so that it can print out to the user/tool a report on all the errors encountered at any stage (wether it&#8217;s just an integrity check stage or an actual attempt to build the HTML pages).</p>
+</div>
+<div class="paragraph">
+<p>Probably, I&#8217;ll have to devise a way to allow each module to &#8220;register&#8221; itself with the <a href="#_errors_tracker">Errors Tracker</a> at initialization time (like Sicro is doing with the logger module), so that the Errors module is able to handle errors from various modules separately (internally) and at the same time produce unified error reports from all modules.</p>
+</div>
+<div class="paragraph">
+<p>After all, different tools might use some modules and not others (eg, the Code Checker for single resources will not need the CodeArchiv module), so the Errors module shouldn&#8217;t make assumptions about which modules will be present during use.</p>
+</div>
+<div class="paragraph">
+<p>This topic introduces another need too, that of some global initialization system (via mod G) that allows all modules to initialize themselves according to other modules included by the app, and their settings. This might be especially true for the Errors and Logger modules. I should think of some simple way to handle registering modules via mod_G.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_resources_module">3.4. Resources module</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="./mod_Resources.pbi" target="_blank" rel="noopener"><code>mod_Resources.pbi</code></a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Currently an empty module that does nothing.</p>
+</div>
+<div class="paragraph">
+<p>Eventually, it will offer an interface to manage and query all the resources of the CodeArchiv&#8201;&#8212;&#8201;and behind the scenes, it will also handle caching the parsed resources output to speed up processing time (See <a href="https://github.com/tajmone/PBCodeArcProto/issues/18" target="_blank" rel="noopener">Issue #18</a>).</p>
+</div>
+<div class="sect3">
+<h4 id="_resources_integrity_checks">3.4.1. Resources Integrity Checks</h4>
+<div class="paragraph">
+<p>These are the integrity checks that the module should carry out on each resource:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><em>Still unclear which checks are mandatory!!!</em></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>See also:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://github.com/tajmone/PBCodeArcProto/issues/10" target="_blank" rel="noopener">Issue #10&#8201;&#8212;&#8201;Integrating The Old Tools</a></p>
+</li>
+<li>
+<p><a href="https://github.com/tajmone/PBCodeArcProto/issues/18" target="_blank" rel="noopener">Issue #18&#8201;&#8212;&#8201;Caching Proposal &amp; Ideas</a></p>
+</li>
+</ul>
+</div>
+<hr>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_notes_on_modules_usage">4. Notes on Modules Usage</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Since the whole purpose of splitting the app into modules, here are some important notes on how the modules should be used in custom tools for this project.</p>
+</div>
+<div class="sect2">
+<h3 id="_global_enumerators">4.1. Global Enumerators</h3>
+<div class="paragraph">
+<p>Dynamic numbering of PB &#8220;objects&#8221; via <code>#PB_Any</code> works on a global scale, even when using modules; so, to avoid conflicts when creating RegExs, files, gadgets, etc., enumerations should be tracked globally by the G module.</p>
+</div>
+<div class="paragraph">
+<p>For example, <a href="./mod_G.pbi" target="_blank" rel="noopener"><code>mod_G.pbi</code></a> defines in its public module interface:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">Enumeration RegExsIDs
+EndEnumeration</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Where <code>RegExsIDs</code> is a common RegEx Enumeration Identifier to keep track of the RegExs ID across modules, otherwise Enums will start over from 0 and overwrite existing RegExs! Other modules' Enums will take on from there by using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">Enumeration G::RegExsIDs</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This system allows working with enumerated &#8220;object&#8221; without conflicts, and to use constants instead of vars to refer to the various RegExs, files, gadgets, etc.</p>
+</div>
+<div class="paragraph">
+<p>It also means that any third party tools willing to reuse some of the modules of this project will need to adhere to this enumeration scheme.</p>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_new_converter_goal">5. New Converter Goal</h2>
+<div class="sectionbody">
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p><em><strong>BEWARE</strong></em>&#8201;&#8212;&#8201;THIS SECTION IS OLD AND MIGHT NOT REFLECT THE LATEST CHANGES!_</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>Currently, the HTMLPageConvert has always been intended as a tool to merely create the HTML pages for the project; this was strongly determined by the fact that it was a &#8220;runnable&#8221; and guiless app. The upcoming introduction of the GUI lifts these limits, and the new app could be considered as a general purpose project maintainment tools providing this functionality:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Collect Statistics on the Archiv</p>
+</li>
+<li>
+<p>Check Archiv Integrity</p>
+</li>
+<li>
+<p>Create HTML Pages</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>whereas these three are currently blended into a single operation, we can imagine project maintainers needing the tool to use them separately. Here are some practical examples</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+<div class="sect2">
+<h3 id="_gathering_statistic">5.1. Gathering Statistic</h3>
+<div class="paragraph">
+<p>At any point in time a maintainer might wish to use the tool for the sole purpose of collecting some statistic on the CodeArchiv&#8201;&#8212;&#8201;how many Categories there are, how many resources, the full list of code authors, statistics on code licenses, etc.</p>
+</div>
+<div class="paragraph">
+<p>Therefore, the Statistics functionality of the new App could be furthered developed in time, in order to allow finer statistics, even though these might not be used by the actual page creation process.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_integrity_check">5.2. Integrity Check</h3>
+<div class="paragraph">
+<p>Maintainers should be able to check the CodeArchiv integrity even without creating the HTML pages. For example, when introducing changes in the project&#8217;s prerequisites multiple resources and categories might require adaptation to the new standard, and the maintainer might wish to run Integrity Checks at multiple times, targeting specific aspects of the Project.</p>
+</div>
+<div class="paragraph">
+<p>Likewise, when importing into the Archiv multiple new resources there would be a need to frequently run the integrity checks, until all resources and categories pass the tests.</p>
+</div>
+<div class="paragraph">
+<p>Therefore, Integrity Checks should be a functionality that can be accessed from the GUI independently from page conversions&#8201;&#8212;&#8201;but obviously, any integrity check findings will also be available to the converter and other functionality so they can use the data to organize their tasks.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_html_page_creation">5.3. HTML Page Creation</h3>
+<div class="paragraph">
+<p>Creation of the HTML pages should have a panel of its own. Running this task will implicity also run tasks that are common to both Statistics and Integrity, because behing the scenes all functionality share some procedures and data. But as far as the end user should be concerned, HTML Creation is presented in a panel of its own, allowing the user to open the App and request stratight away to create/update all the HTML pages.</p>
+</div>
+<div class="paragraph">
+<p>&#8230;&#8203;</p>
+</div>
+<div class="paragraph">
+<p>These three functionalities/panels are to be considered as representing three successive steps of the process&#8201;&#8212;&#8201;Integrity Checks implicitly require gathering Statistics, and HTML Conversion implicitly requires Integrity Checks to be run. Their separation into independent panel is simply a way to presen them to the end user and independently manageable features.</p>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_modules_roadmap">6. Modules Roadmap</h2>
+<div class="sectionbody">
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p><em>*BEWARE*&#8201;&#8212;&#8201;THIS SECTION IS OLD AND MIGHT NOT REFLECT THE LATEST CHANGES!</em></p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>I still need to work out properly how to move all the current functionality into separate modules. Presently, the main challenges are posed by the Error Tracking system, the Debug logging and the Final Report: in order to move any part of the current code to independent modules, I must first address these three systems so that they don&#8217;t break down.</p>
+</div>
+<div class="paragraph">
+<p>Then, I must decide which of the current HTML Creator functionality needs to be split in a module and which might be kept in main code&#8201;&#8212;&#8201;basically, it boils down to what might be needed by other tools.</p>
+</div>
+<div class="paragraph">
+<p>Because in PureBasic modules can&#8217;t access main code, moving any functionality to a module is likely to force me to move commonly shared data to an independent module too. For example, implementing the GUI as a separate module will have an avalanche effect in this regard (which is why I&#8217;m taking so long to decide how to go about splitting up the current code).</p>
+</div>
+<div class="paragraph">
+<p>These are tricky issues, so I should plan it well.</p>
+</div>
+<div class="sect2">
+<h3 id="_errors_management">6.1. Errors Management</h3>
+<div class="sect3">
+<h4 id="_current_status">6.1.1. Current Status</h4>
+<div class="paragraph">
+<p>Currently the HTML Pages Creator has a dual approach to errors:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check Project Integrity Step</p>
+</li>
+<li>
+<p>Project processing errors managment</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The two are independent from each other. The Project Integrity Step does some preliminary checks to verify if there are structural problems in the Archiv, but doesn&#8217;t go as far as checking the integrity single resources. This is intended as a way to detect common problems before starting the conversion process. For this reason, errors are not tracked by this step, they are just reported to the user who is then asked if he still wants to go ahead.</p>
+</div>
+<div class="paragraph">
+<p>The management of errors during processing is another thing altogether, and it&#8217;s handled by the <a href="#_errors_tracker">Errors Tracker</a> Module, which is required to build a final report with statistics (which are useful to handle multiple errors).</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_possible_changes">6.1.2. Possible Changes</h4>
+<div class="paragraph">
+<p>The current approach might not be suitable for the new design that is about to be implemented. This is due to the fact that the user will be able to pick and choose settings of how the project should be processed, possibly requiring a different model for the Check Project Integrity Step (eg: it might require that all resources be tested to).</p>
+</div>
+<div class="paragraph">
+<p>Furthermore, a <strong>Dry Run</strong> option will also be available, which would allow to simulate the whole conversion process without actually writing to disk, in order to prevent chaning anything on disk until we&#8217;re sure that the whole process is error free. It makes sense that a dry-run should redirect to a disk cache all the converted pages, so that after the test run it would be possible to confirm conversion without having to repeat the whole process froms scratch.</p>
+</div>
+<div class="paragraph">
+<p>While the Error Track is not going to be affected by this, the Check Project Integrity Step is definitely going to be.</p>
+</div>
+<div class="paragraph">
+<p>Also, I think that some data structures and/or functionality of the tracker could be reused by the new Project Integrity checker (but in a way that shouldn&#8217;t affect the report).</p>
+</div>
+<div class="paragraph">
+<p>Another thing to keep in mind is that some resource file checks will automatically correct some problems with the resource (eg: if in-file settings are found, they are removed on the spot).</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_log_module">6.2. Log Module</h3>
+<div class="paragraph">
+<p>Currently all logging is directly printed to the debug window via <code>Debug</code>. Since the app is about to become a GUI app, chances are that it might also be used as a compiled binary instead of simply being Run from the IDE; so I should consider that the debug window won&#8217;t necessary be available. After all, using a compiled binary might improve performance, so the original motives to keep the app IDE-runnable no longer apply (it was mainly to keep it simple, but this is no longer the case).</p>
+</div>
+<div class="paragraph">
+<p>Therefore, an independent log module should be created, and wherever the current code prints out text to the debug window, it should instead pass that text to the log module, which will then decide if and how to display it.</p>
+</div>
+<div class="paragraph">
+<p>Log messages should be passed to the module with something like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">log::logtext("some text", &lt;DBG Level&gt;)</code></pre>
+</div>
+</div>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>where <code>&lt;DBG Level&gt;</code> is a number representing the Debug Level of the text. This would allow the logger to decide if the text should be displayed or ignored, according to the current settings of the tool.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Maybe I could also add a third parameter, to indicate if the message should be considered as a <code>STDIN</code> or <code>STDERR</code> message&#8201;&#8212;&#8201;so that console apps could redirect it correctly, and GUI apps might use this to handle text with different colors, etc, while other tools might just ignore this.</p>
+</div>
+<div class="paragraph">
+<p>The whole point here seems to revolve around the fact that the Log module is probably going to be an intermediary between the various functionality modules and the main tool code; ie, the module is not going to actually handle the received text to produce some output, but instead make it available to the tool&#8217;s main code, which will then decide how to display or store it.</p>
+</div>
+<div class="paragraph">
+<p>So I might have to find a way to initialize the log module at startup, in order to register the procedures which the logger needs to interact with. Else, I could just store the data in the module namespace and expect the tool&#8217;s maincode to retrive it on demand, by either accessing the raw data directly or by probing some exposed procedure of the log module. I must weigh the pros and cons of these diffrente approaches.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_gui_introduction">6.3. GUI Introduction</h3>
+<div class="paragraph">
+<p>The introduction of a GUI is going to be a bing change, affecting both data access and storage as well as user options to control details of the various checks, the conversion process, and how errors should be handled (eg, allowing to ignore errors for maintainance/dev purposes).</p>
+</div>
+<div class="paragraph">
+<p>If on the one hand a GUI simplifies controlling settings, on the other it introduces new problems too because the possible combinations of user choices must be kept under control to prevent unwise mixtures and redundant behaviours.</p>
+</div>
+<div class="paragraph">
+<p>It seems worth of building the GUI as a module (<code>GUI::</code>) so to make it accessible from other modules too. I haven&#8217;t decided yet if user settings for the project should be stored in the GUI&#8217;s module or in a separate module&#8201;&#8212;&#8201;probably it&#8217;s better to have a dedicated module for the Archiv data and info, settings included, just in case in future we might need a separate console tool for other purposes.</p>
+</div>
+<div class="sect3">
+<h4 id="_gui_prototype">6.3.1. GUI Prototype</h4>
+<div class="paragraph">
+<p>Currently, GUI testing and prototyping is being done in:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../_tempwork/GUI_prototype/" target="_blank" rel="noopener"><code>../_tempwork/GUI_prototype/</code></a></p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="../_tempwork/GUI_prototype/protoGUI.pb" target="_blank" rel="noopener"><code>protoGUI.pb</code></a>&#8201;&#8212;&#8201;codebase of GUI</p>
+</li>
+<li>
+<p><a href="../_tempwork/GUI_prototype/dummyGUI.pbf" target="_blank" rel="noopener"><code>dummyGUI.pb</code></a>&#8201;&#8212;&#8201;proof of concept via Form Designer</p>
+</li>
+<li>
+<p><a href="../_tempwork/GUI_prototype/dummyGUI_screenshot.png" target="_blank" rel="noopener"><code>dummyGUI_screenshot.png</code></a>&#8201;&#8212;&#8201;proof of concept screenshot</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Different approaches are being considered. Once a satisfying result is achieved (visually speaking), it will be moved to this folder to start integration.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_brainstorming">6.3.2. Brainstorming</h4>
+<div class="paragraph">
+<p>I need to brainstorm what the GUI should display to the user, and which options should be changeable and how.</p>
+</div>
+<div class="paragraph">
+<p>As a general rule, the GUI should be divided in panel, each covering a given aspect of the project (info, error, conversion, etc.). Each panel should display elements resuming the overall status in a simple manner, and offer a button which can be clicked to get a pop-up window with detailed information.</p>
+</div>
+<div class="paragraph">
+<p>Proto GUI imgs</p>
+</div>
+<div class="paragraph">
+<p>Also, each panel should have a timestamp displaying when it was last refreshed, since some panel will be connected to different level of functionality&#8201;&#8212;&#8201;refreshing one panel might render inactive other panels, depending on the cascading level of dependency amongst them, but the timestamp will always provide a visual clue to the last time it was updated (manually or automatically alike).</p>
+</div>
+<div class="paragraph">
+<p>Some panels will also need to offer some button(s) to carry out actions, and maybe others to select options and settings.</p>
+</div>
+<div class="paragraph">
+<p>The whole idea is to keep the GUI clean, avoiding too many entries (all that is not strictly necesary should be delegate to the pop-up window for details).</p>
+</div>
+<div class="paragraph">
+<p>The tricky part is going to be keeping track of what changes, options and rereshes need to affect other panels and their settings&#8201;&#8212;&#8201;one more reason to keep it simple in design.</p>
+</div>
+<div class="paragraph">
+<p>Conceivably, there should be a progess status panel to indicate when the app is doing something. It should have both a counter (of the type <code>n/n</code>, indicating current step out of total steps) and a progress bar.</p>
+</div>
+<div class="paragraph">
+<p>A log gadget of sorts should also be available, to display log info on the latest operation(s) carried out in the background&#8201;&#8212;&#8201;the full log should be accessible in a pop-up window by clicking a button. Possibly, a WebGadget should be used, to allow basic text coloring to distinguish error and success messages (red, green) from neutral logs (grey). In the past I&#8217;ve already used the WebGadget for similar purposes, and it has always served me well (and comes with less problems than using other types of gadgets for the purpose).</p>
+</div>
+<div class="paragraph">
+<p>The log gadget will have to communicate with the Log Module, most probably. A few intermediate procedures can easily handle this, and decide how to color the text, and when to reset the log gadget&#8217;s text to make space for more recent log info&#8201;&#8212;&#8201;as for the pop-up with the full log, it will depend on how the log module works: the full log might be either stored by the GUI or the log module.</p>
+</div>
+<div class="sect4">
+<h5 id="_project_info_panel">6.3.2.1. Project Info Panel</h5>
+<div class="paragraph">
+<p>The GUI should have a panel displaying info on the Archiv structure:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Total Number of Categories (n)</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Number of Root Categories</p>
+</li>
+<li>
+<p>Number of Sub-Categories (s/n)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Total Number of Resources (n)</p>
+<div class="ulist">
+<ul>
+<li>
+<p>number of <code>.pb</code> resources</p>
+</li>
+<li>
+<p>number of <code>.pbi</code> resources</p>
+</li>
+<li>
+<p>number of <code>CodeInfo.txt</code> resources</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Last Updated (timestamp)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The above information should be gathered automatically at startup, but at any time the user can use a <code>refresh</code> button to update it (eg, if he has changed the files/folders in the meantime)&#8201;&#8212;&#8201;refreshment of this dialog might imply resetting other dialogs too, because some changes in the Archiv might require running again some functions.</p>
+</div>
+<div class="paragraph">
+<p>The <strong>Last Updated</strong> (timestamp: <code>YY/MM/DD-hh-mm-ss</code>) seems useful because different panels might be refreshed at different points in time, and if each panel has a timestamp it can be useful to keep track of their differences, and to work out why a panel is greyed out (ie, needs refreshing).</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_project_errors_panel">6.3.2.2. Project Errors Panel</h5>
+<div class="paragraph">
+<p>Another panel should show statistic on problems found in the Archiv, either <strong>structural problems</strong> (missing READMEs, etc.) or <strong>resource problems</strong> (resources not passing the check tests).</p>
+</div>
+<div class="paragraph">
+<p>Some error information might not be available at all times, so there must be a way to visually represent uncertainity&#8201;&#8212;&#8201;eg, an entry might be <code>README.md</code>, intended to show if every Category has a <code>README.md</code> file, showing a green check if the test passed, a red cross if problems where found (and maybe also the number of errors), and a question mark if the matter is yet unknown.</p>
+</div>
+<div class="paragraph">
+<p>So, the possible entries in such a panel could be:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Project Structure:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>READMEs</strong>&#8201;&#8212;&#8201;all Categories must have a <code>README.md</code></p>
+</li>
+<li>
+<p><strong>YAML Settings</strong>&#8201;&#8212;&#8201;the Arhiv project needs a <code>meta.yaml</code> file.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Resources:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>syntax</strong>&#8201;&#8212;&#8201;reporting on how compilable resources passed the <code>--check --thread</code> compiler test. This one is tricky because I haven&#8217;t yet understood how accurately the PBCompiler can check a sourcefile destined for another OS!</p>
+</li>
+<li>
+<p><strong>header comments</strong>&#8201;&#8212;&#8201;reporting if a resource passed all tests on its commented headers (obligatory keys, etc.)</p>
+</li>
+<li>
+<p><strong>include files</strong>&#8201;&#8212;&#8201;reporting if <code>.pbi</code> files contain the required <code>CompilerIf #PB_Compiler_IsMainFile</code> block.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Although incomplete, the above list makes it clear that a similar panel would be too cluttered to be practical. I should summarize the different problems in a few useful categories:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Proj Structure</strong> (n)&#8201;&#8212;&#8201;where <code>n</code> is the number of structural errors (if any)</p>
+</li>
+<li>
+<p><strong>Resources</strong> (e/n)&#8201;&#8212;&#8201;where <code>e</code> is the number of faulty resource over <code>n</code> (total num of resources)</p>
+</li>
+<li>
+<p><strong>Dependencies</strong> (n)&#8201;&#8212;&#8201;where <code>n</code> is the number of problems encountered with dependencies (pandoc, etc).</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>and just assign to them a color based on status (green = ok, red = error, grey = unknown) and add next to them a number in braces showing the total count&#8201;&#8212;&#8201;eg: <strong>Resources (80)</strong> in green = 80 resources, all passed the test; while <strong>Resources (5/80)</strong> in red = 80 resources, 5 of which didn&#8217;t pass the test; and <strong>Resources (80)</strong> in grey = 80 resources, unknown status; while <strong>Resources (?)</strong> would indicate unknown number of resources and status.</p>
+</li>
+</ol>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>And so on.</p>
+</div>
+<div class="paragraph">
+<p>Looking at the proof of concept screenshot:</p>
+</div>
+<div class="paragraph">
+<p>Proto GUI imgs</p>
+</div>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>the GUI&#8217;s "<strong>Project Status</strong>" panel is telling us that:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Categories</strong>: 3 out of 21 categories have problems which must be addressed. It could be that each category has more than one error, and that the error is tied specifically to the category structure (READMEs, etc) or even to a resource therein&#8201;&#8212;&#8201;it ultimately depends on how we wish statistics to be shown.</p>
+</li>
+<li>
+<p><strong>Resources</strong>: 10 out of 85 resources have problems that need to be addressed. It could be that a resource has more than one problem (invalid header, settings saved in file, and include file has no main block). In this case we can pinpoint the number of faulty resources OR the total number of resources related problems (it&#8217;s a matter of choice).</p>
+</li>
+<li>
+<p><strong>Structure</strong>: 0 structural problems found.</p>
+</li>
+<li>
+<p><strong>Dependencies</strong>: 1/1 dependencies are OK.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>This first prototype has brought to light that simplicity in the GUI could also introduce ambiguity of interpretation. We must decide how errors are counted&#8201;&#8212;&#8201;WHAT COUNTS AS A CATEGORY ERROR? ANY ERROR, INCLUDING RESOURCES?.</p>
+</div>
+<div class="paragraph">
+<p>Of course, the <code>details</code> button will pop-up a detailed resume of all these problems, leaving no ambiguity of interpretations; nevertheless, <strong>this has brought to attention the issue of how to classify and count problems in GUI panels</strong>&#8201;&#8212;&#8201;we can&#8217;t create an entry for each separate problem, but grouping multiple problems under a same entry creates ambiguity.</p>
+</div>
+<div class="paragraph">
+<p>The panel should then have an <code>Info</code> button which can be clicked to produce a pop-up window with a full status report&#8201;&#8212;&#8201;structure, resources and dependencies, listing all the known problems and statistics. This would be a much cleaner approach (instead of a cluttered panel) and still allow access to full status details from within the GUI.</p>
+</div>
+<hr>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_problems_ahead">7. Problems Ahead</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_issues_with_resource_files">7.1. Issues With Resource Files</h3>
+<div class="paragraph">
+<p>There are some issues in dealing with resource files which require some thoughts in order to be implemented smartly, especially since they deal with functionality that will be shared by different apps.</p>
+</div>
+<div class="paragraph">
+<p>Depending on the type of resource file, the number of operations that could be carried out on the resource may vary.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">res type</th>
+<th class="tableblock halign-left valign-top">parse/validate header comments</th>
+<th class="tableblock halign-left valign-top">check settings at end of file</th>
+<th class="tableblock halign-left valign-top"><code>--check --thread</code></th>
+<th class="tableblock halign-left valign-top"><code>CompilerIf #PB_Compiler_IsMainFile</code> block</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;file&gt;.pb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">always</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">always</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">always</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>never</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;incfile&gt;.pbi</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">always</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">always</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">always</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">always</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CodeInfo.txt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">always</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>never</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>never</em></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>never</em></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>This brings to attention the fact that with include files (<code>.pbi</code>) there is a potential redundancy of file access if we were to keep separate functions for header comments parsing, checks for the presence of PB settings in the file and checks for a <code>#PB_Compiler_IsMainFile</code> block.</p>
+</div>
+<div class="paragraph">
+<p>Ideally, we could access the resource file just once:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Extract the raw header comments block (and store it to memory)</p>
+</li>
+<li>
+<p>Check if PB settings are stored inside the file</p>
+</li>
+<li>
+<p>Check that a <code>*.pbi</code> resource has a <code>#PB_Compiler_IsMainFile</code> block</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>This could be carried out indepedently of the desired actions&#8201;&#8212;&#8201;ie, the module dealing with resource files should carry out the above steps whenever it receives a request to do something with a given resource.</p>
+</div>
+<div class="paragraph">
+<p>The downside of this approach is that any tools that don&#8217;t wish to carry out all the checks might end up having some overhead due to this (potentially, steps 2 and 3 are the more time consuming ones).</p>
+</div>
+<div class="paragraph">
+<p>Alternatively, the module could allow the user to register the intended actions he will need for any resource&#8201;&#8212;&#8201;ie, before actually carrying any of them out&#8201;&#8212;&#8201;so the module can smartly prefetch/preprocess the resource file accordingly.</p>
+</div>
+<div class="paragraph">
+<p>This is worth considering, especially in view of the implementation of a cache system. In both cases, it&#8217;s important that the module has some independent way of controlling file access, imposing a separation between the required actions on the resource and how and when the resource is accessed on disk. The tool should only worry about requesting to the module&#8217;s API that the various checks are carried out, and leave it entirely to the module to decide when and how the resource should be retrived from disk, allowing therefore the module the freedom to prefetch data and store it to memory when this would prevent redundant disk accesses.</p>
+</div>
+<div class="paragraph">
+<p>What emerges from these considerations is that all functionality dealing with resources is likely to be better handled by a single module&#8201;&#8212;&#8201;even if some tools will not use all of them.</p>
+</div>
+<div class="sect3">
+<h4 id="_memoization_a_possible_solution">7.1.1. Memoization: A Possible Solution</h4>
+<div class="paragraph">
+<p>The above mentioned issues could be resolved by employing momization in the module&#8217;s procedures: if the resource has already been parsed, the stored data is returned instead of carrying out the full process of accessing the resource and extracting the data.</p>
+</div>
+<div class="paragraph">
+<p>This does not solve the general problem of wehter or not any attempt to check a resource for a specific problem should make the module prefetch all potentially needed data. This second aspect could be handled by some settings passed to the module, to inform it of what checks the tools will carry out in the context&#8201;&#8212;&#8201;eg., a tool might inform the res module that it&#8217;s not interested in dealing with PB settings that might be stored in the source file, but only with parsing header comments; in this case the module will not attempt to handle the in-file settings and memoize them. And so on.</p>
+</div>
+<div class="paragraph">
+<p>These two solutions together could optimize both the issue of redundant file access, as well as provide a single reusable module for all tools that will not carry out unnecessary actions.</p>
+</div>
+<div class="paragraph">
+<p>The details of how these are going to be implemented are yet to be established, but they should not affect they module&#8217;s API nor create problems when a cache system is introduced in the main code of the HTML Generator (file caching should filter invocations of the res module, and therefore not affect the res module&#8217;s public interface).</p>
+</div>
+<div class="paragraph">
+<p>With this in mind, I should start to move all resource related functionality to an independent module, even if it doesn&#8217;t take care of optimizations at the onset&#8201;&#8212;&#8201;as long as it won&#8217;t break its usage when these are introduced.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version 1.0.0<br>
+Last updated 2018-09-05 15:20:46 ora legale Europa occidentale
+</div>
+</div>
+</body>
+</html>

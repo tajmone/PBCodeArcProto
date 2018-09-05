@@ -17,7 +17,7 @@
 ;- TODO LIST -------------------------------------------------------------------
 ;{ =========
 ; [ ] Integrate the code from "HTMLPagesCreator.pb" that deals with parsing
-;     resources comments headers.
+;     resources comments headers:
 ;     [ ] 
 ; [ ] Integrate functionality from Sicro's old "CodesChecker.pb":
 ;     [ ] Check code syntax via the compiler syntax checker (--check --thread).
@@ -27,7 +27,9 @@
 ;     [ ] 
 ; [ ] Integrate functionality from Sicro's old "CodesCleaner.pb":
 ;     [ ] Remove any settings at the end of source file.
-;     [ ] 
+; [ ] New functionality:
+;     [ ] Check that filename is cross-platform valid -- use CheckFilename()
+
 ;}
 
 ; ******************************************************************************
