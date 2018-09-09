@@ -436,7 +436,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>MODULARIZATION NOTES</h1>
 <div class="details">
 <span id="revnumber">version 1.0.1,</span>
-<span id="revdate">September 5, 2018</span>
+<span id="revdate">September 9, 2018</span>
 <br><span id="revremark">dev-notes</span>
 </div>
 <div id="toc" class="toc2">
@@ -617,6 +617,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 </ul>
 </div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">; "mod_G.pbi" v0.0.13 (2018/06/07) | PureBASIC 5.62 | MIT License</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>This module (<code>G::</code>) holds data commonly shared by all tools.</p>
 </div>
@@ -639,6 +644,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><a href="./mod_CodeArchiv.pbi" target="_blank" rel="noopener"><code>mod_CodeArchiv.pbi</code></a></p>
 </li>
 </ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">; "mod_CodeArchiv.pbi" v0.0.19 (2018/06/07) | PureBASIC 5.62 | MIT License</code></pre>
+</div>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -835,6 +845,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 </ul>
 </div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">; "mod_Errors.pbi" v0.0.2 (2018/05/16) | PureBASIC 5.62 | MIT License</code></pre>
+</div>
+</div>
 <div class="paragraph">
 <p>This module (<code>Err::</code>) tracks and handles all errors encountered during the processing stage of the project (validation, extraction, conversion, etc.). Every module that takes part in the Archiv processing should report errors to this module and let the module handle them.</p>
 </div>
@@ -983,6 +998,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><a href="./mod_Resources.pbi" target="_blank" rel="noopener"><code>mod_Resources.pbi</code></a></p>
 </li>
 </ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">; "mod_Resources.pbi" v0.0.2 (2018/07/09) | PureBASIC 5.62 | MIT License</code></pre>
+</div>
 </div>
 <div class="paragraph">
 <p>Currently an empty module that does nothing.</p>
@@ -1495,10 +1515,10 @@ EndEnumeration</code></pre>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">res type</th>
-<th class="tableblock halign-left valign-top">parse/validate header comments</th>
-<th class="tableblock halign-left valign-top">check settings at end of file</th>
+<th class="tableblock halign-left valign-top">alidate header</th>
+<th class="tableblock halign-left valign-top">check EOF settings</th>
 <th class="tableblock halign-left valign-top"><code>--check --thread</code></th>
-<th class="tableblock halign-left valign-top"><code>CompilerIf #PB_Compiler_IsMainFile</code> block</th>
+<th class="tableblock halign-left valign-top"><code>IsMainFile</code> block</th>
 </tr>
 </thead>
 <tbody>
@@ -1584,7 +1604,7 @@ EndEnumeration</code></pre>
 <div id="footer">
 <div id="footer-text">
 Version 1.0.1<br>
-Last updated 2018-09-05 20:03:04 ora legale Europa occidentale
+Last updated 2018-09-09 11:04:02 ora legale Europa occidentale
 </div>
 </div>
 </body>

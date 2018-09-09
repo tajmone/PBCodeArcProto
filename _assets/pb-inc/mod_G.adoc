@@ -1,0 +1,17 @@
+= Global Module
+:modfile: mod_G.pbi
+
+* link:./{modfile}[`{modfile}`^]
+
+[source,purebasic]
+--------------------------------------------------------------------------------
+include::{modfile}[lines=10]
+--------------------------------------------------------------------------------
+
+
+This module (`G::`) holds data commonly shared by all tools.
+
+* *Cross platform constants* (`#EOL`, `#EOL_WRONG`, `#DSEP`, etc.)
+* <<Global Enumerators,*Global enumerators*>>
+
+// EOF //

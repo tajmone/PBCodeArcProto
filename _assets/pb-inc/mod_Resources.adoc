@@ -1,0 +1,26 @@
+= Resources module
+:modfile: mod_Resources.pbi
+
+* link:./{modfile}[`{modfile}`^]
+
+[source,purebasic]
+--------------------------------------------------------------------------------
+include::{modfile}[lines=10]
+--------------------------------------------------------------------------------
+
+Currently an empty module that does nothing.
+
+Eventually, it will offer an interface to manage and query all the resources of the CodeArchiv -- and behind the scenes, it will also handle caching the parsed resources output to speed up processing time (See https://github.com/tajmone/PBCodeArcProto/issues/18[Issue #18^]).
+
+== Resources Integrity Checks
+
+These are the integrity checks that the module should carry out on each resource:
+
+* _Still unclear which checks are mandatory!!!_
+
+See also:
+
+* https://github.com/tajmone/PBCodeArcProto/issues/10[Issue #10 -- Integrating The Old Tools^]
+* https://github.com/tajmone/PBCodeArcProto/issues/18[Issue #18 -- Caching Proposal & Ideas^]
+
+// EOF //

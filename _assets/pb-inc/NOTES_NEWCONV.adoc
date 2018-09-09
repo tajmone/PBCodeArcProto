@@ -1,0 +1,41 @@
+
+
+= New Converter Goal
+
+[WARNING]
+================================================================================
+THIS SECTION IS OLD AND MIGHT NOT REFLECT THE LATEST CHANGES!
+================================================================================
+
+Currently, the HTMLPageConvert has always been intended as a tool to merely create the HTML pages for the project; this was strongly determined by the fact that it was a "`runnable`" and guiless app. The upcoming introduction of the GUI lifts these limits, and the new app could be considered as a general purpose project maintainment tools providing this functionality:
+
+1.  Collect Statistics on the Archiv
+2.  Check Archiv Integrity
+3.  Create HTML Pages
+
+... whereas these three are currently blended into a single operation, we can imagine project maintainers needing the tool to use them separately. Here are some practical examples
+
+== Gathering Statistic
+
+At any point in time a maintainer might wish to use the tool for the sole purpose of collecting some statistic on the CodeArchiv -- how many Categories there are, how many resources, the full list of code authors, statistics on code licenses, etc.
+
+Therefore, the Statistics functionality of the new App could be furthered developed in time, in order to allow finer statistics, even though these might not be used by the actual page creation process.
+
+== Integrity Check
+
+Maintainers should be able to check the CodeArchiv integrity even without creating the HTML pages. For example, when introducing changes in the project's prerequisites multiple resources and categories might require adaptation to the new standard, and the maintainer might wish to run Integrity Checks at multiple times, targeting specific aspects of the Project.
+
+Likewise, when importing into the Archiv multiple new resources there would be a need to frequently run the integrity checks, until all resources and categories pass the tests.
+
+Therefore, Integrity Checks should be a functionality that can be accessed from the GUI independently from page conversions -- but obviously, any integrity check findings will also be available to the converter and other functionality so they can use the data to organize their tasks.
+
+== HTML Page Creation
+
+Creation of the HTML pages should have a panel of its own. Running this task will implicity also run tasks that are common to both Statistics and Integrity, because behing the scenes all functionality share some procedures and data. But as far as the end user should be concerned, HTML Creation is presented in a panel of its own, allowing the user to open the App and request stratight away to create/update all the HTML pages.
+
+...
+
+These three functionalities/panels are to be considered as representing three successive steps of the process -- Integrity Checks implicitly require gathering Statistics, and HTML Conversion implicitly requires Integrity Checks to be run. Their separation into independent panel is simply a way to presen them to the end user and independently manageable features.
+
+
+// EOF //

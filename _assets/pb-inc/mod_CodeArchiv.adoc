@@ -1,0 +1,67 @@
+= CodeArchiv Module
+:modfile: mod_CodeArchiv.pbi
+
+* link:./{modfile}[`{modfile}`^]
+
+[source,purebasic]
+--------------------------------------------------------------------------------
+include::{modfile}[lines=10]
+--------------------------------------------------------------------------------
+
+
+[NOTE]
+================================================================================
+This section was last updated according to `mod_CodeArchiv.pbi` *v0.0.19* (2018/06/07)
+================================================================================
+
+
+This module (`Arc::`) is intended as an interface for all tools to handle the CodeArchiv categories and resources:
+
+* `Arc::ScanProject()` -- Scans the CodeArchiv project tree and
+** builds list of all Categories (`Arc::CategoriesL()`)
+** builds list of the Top-Level Categories (`Arc::RootCategoriesL()`)
+** builds list of all Resources (`Arc::ResourcesL()`)
+** carries out integrity checks on the CodeArchiv:
+*** Check that "```_assets/meta.yaml```" file exists and is not 0 Kb.
+*** Check that every category has a "```REAMDE.md```" file and is not 0 Kb.
+*** Check that every category contains resources.
+*** Returns the number of errors found (if any).
+*** Stores in `info\Errors` the number of errors found.
+*** Stores in `info\IntegrityReport` a report on the integrity checks. (if everything went fine, the report will either contain a standard "`everything is OK`" message, otherwise a detailed report on the encountered errors)
+* Exposes statistics via `Arc::info` data structure:
+** `info\IsReady.i` -- Boolean for querying the module's status (_currently unused!_).
+** `info\Errors` Total errors found during project scanning.
+** `info\IntegrityReport` Integrity Checks Report (with Errors details, if any).
+** `info\totCategories.i` -- Total Categories count (Root excluded)
+** `info\totRootCategories.i` -- Total Top-Level Categories count
+** `info\totResources.i` -- Total Resources count
+** `info\totResT_PBSrc.i` -- Total Resources of PureBasic Source type
+** `info\totResT_PBInc.i` -- Total Resources of PureBasic Include-file type
+** `info\totResT_Folder.i` -- Total Resources of Subfolder type
+* Provides some plaintext *Info Helpers*:
+** `Arc::GetStats()` -- returns a str with rèsumè of CodeArchiv Categories and Resources.
+** `Arc::GetTree()` -- returns a str with an Ascii-Art Tree representation of the CodeArchiv Categories and Resources.
+** `Arc::GetCategories()` -- returns a str with numbered list of all Categories in the CodeeArchiv.
+** `Arc::GetRootCategories()` -- returns a str with numbered list of Root Categories (top-level categories).
+** `Arc::GetResources()` -- returns a str with numbered list of all resources in the CodeArchiv.
+* Provide some *Iterators* for invoking a CallBack procedure on iterated items:
+** `Arc::CategoriesIteratorCallback( *CallbackProc )` -- iterate categories and invoke `CallbackProc()` at each iteration
+** `Arc::ResourcesIteratorCallback( *CallbackProc )` -- iterate through resources and invoke `CallbackProc()` at each iteration
+* Exposes to the `CallbackProc()` info about the current Resource and Category being iterated, via `Arc::Current` structure:
+** `Arc::Current\Resource` -- a struct var containing all required info about the current resource:
+*** `File.s` -- Filename ( `<filename>.pb` | `<filename>.pbi` | "```<subfolder>/CodeInfo.txt```" )
+*** `Path.s` -- Path relative to CodeArchiv root (includes filename)
+*** `Type.i` -- ( `G::#ResT_PBSrc` | `G::#ResT_PBInc` | `G::#ResT_Folder` )
+*** `*Category.Category` -- pointer to its parent category
+** `Arc::Current\Category` -- a struct var containing all required info about the current category being iterated, or the host category of the current resource being iterated
+*** `Name.s` -- Folder name
+*** `Path.s` -- Path relative to CodeArchiv root (includes folder name)
+*** `Level.i` -- 0-2 (Root, Top-Level Category, Subcategory)
+*** `SubCategoriesL.s()` List -- Name/Link List to SubCategories
+*** `FilesToParseL.s()` List -- List of files to parse (including "```<subf>/CodeInfo.txt```")
+
+The above feature of the module's API are intended to offer flexible access to the CodeArchiv resources and categories via specific API procedures and vars that hide away the complexity of the Archiv internals, and could change in the future without requiring rewriting the code of the tools using this module -- a few tweaks should suffice to adapt to major API changes.
+
+Having separate lists and iterators for Categories and Resources allows the module to be useful for both tools dealing with Categories (eg, the HTML pages creator) and tools that focus on checking that resources meet the requirements.
+
+// EOF //
