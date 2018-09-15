@@ -461,7 +461,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 <li><a href="#_resources_module">3.4. Resources module</a>
 <ul class="sectlevel3">
-<li><a href="#_resources_integrity_checks">3.4.1. Resources Integrity Checks</a></li>
+<li><a href="#_public_interface">3.4.1. Public Interface</a></li>
+<li><a href="#_resources_integrity_checks">3.4.2. Resources Integrity Checks</a></li>
 </ul>
 </li>
 </ul>
@@ -1001,17 +1002,88 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">; "mod_Resources.pbi" v0.0.2 (2018/07/09) | PureBASIC 5.62 | MIT License</code></pre>
+<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">; "mod_Resources.pbi" v0.0.3 (2018/09/15) | PureBASIC 5.62 | MIT License</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Currently an empty module that does nothing.</p>
+<p>Currently this module is being recreated by porting the original code used in <code>HTMLPagesCreator.pb</code>.
+The original code needs to be changed, for this module might be subject to wider uses than those of the HTML pages builder.</p>
+</div>
+<div class="paragraph">
+<p>Right now, the goal is just to port to this module all the code that deals with parsing the Header Block of resources, so that <code>HTMLPagesCreator.pb</code> will be able to function via this module.
+After that, I&#8217;ll think on how the whole interfacing system could be optimized.</p>
+</div>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p><i class="fa fa-square-o"></i> Integrate the code from <code>HTMLPagesCreator.pb</code> that deals with parsing resources comments headers:</p>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p><i class="fa fa-check-square-o"></i> ExtractHeaderBlock()</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> ParseFileComments()</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> Integrate functionality from Sicro&#8217;s old <code>CodesChecker.pb</code>:</p>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p><i class="fa fa-square-o"></i> Check code syntax via the compiler syntax checker (<code>--check --thread</code>).</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> Check for presence of <code>CompilerIf #PB_Compiler_IsMainFile</code> block in include file resources (<code>*.pbi</code>).</p>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> Check for settings at the end of source file.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> Integrate functionality from Sicro&#8217;s old <code>CodesCleaner.pb</code>:</p>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p><i class="fa fa-square-o"></i> Remove any settings at the end of source file.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><i class="fa fa-square-o"></i> New functionality:</p>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p><i class="fa fa-square-o"></i> Check that filename is cross-platform valid&#8201;&#8212;&#8201;use <code>CheckFilename()</code></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
 </div>
 <div class="paragraph">
 <p>Eventually, it will offer an interface to manage and query all the resources of the CodeArchiv&#8201;&#8212;&#8201;and behind the scenes, it will also handle caching the parsed resources output to speed up processing time (See <a href="https://github.com/tajmone/PBCodeArcProto/issues/18" target="_blank" rel="noopener">Issue #18</a>).</p>
 </div>
 <div class="sect3">
-<h4 id="_resources_integrity_checks">3.4.1. Resources Integrity Checks</h4>
+<h4 id="_public_interface">3.4.1. Public Interface</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">  ; ============================================================================
+  ;                        PUBLIC PROCEDURES DECLARATION
+  ; ============================================================================
+  Declare   CheckAllResources()
+  Declare.i ExtractHeaderBlock(file.s) ; Extracts Header Block from resource file
+                                       ; and stores it in Res::HeaderBlockL.s()</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_resources_integrity_checks">3.4.2. Resources Integrity Checks</h4>
 <div class="paragraph">
 <p>These are the integrity checks that the module should carry out on each resource:</p>
 </div>

@@ -8,9 +8,34 @@
 include::{modfile}[lines=10]
 --------------------------------------------------------------------------------
 
-Currently an empty module that does nothing.
+Currently this module is being recreated by porting the original code used in `HTMLPagesCreator.pb`.
+The original code needs to be changed, for this module might be subject to wider uses than those of the HTML pages builder.
+
+Right now, the goal is just to port to this module all the code that deals with parsing the Header Block of resources, so that `HTMLPagesCreator.pb` will be able to function via this module.
+After that, I'll think on how the whole interfacing system could be optimized.
+
+* [ ] Integrate the code from `HTMLPagesCreator.pb` that deals with parsing resources comments headers:
+** [x] ExtractHeaderBlock()
+** [ ] ParseFileComments()
+* [ ] Integrate functionality from Sicro's old `CodesChecker.pb`:
+** [ ] Check code syntax via the compiler syntax checker (`--check --thread`).
+** [ ] Check for presence of `CompilerIf #PB_Compiler_IsMainFile` block in include file resources (``*.pbi``).
+** [ ] Check for settings at the end of source file.
+* [ ] Integrate functionality from Sicro's old `CodesCleaner.pb`:
+** [ ] Remove any settings at the end of source file.
+* [ ] New functionality:
+** [ ] Check that filename is cross-platform valid -- use `CheckFilename()`
 
 Eventually, it will offer an interface to manage and query all the resources of the CodeArchiv -- and behind the scenes, it will also handle caching the parsed resources output to speed up processing time (See https://github.com/tajmone/PBCodeArcProto/issues/18[Issue #18^]).
+
+
+== Public Interface
+
+[source,purebasic]
+--------------------------------------------------------------------------------
+include::{modfile}[tag=public_procedures]
+--------------------------------------------------------------------------------
+
 
 == Resources Integrity Checks
 
