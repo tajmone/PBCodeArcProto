@@ -33,7 +33,7 @@ Eventually, it will offer an interface to manage and query all the resources of 
 
 [source,purebasic]
 --------------------------------------------------------------------------------
-include::{modfile}[tag=public_procedures]
+include::{modfile}[tags=public_datatypes;public_data;public_procedures]
 --------------------------------------------------------------------------------
 
 

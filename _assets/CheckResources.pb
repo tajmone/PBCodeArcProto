@@ -27,6 +27,8 @@ XIncludeFile "pb-inc/mod_Resources.pbi"  ; Res::   => Resources Module
 ;                                      MAIN                                     
 ;{==============================================================================
 
+DebugLevel 0
+
 err = Arc::ScanProject()
 
 If err

@@ -435,8 +435,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="header">
 <h1>MODULARIZATION NOTES</h1>
 <div class="details">
-<span id="revnumber">version 1.0.1,</span>
-<span id="revdate">September 9, 2018</span>
+<span id="revnumber">version 1.0.2,</span>
+<span id="revdate">September 15, 2018</span>
 <br><span id="revremark">dev-notes</span>
 </div>
 <div id="toc" class="toc2">
@@ -1002,7 +1002,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">; "mod_Resources.pbi" v0.0.3 (2018/09/15) | PureBASIC 5.62 | MIT License</code></pre>
+<pre class="highlight"><code class="language-purebasic" data-lang="purebasic">; "mod_Resources.pbi" v0.0.4 (2018/09/15) | PureBASIC 5.62 | MIT License</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1074,11 +1074,37 @@ After that, I&#8217;ll think on how the whole interfacing system could be optimi
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-purebasic" data-lang="purebasic">  ; ============================================================================
+  ;                              PUBLIC DATA TYPES
+  ; ============================================================================
+  Structure KeyValPair
+    key.s
+    val.s
+  EndStructure
+  ; ============================================================================
+  ;                           PUBLIC VARS &amp; CONSTANTS
+  ; ============================================================================
+  NewList HeaderBlockL.s()          ; Extracted Header Block comment lines.
+  NewList MetadataRawL.KeyValPair() ; Extracted Header key-val pairs, raw.
+
+  CompilerIf Not Defined(PURGE_EMPTY_KEYS, #PB_Constant)
+    Debug "#PURGE_EMPTY_KEYS: Not user defined, falling back on default value."
+    #PURGE_EMPTY_KEYS = #False
+  CompilerEndIf
+
+  ; ============================================================================
   ;                        PUBLIC PROCEDURES DECLARATION
   ; ============================================================================
-  Declare   CheckAllResources()
-  Declare.i ExtractHeaderBlock(file.s) ; Extracts Header Block from resource file
-                                       ; and stores it in Res::HeaderBlockL.s()</code></pre>
+  Declare   CheckAllResources()        ; WIP: Iterate all CodeArchiv resources
+                                       ; and carry out sanitation checks.
+
+  Declare.i ExtractHeaderBlock(file.s) ; Extract Header Block from resource file
+                                       ; and store it in Res::HeaderBlockL().
+                                       ; Returns total comment lines extracted.
+
+  Declare.i ParseComments(file.s)      ; Parse Res::HeaderBlockL(), extrapolate
+                                       ; raw key-value pairs and store them in
+                                       ; Res::MetadataRawL().
+                                       ; Returns total keys extracted.</code></pre>
 </div>
 </div>
 </div>
@@ -1675,8 +1701,8 @@ EndEnumeration</code></pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 1.0.1<br>
-Last updated 2018-09-09 11:04:02 ora legale Europa occidentale
+Version 1.0.2<br>
+Last updated 2018-09-15 14:38:03 ora legale Europa occidentale
 </div>
 </div>
 </body>

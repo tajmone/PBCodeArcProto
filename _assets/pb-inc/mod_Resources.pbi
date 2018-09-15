@@ -7,7 +7,7 @@
 ; *                             by Tristano Ajmone                             *
 ; *                                                                            *
 ; ******************************************************************************
-; "mod_Resources.pbi" v0.0.3 (2018/09/15) | PureBASIC 5.62 | MIT License
+; "mod_Resources.pbi" v0.0.4 (2018/09/15) | PureBASIC 5.62 | MIT License
 
 ; Resources management module shared by all CodeArchiv tools.
 
@@ -38,30 +38,56 @@
 ; *                                                                            *
 ; ******************************************************************************
 DeclareModule Res
+  ; tag::public_datatypes[]
   ; ============================================================================
   ;                              PUBLIC DATA TYPES                              
   ; ============================================================================
+  ; tag::public_structures[]
   Structure KeyValPair
     key.s
     val.s
   EndStructure
+  ; end::public_structures[]
+  ; end::public_datatypes[]
+  ; tag::public_data[]
   ; ============================================================================
   ;                           PUBLIC VARS & CONSTANTS
   ; ============================================================================
-  NewList HeaderBlockL.s() ; Shared List to store extracted comment lines
+  NewList HeaderBlockL.s()          ; Extracted Header Block comment lines.
+  NewList MetadataRawL.KeyValPair() ; Extracted Header key-val pairs, raw.
   
+  CompilerIf Not Defined(PURGE_EMPTY_KEYS, #PB_Constant)
+    Debug "#PURGE_EMPTY_KEYS: Not user defined, falling back on default value."
+    #PURGE_EMPTY_KEYS = #False
+  CompilerEndIf
+  
+  ; end::public_data[]
   ; tag::public_procedures[]
   ; ============================================================================
   ;                        PUBLIC PROCEDURES DECLARATION                        
   ; ============================================================================
-  Declare   CheckAllResources()
-  Declare.i ExtractHeaderBlock(file.s) ; Extracts Header Block from resource file
-                                       ; and stores it in Res::HeaderBlockL.s()
+  Declare   CheckAllResources()        ; WIP: Iterate all CodeArchiv resources
+                                       ; and carry out sanitation checks.
+  
+  Declare.i ExtractHeaderBlock(file.s) ; Extract Header Block from resource file
+                                       ; and store it in Res::HeaderBlockL().
+                                       ; Returns total comment lines extracted.
+  
+  Declare.i ParseComments(file.s)      ; Parse Res::HeaderBlockL(), extrapolate
+                                       ; raw key-value pairs and store them in
+                                       ; Res::MetadataRawL().
+                                       ; Returns total keys extracted.
   
   ; end::public_procedures[]
 EndDeclareModule
 
 Module Res
+  ; ==============================================================================
+  ;                           Temporary Vars & Constants                          
+  ; ==============================================================================
+  ; These vars and constants are being used temporarily and they should be removed
+  ; later on.
+  #DBGL4 = 4 ; Debug Level constant to simplify S&R operations in source code.
   ; ============================================================================
   ;                        PRIVATE PROCEDURES DECLARATION                       
   ; ============================================================================
@@ -128,6 +154,120 @@ Module Res
     
   EndProcedure
   
+  Procedure.i ParseComments(file.s)
+    ; ----------------------------------------------------------------------------
+    ; Parse the List of extracted comment-lines and extrapolate key-value pairs.
+    ; Keys with empty values are preserved! FIXME: Drop empty keys
+    ; Returns the number of total keys extracted (Or zero If none).   
+    ; ----------------------------------------------------------------------------
+    Debug ">>> ParseComments()", #DBGL4
+    
+    Shared HeaderBlockL(), MetadataRawL()
+    ClearList(MetadataRawL())
+
+    totLines = ListSize( HeaderBlockL() )
+    
+    lineCnt = 1
+    dbgIndent.s = "  | "
+    
+    ForEach HeaderBlockL()
+      lineNum.s = RSet(Str(lineCnt), 2, "0") + "| "
+      commDelim.s = Left(HeaderBlockL(), 3)
+      If commDelim = ";: " Or commDelim = ";{:"  Or commDelim = ";}:"
+        Debug lineNum + "Parse:", #DBGL4
+        ;  ===========
+        ;- Extract Key
+        ;  ===========
+        key.s = Trim(StringField(HeaderBlockL(), 2, ":"))
+        Debug dbgIndent + "- key found: '" + key +"'", #DBGL4
+        ;  =============
+        ;- Extract Value
+        ;  =============
+        valueStart = FindString(HeaderBlockL(), ":", 4)
+        value.s = Trim(Mid(HeaderBlockL(), valueStart +1))
+        If value = #Empty$
+          Debug dbgIndent + "- value found: (empty)", #DBGL4
+          newParagraph = #True
+        Else
+          Debug dbgIndent + "- value found: '" + value +"'", #DBGL4
+          newParagraph = #False
+        EndIf
+        ;  =======================
+        ;- Look for Carry-On Value
+        ;  =======================
+        carryOn = #False
+        Repeat
+          
+          If lineCnt = totLines
+            Break
+          EndIf
+          
+          NextElement(HeaderBlockL())
+          lineCnt +1
+          
+          commDelim.s = Left(HeaderBlockL(), 3)
+          If Left(commDelim, 2) = ";." Or commDelim = ";{."  Or commDelim = ";}."
+            
+            ;- Carry-on line found
+            ;  ~~~~~~~~~~~~~~~~~~~
+            carryOn = #True
+            valueNew.s = Trim(Mid(HeaderBlockL(), 4))
+            lineNum.s = RSet(Str(lineCnt), 2, "0") + "| "
+            Debug lineNum + "Detected value carry-on:", #DBGL4
+            Debug dbgIndent + "- carry-on value found: '" + valueNew +"'", #DBGL4
+            ;  ------------------------------
+            ;- Append Carry-On Value to Value
+            ;  ------------------------------
+            If valueNew <> #Empty$
+              If newParagraph
+                value + valueNew
+              Else
+                value + " " + valueNew
+              EndIf
+              newParagraph = #False
+            Else
+              value + G::#EOL2
+              newParagraph = #True
+            EndIf
+            
+          Else ;- No carry-on line found (or no more)
+               ;  ~~~~~~~~~~~~~~~~~~~~~~
+            If carryOn ; (there were carry-on lines)
+                       ; Debug final value string
+              Debug dbgIndent + "- Assembled value:" + G::#EOL + G::#DIV4$, #DBGL4
+              Debug value, #DBGL4
+            EndIf
+            ;  ===========================
+            ;- Add <key> & <value> to list
+            ;  ===========================
+            If Not ( value = #Empty$ And #PURGE_EMPTY_KEYS ); <= customizable setting
+              AddElement(MetadataRawL())
+              MetadataRawL()\key = key
+              MetadataRawL()\val = value
+            Else
+              ; Skip Empty Key
+              ; ~~~~~~~~~~~~~~
+              ; TODO: Should debug this differently according to current DBG Level
+              ;             Debug "~ Purged empty key: " + key, #DBGL3           
+            EndIf
+            ; Roll-back List Element and line counter...
+            PreviousElement(HeaderBlockL())
+            lineCnt -1
+            Break
+          EndIf
+          
+        ForEver
+        
+      Else
+        Debug lineNum + "Skip", #DBGL4
+      EndIf
+      lineCnt +1
+      Debug G::#DIV4$, #DBGL4
+    Next
+    
+    Debug "<<< ParseComments()", #DBGL4
+    ProcedureReturn ListSize( MetadataRawL() )
+  EndProcedure
   
   ; ****************************************************************************
   ; *                                                                          *
@@ -182,8 +322,32 @@ Module Res
       ForEach HeaderBlockL()
         Debug "     " + HeaderBlockL()
       Next
+      Debug "     " + G::#DIV3$ + G::#EOL
+    EndIf 
+    ; ==============================================================================
+    ;                          Extract HeaderBlock Metadata                         
+    ; ==============================================================================
+    Shared MetadataRawL()
+    
+    totEntries = ParseComments(G::CodeArchivPath + Arc::Current\Resource\Path)
+    If totEntries <= 0
+      Debug "     ERROR!!! No key-vals extracted"
+    Else
+      Debug "     Resource's Metadata (" + totEntries + " keys):"
+      Debug "     " + G::#DIV3$
+      i = 1
+      pad =  5 + Len(Str(totEntries))
+      ForEach MetadataRawL()
+        MarginL$ = RSet(Str(i), pad) + ". "
+        Debug MarginL$ + MetadataRawL()\key + ": " + MetadataRawL()\val
+        i+1
+      Next
       Debug "     " + G::#DIV3$
     EndIf 
+    
+    
+    ; ---------------------------
+    
     ;     Debug "     <<< IterResChek()"
   EndProcedure
   
@@ -192,6 +356,9 @@ EndModule
 
 ;-  CHANGELOG ------------------------------------------------------------------
 ;{  =========
+; v0.0.4 (2018/09/15)
+;   - Add ParseComments(), taken from "HTMLPagesCreator.pb" and readapted.
+;     Store extracted in Res::MetadataRawL(), a List of key-val pairs.
 ; v0.0.3 (2018/09/15)
 ;   - Add ExtractHeaderBlock(), taken from "HTMLPagesCreator.pb" and readapted.
 ;     Store extracted header in Res::HeaderBlockL(), a List of strings.
