@@ -24,6 +24,7 @@ DeclareModule Logger
     #DeviceType_Debug
     #DeviceType_File
     #DeviceType_ListGadget
+    #DeviceType_StandardProgramOutput ; STDERR or STDOUT
   EndEnumeration
   
   ; -----------------------------------------------------------------
@@ -65,7 +66,7 @@ Module Logger
   ; -----------------------------------------------------------------
   ;-> Global Lists and Arrays
   ; -----------------------------------------------------------------
-
+  
   Global NewList LoggerRandomIDList.LoggerStruc()
   Global Dim     LoggerConstantIDArray.LoggerStruc(0)
   
@@ -98,6 +99,14 @@ Module Logger
   
   ; -----------------------------------------------------------------
   
+  Macro AddDevice_SetParameters(_DeviceList_)
+    
+    _DeviceList_\DeviceType = DeviceType
+    _DeviceList_\Device     = Device
+    _DeviceList_\LogLevel   = LogLevel
+    
+  EndMacro
+  
   Procedure AddDevice(LoggerID, DeviceType, LogLevel, Device = 0)
     
     If LoggerID => 0 And LoggerID <= ArraySize(LoggerConstantIDArray())
@@ -108,9 +117,7 @@ Module Logger
       EndIf
       
       ; Set the parameters of the new device
-      LoggerConstantIDArray(LoggerID)\Device()\DeviceType = DeviceType
-      LoggerConstantIDArray(LoggerID)\Device()\Device     = Device
-      LoggerConstantIDArray(LoggerID)\Device()\LogLevel   = LogLevel
+      AddDevice_SetParameters(LoggerConstantIDArray(LoggerID)\Device())
       
     Else ; Auto-generated ID (#PB_Any)
       
@@ -121,9 +128,7 @@ Module Logger
       EndIf
       
       ; Set the parameters of the new device
-      LoggerRandomIDList()\Device()\DeviceType = DeviceType
-      LoggerRandomIDList()\Device()\Device     = Device
-      LoggerRandomIDList()\Device()\LogLevel   = LogLevel
+      AddDevice_SetParameters(LoggerRandomIDList()\Device())
       
     EndIf
     
@@ -133,6 +138,49 @@ Module Logger
   
   ; -----------------------------------------------------------------
   
+  Macro AddLog_ProcessAllDevices(_DeviceList_)
+    
+    ForEach _DeviceList_
+      
+        ; Logger level must be equal or above the parameter level
+        If _DeviceList_\LogLevel < LogLevel
+          Continue
+        EndIf
+        
+        ; Process the device type
+        Select _DeviceList_\DeviceType
+            
+          Case #DeviceType_Callback
+            Callback = _DeviceList_\Device
+            Callback(LogMessage$)
+            
+          Case #DeviceType_Debug
+            Debug LogMessage$
+            
+          Case #DeviceType_File
+            WriteStringN(_DeviceList_\Device, LogMessage$)
+            
+          Case #DeviceType_ListGadget
+            AddGadgetItem(_DeviceList_\Device, -1, LogMessage$)
+            
+          Case #DeviceType_StandardProgramOutput
+            
+            Select LogLevel
+                
+              Case #LogLevel_Debug, #LogLevel_Info, #LogLevel_Warn
+                PrintN(LogMessage$)
+                
+              Case #LogLevel_Error
+                ConsoleError(LogMessage$)
+                
+            EndSelect
+            
+        EndSelect
+      
+    Next
+    
+  EndMacro
+  
   Procedure AddLog(LoggerID, LogMessage$, LogLevel)
     
     Protected Callback.CallbackPrototype
@@ -140,64 +188,14 @@ Module Logger
     If LoggerID => 0 And LoggerID <= ArraySize(LoggerConstantIDArray())
       
       ; Iterate through all devices of the logger
-      ForEach LoggerConstantIDArray(LoggerID)\Device()
-        
-        ; Logger level must be equal or above the parameter level
-        If LoggerConstantIDArray(LoggerID)\Device()\LogLevel < LogLevel
-          Continue
-        EndIf
-        
-        ; Process the device type
-        Select LoggerConstantIDArray(LoggerID)\Device()\DeviceType
-            
-          Case #DeviceType_Callback
-            Callback = LoggerConstantIDArray(LoggerID)\Device()\Device
-            Callback(LogMessage$)
-            
-          Case #DeviceType_Debug
-            Debug LogMessage$
-            
-          Case #DeviceType_File
-            WriteStringN(LoggerConstantIDArray(LoggerID)\Device()\Device, LogMessage$)
-            
-          Case #DeviceType_ListGadget
-            AddGadgetItem(LoggerConstantIDArray(LoggerID)\Device()\Device, -1, LogMessage$)
-            
-        EndSelect
-        
-      Next
+      AddLog_ProcessAllDevices(LoggerConstantIDArray(LoggerID)\Device())
       
     Else ; Auto-generated ID (#PB_Any)
       
       ChangeCurrentElement(LoggerRandomIDList(), LoggerID)
       
       ; Iterate through all devices of the logger
-      ForEach LoggerRandomIDList()\Device()
-        
-        ; Logger level must be equal or above the parameter level
-        If LoggerRandomIDList()\Device()\LogLevel < LogLevel
-          Continue
-        EndIf
-        
-        ; Process the device type
-        Select LoggerRandomIDList()\Device()\DeviceType
-            
-          Case #DeviceType_Callback
-            Callback = LoggerRandomIDList()\Device()\Device
-            Callback(LogMessage$)
-            
-          Case #DeviceType_Debug
-            Debug LogMessage$
-            
-          Case #DeviceType_File
-            WriteStringN(LoggerRandomIDList()\Device()\Device, LogMessage$)
-            
-          Case #DeviceType_ListGadget
-            AddGadgetItem(LoggerRandomIDList()\Device()\Device, -1, LogMessage$)
-            
-        EndSelect
-        
-      Next
+      AddLog_ProcessAllDevices(LoggerRandomIDList()\Device())
       
     EndIf
     
