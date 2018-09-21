@@ -10,6 +10,8 @@ This folder contains the AsciiDoc source files and scripts to build the __PB Cod
 <!-- MarkdownTOC autolink="true" bracket="round" autoanchor="false" lowercase="only_ascii" uri_encoding="true" levels="1,2,3" -->
 
 - [About the Docs](#about-the-docs)
+- [Doxter, A PureBasic Docs Generator](#doxter-a-purebasic-docs-generator)
+    - [Doxter Migration Grace Period](#doxter-migration-grace-period)
 - [AsciiDoc File Extensions Conventions](#asciidoc-file-extensions-conventions)
 - [Bulding the Docs](#bulding-the-docs)
     - [System Requirements](#system-requirements)
@@ -31,6 +33,29 @@ Furthermore, AsciiDoc can import (even conditionally) into the document other As
 
 Because of the last point mentioned, the documents in this folder will import some ADoc files stored elsewhere in the project.
 
+# Doxter, A PureBasic Docs Generator
+
+- [`Doxter.html`](../Doxter.html) — Documentation ([Live HTML Preview][Doxter LiveHTML])
+
+The new tool __Doxter__, created for this project, allows to maintain documentation inside the source code, and then parse the source and produce an AsciiDoc document.
+
+The auto-generated ADocs will be subdivided in tagged regions, therefore every document (including documents independent from source files) can import regions from the auto-generate doc of every module and source file, and when Doxter updates their doc files, every document in the project will be automatically updated.
+
+This will grante a documentation that is always on par with the source code(s) it refers to.
+
+[Doxter LiveHTML]: http://htmlpreview.github.io/?https://github.com/tajmone/PBCodeArcProto/blob/master/_assets/Doxter.html "Live HTML Preview of Doxter Documentation"
+
+## Doxter Migration Grace Period
+
+Currently, the PB sources in the `/_assets/` folder tree still need to be readapted to employ __Doxter__. They are currently being documented in external AsciDoc files; we need to copy the relevant parts of the documentation directly in their source files, so that from thereon source code and its documentation will be bundled together and be always up to date.
+
+Until all source files are ported to the new system, we'll have to endure a period of grace, in which scripts that update documentation will have to selectively choose which PB source to process with Doxter.
+
+For more details, see:
+
+- [`BUILD-DOCS.bat`](./BUILD-DOCS.bat)
+
+
 # AsciiDoc File Extensions Conventions
 
 For convenience, we'll adopt different file extensions for AsciiDoc files, according to their role:
@@ -44,7 +69,10 @@ This provides not only visual hints to quickly distinguish a main document from 
 
 # Bulding the Docs
 
-Use the shell scripts in this folder.
+Use the shell scripts in this folder:
+
+- [`BUILD-DOCS.bat`](./BUILD-DOCS.bat)
+
 
 ## System Requirements
 

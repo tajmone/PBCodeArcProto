@@ -21,6 +21,7 @@ The `/_assets/` folder contains:
 
 - [Files List](#files-list)
     - [Apps and Tools](#apps-and-tools)
+        - [Doxter, A PureBasic Docs Generator](#doxter-a-purebasic-docs-generator)
     - [Documentation](#documentation)
     - [Website Assets](#website-assets)
     - [Website Creation Resources](#website-creation-resources)
@@ -43,6 +44,19 @@ PB source files:
 - [`CheckResources.pb`](./CheckResources.pb) — an app to validate all resources (similar to the old [`CodesChecker`][CodesChecker] app)
 
 [CodesChecker]: ../_tempwork/CodesChecker.md "Read about the 'CodesChecker' app"
+
+### Doxter, A PureBasic Docs Generator
+
+- [`Doxter.html`](./Doxter.html) — Documentation ([Live HTML Preview][Doxter LiveHTML])
+- [`Doxter.pb`](./Doxter.pb)
+
+The new tool __Doxter__, created for this project, allows to maintain documentation inside the source code, and then parse the source and produce an AsciiDoc document.
+
+The auto-generated ADocs will be subdivided in tagged regions, therefore every document (including documents independent from source files) can import regions from the auto-generate doc of every module and source file, and when Doxter updates their doc files, every document in the project will be automatically updated.
+
+This will grante a documentation that is always on par with the source code(s) it refers to.
+
+[Doxter LiveHTML]: http://htmlpreview.github.io/?https://github.com/tajmone/PBCodeArcProto/blob/master/_assets/Doxter.html "Live HTML Preview of Doxter Documentation"
 
 ## Documentation
 
