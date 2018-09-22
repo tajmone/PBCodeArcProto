@@ -23,7 +23,7 @@ The `/_assets/` folder contains:
     - [Apps and Tools](#apps-and-tools)
         - [Doxter, A PureBasic Docs Generator](#doxter-a-purebasic-docs-generator)
     - [Documentation](#documentation)
-    - [Website Assets](#website-assets)
+    - [Web and HTML Docs Assets](#web-and-html-docs-assets)
     - [Website Creation Resources](#website-creation-resources)
 - [The CodeArchiv Website](#the-codearchiv-website)
     - [HTMLPagesCreator](#htmlpagescreator)
@@ -69,15 +69,15 @@ This will grante a documentation that is always on par with the source code(s) i
 [MODULARZ adoc]: ./pb-inc/MODULARIZATION_NOTES.asciidoc
 [MODULARZ live]: https://tajmone.github.io/PBCodeArcProto/_assets/pb-inc/MODULARIZATION_NOTES "Live HTML Preview"
 
-## Website Assets
+## Web and HTML Docs Assets
 
-Currently there are only CSS sytlesheets assets:
+Current assets for HTML pages and documentation:
 
+- [`/hjs/`](./hjs) — modded [Highlight.js] release for syntax highlighting PureBasic.
 - [`bulma.css`](./bulma.css) — created with [Bulma CSS framework].
 - [`custom.css`](./custom.css) — custom tweaks.
 
 These files are temporary; later on a proper Sass project will be added to build _ad hoc_ stylesheets.
-
 
 ## Website Creation Resources
 
@@ -116,6 +116,8 @@ __HTMLPagesCreator__ is going to be the website generator for the __[PureBasic C
 [Bulma CSS framework]: https://bulma.io/ "Visit Bulma CSS framework website"
 
 [HTML5 Boilerplate]: https://html5boilerplate.com/ "Visit HTML5 Boilerplate website"
+
+[Highlight.js]:https://highlightjs.org 
 
 <!-- Project Files -->
 
