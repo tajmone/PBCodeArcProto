@@ -64,6 +64,8 @@
 ## ===================
 ## DOCUMENTATION FILES
 ## ===================
+*.adoc       text
+*.asciidoc   text
 *.markdown   text
 *.md         text
 *.txt        text
