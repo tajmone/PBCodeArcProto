@@ -55,6 +55,7 @@
 *.html     text
 *.css      text
 *.js       text
+highlight.min.js  eol=lf
 
 ## ============
 ## PANDOC FILES
